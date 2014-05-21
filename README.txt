@@ -2,10 +2,10 @@ Autoinstall on debian:
 
 export PROJECTNAME=myproject
 apt-get update
-apt-get --force-yes -y install subversion libjson-perl
+apt-get --force-yes -y install git libjson-perl
 cd /opt/
-svn co https://svn.priv.de/ADBGUI/
-mv ADBGUI $PROJECTNAME
+git clone https://git.saytec.ag/pRiVi/adbgui.git
+mv adbgui $PROJECTNAME
 cd $PROJECTNAME
 # If you want to use the qooxdoo feature   : paramter "qx"
 # If you do not want apache to be installed: paramter "noap"
