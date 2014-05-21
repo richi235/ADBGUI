@@ -1,0 +1,207 @@
+
+/***************************
+Globals
+***************************/
+
+table {
+  border-collapse:collapse;
+  border-spacing:0px;
+  background-color:transparent;
+
+}
+
+div, {
+  padding:0px;
+  margin:0px;
+  background-color:transparent;
+}
+
+p {
+  padding-top:0.3em;
+  padding-bottom:0.3em;
+  margin-top:0.2em;
+  margin-bottom:0.2em;
+}
+
+td {
+  padding-top:0.2em;
+  padding-bottom:0.2em;
+  padding-left:0.2em;
+  padding-right:0.2em;
+}
+
+tr {
+  padding-top:1px;
+  padding-bottom:1px;
+  margin-top:1px;
+  margin-bottom:1px;
+}
+
+h1 {
+  color:#2B2B95;
+  padding-bottom:0.5em;
+  margin-bottom:0px;
+}
+
+h3, h2 {
+  color:#2B2B95;
+}
+
+h3.error {
+  color:#ff0000;
+}
+
+img {
+  border:0px;
+}
+
+form {
+  padding:0px;
+  border:0px;
+  margin:0px;
+}
+
+a {
+  color:#2B2B95;
+}
+
+pre, code {
+  font-size:1.2em;
+  color:#111111;
+}
+
+/***************************
+Page Layout Container
+***************************/
+
+body {
+  border:0px;
+  padding:0px;
+  margin:0px;
+
+  background: #ffffff top repeat-x;
+  color:#000000;
+}     
+
+/* Workaround for IE, who can't use width on body */
+#all_container {
+  width:100%;
+}
+
+
+/***************************
+Fonts
+***************************/
+.dia {
+  font-size:lager;
+}
+
+.categories {
+  border: 1px solid grey;
+  padding: 10px;
+  width: 300px;
+  background-color:white;
+}
+
+body, th, td, p, div, li, a {
+  font-family: Verdana,Arial,Helvetica,sans-serif;
+  font-size:small;
+}
+
+h1 {
+  font-size:1.4em;
+  font-weight:bold;
+}
+
+h2 {
+  font-size:1.25em;
+  font-weight:bold;
+}
+
+h3 {
+  font-size:1.1em;
+  font-weight:bold;
+}
+
+
+/***************************
+Mainframe without Submenu
+***************************/
+
+#page_fullframe {
+  border-top:1px solid #3A3AC9;
+}
+
+#fullframe_title {
+  border-top:1px solid #2B2B95;
+  padding-top:20px;
+  padding-left:60px;
+  padding-right:60px;
+  background-color:#E6E6FB;
+}
+
+#fullframe_content {
+  padding-top:30px;
+  padding-bottom:50px;
+  padding-left:50px;
+  padding-right:50px;
+  background-color:#FAFAFE;
+}
+
+
+/***************************
+IE HACK:
+***************************/
+
+* html table {
+  width:0%;
+}
+* html table.select_table {
+  width:0%;
+}
+* html table.wizard {
+  width:0%;
+}
+* html table.selection_head {
+  width:0%;
+}
+* html table.stdout {
+  width:0%;
+}
+
+* html body {
+  font-size:xx-small;
+}
+* html th {
+  font-size:xx-small;
+}
+* html td {
+  font-size:xx-small;
+}
+* html p {
+  font-size:xx-small;
+}
+* html div {
+  font-size:xx-small;
+}
+* html li {
+  font-size:xx-small;
+}
+* html a {
+  font-size:xx-small;
+}
+
+* html #content_main {
+  width:100%;
+}
+
+* html ul.menu_sb {
+  padding-left: 0.7em;
+  margin-left: 0.7em;
+}
+
+/***************************
+IE HACK END
+***************************/
+
+
