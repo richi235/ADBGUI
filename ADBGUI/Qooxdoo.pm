@@ -834,7 +834,7 @@ sub onClientData {
          }
       }
       $self->onGetLines({
-         "q" => $options->{heap}->{connection}->{q},
+         "q" => $options->{heap}->{connection}->{"q"},
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -849,7 +849,7 @@ sub onClientData {
       });
    } elsif(($options->{job} eq "saveedit") ||
            ($options->{job} eq "newedit"))  {
-      $self->onSaveEditEntry({
+      my $params = {
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -858,8 +858,10 @@ sub onClientData {
          oid => $options->{oid},
          curSession => $options->{curSession},
          "q" => $options->{heap}->{connection}->{"q"},
-         job => $options->{job}
-      });
+         job => $options->{job},
+      };
+      $params->{columns} = $self->parseFormularData($params);
+      $self->onSaveEditEntry($params);
    } elsif($options->{job} eq "htmlpreview") {
       $self->onHTMLPreview({
          table => $options->{table},
@@ -910,6 +912,33 @@ sub onClientData {
    } else {
       $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("unknown command: ".$options->{job}));
    }
+}
+sub parseFormularData {
+   my $self = shift;
+   my $options = shift;
+   my $q = shift;
+   my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
+   my $columns = {};
+   #if ($options->{"q"}->param("ignoreEmptyValues")) {
+      foreach my $column (hashKeysRightOrder($curtabledef->{columns})) {
+         #next if $curtabledef->{columns}->{$column}->{hidden};
+         $columns->{$options->{table}.$TSEP.$column} = htmlUnEscape(CGI::unescape($options->{"q"}->param($column)))
+            if (defined($options->{"q"}->param($column)) || ($column eq $UNIQIDCOLUMNNAME));
+         delete $columns->{$options->{table}.$TSEP.$column}
+            if (($columns->{$options->{table}.$TSEP.$column} eq "") && $curtabledef->{columns}->{$column}->{hidden});
+      }
+   #} else {
+   #   foreach my $column (grep { (exists($curtabledef->{columns}->{$_}) &&
+   #                              defined($curtabledef->{columns}->{$_}) &&
+   #                               exists($curtabledef->{columns}->{$_}->{type}) &&
+   #                              defined($curtabledef->{columns}->{$_}->{type}) &&
+   #                                      $curtabledef->{columns}->{$_}->{type} &&
+   #                                     ($curtabledef->{columns}->{$_}->{type} ne "htmltext") &&
+   #                                     ($curtabledef->{columns}->{$_}->{type} ne "longtext")) } hashKeysRightOrder($curtabledef->{columns})) {
+   #      $columns->{$options->{table}.$TSEP.$column} = htmlUnEscape(CGI::unescape($options->{"q"}->param($column)));
+   #   }
+   #}
+   return $columns;
 }
 
 sub onTreeChange {
@@ -1177,7 +1206,7 @@ sub onGetLines {
    my $options = shift;
    my $moreparams = shift;
    unless ((!$moreparams) && $options->{q} && $options->{curSession} && $options->{table} && ($options->{start} =~ /^\d+$/) && ($options->{end} =~ /^\d+$/) && ($options->{end} >= $options->{start})) {
-      Log("onGetLines: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}." q=".$options->{q}.": !", $ERROR);
+      Log("onGetLines: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}." q=".$options->{"q"}.": !", $ERROR);
       return undef;
    }
    #my $suffix = "show";
@@ -1185,13 +1214,14 @@ sub onGetLines {
    $options->{sortby} ||= '';
    #$oid = $options->{table}."_".$suffix."_data";
    my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
-   my $columns = [grep { $_ ne $UNIQIDCOLUMNNAME } grep { my $status = $self->{gui}->getViewStatus({
-      %$options,
-      column => $_,
-      table => $options->{table},
-      targetself => $options->{curSession},
-      action => $LISTACTION,
-   }); ($status ne "hidden") #&& ($status ne "writeonly")
+   my $columns = [grep { $_ ne $UNIQIDCOLUMNNAME } grep {
+      my $status = $self->{gui}->getViewStatus({
+         %$options,
+         column => $_,
+         table => $options->{table},
+         targetself => $options->{curSession},
+         action => $LISTACTION,
+      }); ($status ne "hidden") #&& ($status ne "writeonly")
    } grep {
       $self->{dbm}->isMarked($options->{onlyWithMark}, $curtabledef->{columns}->{$_}->{marks})
    } hashKeysRightOrder($curtabledef->{columns})];
@@ -1691,34 +1721,13 @@ sub onSaveEditEntry {
       Log("onSaveEditEntry: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
       return undef;
    }
-   my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
-   my $columns = {};
-   #if ($options->{"q"}->param("ignoreEmptyValues")) {
-      foreach my $column (hashKeysRightOrder($curtabledef->{columns})) {
-         #next if $curtabledef->{columns}->{$column}->{hidden};
-         $columns->{$options->{table}.$TSEP.$column} = htmlUnEscape(CGI::unescape($options->{"q"}->param($column)))
-            if (defined($options->{"q"}->param($column)) || ($column eq $UNIQIDCOLUMNNAME));
-         delete $columns->{$options->{table}.$TSEP.$column}
-            if (($columns->{$options->{table}.$TSEP.$column} eq "") && $curtabledef->{columns}->{$column}->{hidden});
-      }
-   #} else {
-   #   foreach my $column (grep { (exists($curtabledef->{columns}->{$_}) &&
-   #                              defined($curtabledef->{columns}->{$_}) &&
-   #                               exists($curtabledef->{columns}->{$_}->{type}) &&
-   #                              defined($curtabledef->{columns}->{$_}->{type}) &&
-   #                                      $curtabledef->{columns}->{$_}->{type} &&
-   #                                     ($curtabledef->{columns}->{$_}->{type} ne "htmltext") &&
-   #                                     ($curtabledef->{columns}->{$_}->{type} ne "longtext")) } hashKeysRightOrder($curtabledef->{columns})) {
-   #      $columns->{$options->{table}.$TSEP.$column} = htmlUnEscape(CGI::unescape($options->{"q"}->param($column)));
-   #   }
-   #}
    my $ret = undef;
    my $id = $options->{"q"}->param($UNIQIDCOLUMNNAME);
    if (defined($ret = $self->{dbm}->NewUpdateData({
       %$options,
       cmd => ($id ? "UPDATE" : "NEW"),
       nodeleted => 1,
-      columns => $columns,
+      columns => $options->{columns},
       uniqid => scalar($id) || '',
    }))) {
       # TODO:FIXME:XXX: Das sollte an alle anderen user auch gehen, die auf der tabelle sind!
@@ -1737,7 +1746,7 @@ sub onSaveEditEntry {
                id => $ret,
             });
          }
-         $self->afterNewUpdate($options, $columns, $ret);
+         $self->afterNewUpdate($options, $options->{columns}, $ret);
       } elsif($ret) {
          $poe_kernel->yield(sendToQX => "unlock ".CGI::escape($options->{"q"}->param("oid")));
          $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." ".($ret ? ((length($ret)+15) * 7) : 400)." 100 ".CGI::escape($ret));
@@ -2269,6 +2278,45 @@ sub addFilterTables {
    }
 }
 
+sub getDefaults {
+   my $self = shift;
+   my $params = shift;
+   my $options = $params->{options};
+   my $mydefaults = $options->{defaults} || {};
+   foreach my $column (@{$params->{columns}}) {
+      $mydefaults->{$options->{table}.$TSEP.$column} = $options->{q}->param($options->{table}.$TSEP.$column)
+         if (exists($options->{q}) &&
+            defined($options->{q}) &&
+                    $options->{q} &&
+                    $options->{q}->param($options->{table}.$TSEP.$column));
+      $mydefaults->{$options->{table}.$TSEP.$column} ||= $params->{ret}->[0]->[0]->{$options->{table}.$TSEP.$column}
+         if (defined($params->{ret}->[0]->[0]->{$options->{table}.$TSEP.$column}) && ($options->{id}));
+      if ((!defined($mydefaults->{$options->{table}.$TSEP.$column})) ||
+                  (($params->{curtabledef}->{columns}->{$column}->{defaultoverwritesnull}) &&
+                    # TODO:XXX:FIXME: Hier sollte die Überprüfung auf undef im Datentypenliegen, und nicht manuell selbst gemacht werden
+                   (!$mydefaults->{$options->{table}.$TSEP.$column}) || 
+                   (($params->{curtabledef}->{columns}->{$column}->{type} eq "date" ||
+                    ($params->{curtabledef}->{columns}->{$column}->{type} eq "datetime")) &&
+                    ($mydefaults->{$options->{table}.$TSEP.$column} eq "0000-00-00 00:00:00")))) {
+         if (ref($params->{curtabledef}->{columns}->{$column}->{default}) eq "CODE") {
+            $mydefaults->{$options->{table}.$TSEP.$column} = $params->{curtabledef}->{columns}->{$column}->{default}($params->{ret}->[0]->[0], $options->{curSession});
+            Log('YOU HAVE TO USE "code" AND NOT "default" for code execution!', $ERROR);
+         } elsif ((!exists($params->{curtabledef}->{columns}->{$column}->{default}) ||
+                  !defined($params->{curtabledef}->{columns}->{$column}->{default}) || 
+                          ($params->{curtabledef}->{columns}->{$column}->{default} eq '')) &&
+             (ref($params->{curtabledef}->{columns}->{$column}->{defaultfunc}) eq "CODE")) {
+            $mydefaults->{$options->{table}.$TSEP.$column} = $params->{curtabledef}->{columns}->{$column}->{defaultfunc}($options->{targetself}, $params->{ret}->[0]->[0]);
+         } else {
+            $mydefaults->{$options->{table}.$TSEP.$column} = $params->{curtabledef}->{columns}->{$column}->{default};
+         }
+      }
+      $mydefaults->{$options->{table}.$TSEP.$column} ||= '';
+      $mydefaults->{$options->{table}.$TSEP.$column} =~ s/([:\s])0(\d)/$1$2/g
+         if ($params->{curtabledef}->{columns}->{$column}->{type} eq "datetime");
+   }
+   return $mydefaults;
+}
+
 sub onNewEditEntry {
    my $self = shift;
    my $options = shift;
@@ -2298,7 +2346,7 @@ sub onNewEditEntry {
       }
    # TODO:FIXME:XXX: Typ "virtual" hier rausfiltern oder als readonly schicken?
       hashKeysRightOrder($curtabledef->{columns})];
-   my $ret = undef;
+   my $ret = [];
    if ($options->{id}) {
       my $db = $self->{dbm}->getDBBackend($options->{table});
       unless (defined($ret = $db->getDataSet({
@@ -2327,40 +2375,13 @@ sub onNewEditEntry {
       # TODO:FIXME:XXX: Modal sollte konfigurierbar sein!
       #$poe_kernel->yield(sendToQX => "modal ".$window." 1");
    }
-   # TODO:FIXME:XXX: Nur destroyen wenns bisher schon existiert hat! Oder vieleicht einfach dann updaten?
    my $links = {};
-   my $mydefaults = $options->{defaults} || {};
-   foreach my $column (@$columns) {
-      $mydefaults->{$options->{table}.$TSEP.$column} = $options->{q}->param($options->{table}.$TSEP.$column)
-         if (exists($options->{q}) &&
-            defined($options->{q}) &&
-                    $options->{q} &&
-                    $options->{q}->param($options->{table}.$TSEP.$column));
-      $mydefaults->{$options->{table}.$TSEP.$column} ||= $ret->[0]->[0]->{$options->{table}.$TSEP.$column}
-         if (defined($ret->[0]->[0]->{$options->{table}.$TSEP.$column}) && ($options->{id}));
-      if ((!defined($mydefaults->{$options->{table}.$TSEP.$column})) ||
-                  (($curtabledef->{columns}->{$column}->{defaultoverwritesnull}) &&
-                    # TODO:XXX:FIXME: Hier sollte die Überprüfung auf undef im Datentypenliegen, und nicht manuell selbst gemacht werden
-                   (!$mydefaults->{$options->{table}.$TSEP.$column}) || 
-                   (($curtabledef->{columns}->{$column}->{type} eq "date" ||
-                    ($curtabledef->{columns}->{$column}->{type} eq "datetime")) &&
-                    ($mydefaults->{$options->{table}.$TSEP.$column} eq "0000-00-00 00:00:00")))) {
-         if (ref($curtabledef->{columns}->{$column}->{default}) eq "CODE") {
-            $mydefaults->{$options->{table}.$TSEP.$column} = $curtabledef->{columns}->{$column}->{default}($ret->[0]->[0], $options->{curSession});
-            Log('YOU HAVE TO USE "code" AND NOT "default" for code execution!', $ERROR);
-         } elsif ((!exists($curtabledef->{columns}->{$column}->{default}) ||
-                  !defined($curtabledef->{columns}->{$column}->{default}) || 
-                          ($curtabledef->{columns}->{$column}->{default} eq '')) &&
-             (ref($curtabledef->{columns}->{$column}->{defaultfunc}) eq "CODE")) {
-            $mydefaults->{$options->{table}.$TSEP.$column} = $curtabledef->{columns}->{$column}->{defaultfunc}($options->{targetself}, $ret->[0]->[0]);
-         } else {
-            $mydefaults->{$options->{table}.$TSEP.$column} = $curtabledef->{columns}->{$column}->{default};
-         }
-      }
-      $mydefaults->{$options->{table}.$TSEP.$column} ||= '';
-      $mydefaults->{$options->{table}.$TSEP.$column} =~ s/([:\s])0(\d)/$1$2/g
-         if ($curtabledef->{columns}->{$column}->{type} eq "datetime");
-   }
+   my $mydefaults = $self->getDefaults({
+      options => $options,
+      curtabledef => $curtabledef,
+      columns => $columns,
+      ret => $ret,
+   });
    # TODO:XXX:FIXME: overridecolumns sollte wieder raus... Das sollte im Falle von context (Zeiterfassung) ueber getURL oder so gehen! Muss also ins Qooxdoo (js) rein.
    my $overridecolumns = [];
    if ($options->{override}) {
@@ -2493,7 +2514,7 @@ sub doSpecialColumns {
    my $options = shift;
    my $moreparams = shift;
    unless ((!$moreparams) && $options->{table} && $options->{defaults} && $options->{window} && $options->{curSession}) {
-      Log("doSpecialColumns: Missing parameters: table:".$options->{table}.": !", $ERROR);
+      Log("doSpecialColumns: Missing parameters: table:".$options->{table}.":window=".$options->{window}.":defaults=".$options->{defaults}.":session=".$options->{curSession}.": !", $ERROR);
       return undef;
    }
    return unless $options->{id};
