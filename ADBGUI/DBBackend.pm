@@ -1259,8 +1259,9 @@ sub getSQLStringForTable {
       s/\_$/ DESC/; $_
    } grep {
       my $curorderby = $_;
-      grep { ($curorderby eq $_) ||
-             ($curorderby eq $_."_") } @alltables
+      (grep { ($curorderby eq $_) ||
+              ($curorderby eq $_."_") } @alltables) ? 1 :
+         (Log("DBBackend: getSQLStringTable: ".$param->{table}.": Removing not available sortby :".$_.":", $INFO) & 0)
    } (@orderby);
 
    #my $usedtables = {};
