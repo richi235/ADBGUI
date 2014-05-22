@@ -69,13 +69,17 @@ sub writeMySQLScript {
 
 my $params = [@ARGV];
 
-my $filename = shift(@$params) || '';
+my $filename = undef;
 my $dbstate = 0;
-if (($filename =~ m/createdb/) ||
-    ($filename =~ m/dropdb/) ||
-    ($filename =~ m/empty/)) {
-   $dbstate = $filename;
-   $filename = shift(@$params);
+while (my $curparam = shift(@$params)) {
+   if (($curparam =~ m/createdb/) ||
+       ($curparam =~ m/dropdb/) ||
+       ($curparam =~ m/empty/)) {
+       $dbstate .= " " if $dbstate;
+       $dbstate .= $curparam;
+   } else {
+       $filename = $curparam;   
+   }
 }
 
 Log('$DB->{type} = "'.$DB->{type}.'"; Are you sure this is right?!', $WARNING) unless ($DB->{type} =~ /mysql/i);

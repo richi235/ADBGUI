@@ -5,7 +5,7 @@ cd ..
 echo WARNING: You are deleting and reinitialising all your database content if you enter your db password now!!!
 
 # MySQL
-perl ADBGUI/createMysql.pl dropdb|mysql -p
+perl ADBGUI/createMysql.pl dropdb $1|mysql -p
 
 # Bilder aller Projekte joinen
 rm -R bilder 2>/dev/null
