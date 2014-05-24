@@ -1190,8 +1190,11 @@ sub handleCrossLink {
    my $tablebackrefs = 0;
    if ($options->{crosslink}) {
       if ($options->{crossid} && $options->{crosstable}) {
+         # TODO:XXX:FIXME: Hier wird derzeit nur ein Link verarbeitet, wenn mehrere von der gleichen Tabelle auf eine Tabelle zeigen werden diese nicht aktiv oder doppelt.
+         my $linktabledef = $self->{dbm}->getTableDefiniton($options->{table});
+         my $link = [grep { $linktabledef->{columns}->{$_}->{linkto} eq $options->{crosstable} } (keys %{$linktabledef->{columns}})];
          # TODO:XXX:FIXME: Die cross* auf Sonderzeichen ueberpruefen!!! SQL Injection!!!
-         push(@$where, "(".$options->{table}.$TSEP.$options->{crosstable}."_".$self->{dbm}->getIdColumnName($options->{crosstable})."=".$options->{crossid}.")");
+         push(@$where, "(".$options->{table}.$TSEP.(scalar(@$link) ? $link->[0] : $options->{crosstable}."_".$self->{dbm}->getIdColumnName($options->{crosstable}))."=".$options->{crossid}.")");
       } else {
          $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("No crosslink id\n"));
          push(@$where, "(1 == 2)");
@@ -2549,9 +2552,9 @@ sub doSpecialColumns {
             delete $tables->{crosslinktablename}
                if defined($crosslinktablename);
          } else {
-            $self->{dbm}->getTableDefiniton($crosstable);
-            $crosslinktablename = exists($linktabledef->{columns}->{$options->{table}."_".$self->{dbm}->getIdColumnName($options->{table})}) &&
-                                 defined($linktabledef->{columns}->{$options->{table}."_".$self->{dbm}->getIdColumnName($options->{table})}) ? $crosstable : undef;
+            $crosslinktablename = ((grep { $linktabledef->{columns}->{$_}->{linkto} eq $options->{table} } (keys %{$linktabledef->{columns}})) ||
+                                   (exists($linktabledef->{columns}->{$options->{table}."_".$self->{dbm}->getIdColumnName($options->{table})}) &&
+                                   defined($linktabledef->{columns}->{$options->{table}."_".$self->{dbm}->getIdColumnName($options->{table})}))) ? $crosstable : undef;
             # TODO:FIXME:XXX: Das zeigt Tabellen an, die per 1:n auf mich zeigen koennen. Das ist derzeit unschoen,
             #                 da man in diesem Fall die Eintraege an sich sieht und diese aendert/loescht und nicht
             #                 die Verknuepfung. Das sollte man ueberarbeiten und dann ggf. hier wieder einschalten.
