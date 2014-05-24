@@ -1,11 +1,13 @@
 use DBI;
 use ADBGUI::DBDesign;
 use ADBGUI::Tools qw(mergeColumnInfos);
+use ADBGUI::BasicVariables;
 
 use strict;
 use warnings;
 
 my $tables = {};
+my $tablesvals = {};
 
 my $dbdesign = ADBGUI::DBDesign->new();
 
@@ -26,18 +28,34 @@ $sth->execute;
 
 while (my $c = $sth->fetchrow_hashref) {
    my $table = $c->{"Tables_in_".$DSTDB->{name}};
-   #print $table."\n";
+   print STDERR $table."\n";
    my $sth2 = $db->prepare("show columns from ".$table);
    $sth2->execute;
    while (my $t = $sth2->fetchrow_hashref) {
-      my $type = getMachingType($DB, $t->{Type});
+      my $type = '"'.getMachingType($DB, $t->{Type}).'"';
+      if (($t->{Extra} =~ m,auto_increment,)) { # && ($type eq "number")) {
+         if ($tablesvals->{$table}->{idcolumnname}) {
+            print STDERR "WARNING: Table ".$table.": Ignoring second autoincrement candidate '".$t->{Field}."'. The column '".$tablesvals->{$table}->{idcolumnname}."' has already been selected.\n";
+         } else {
+            $type = '$UNIQIDCOLUMNNAME';
+            $tablesvals->{$table}->{idcolumnname} = $t->{Field};
+         }
+      }
       $tables->{$table}->{$t->{Field}} = {
          type => $type,
          name => $t->{Field},
          null => $t->{Null} ? 1 : 0,
          default => $t->{Default} || "",
       };
-      #print "  ".join(",", map { $_."=".($t->{$_}||"UNDEF") } keys %$t)."\n";
+      #print STDERR "  ".join(",", map { $_."=".($t->{$_}||"UNDEF") } keys %$t)."\n";
+   }
+   #$tablesvals->{$table}->{rights} = '$RIGHTS';
+   #$tablesvals->{$table}->{dbuser} = '$DBUSER';
+   if (                    $tablesvals->{$table}->{idcolumnname} &&
+       $tables->{$table}->{$tablesvals->{$table}->{idcolumnname}}) {
+      $tablesvals->{$table}->{idcolumnname} = '"'.$tablesvals->{$table}->{idcolumnname}.'"';
+   } else {
+      print STDERR "WARNING: Table ".$table." has no idcolumn!\n"
    }
    $sth2->finish;
 }
@@ -92,14 +110,18 @@ sub getMachingType {
 
 sub printSperateResult {
    foreach my $table (keys %$tables) {
-      foreach my $column (keys %{$tables->{$table}}) {
+      foreach my $column (sort { ($tables->{$table}->{$b}->{type} eq '$UNIQIDCOLUMNNAME') <=>
+                                 ($tables->{$table}->{$a}->{type} eq '$UNIQIDCOLUMNNAME') } keys %{$tables->{$table}}) {
          my $curdef = $tables->{$table}->{$column};
-         #print '   $DB->{tables}->{"'.$table.'"} = {'."\n";
-         #print '      rights => $RIGHTS,'."\n";
-         #print '      dbuser => $DBUSER,'."\n";
-         #print '   };'."\n";
+         if ($tablesvals->{$table}) {
+            print '   $DB->{tables}->{"'.$table.'"} = {'."\n";
+            foreach my $curkey (keys %{$tablesvals->{$table}}) {
+               print '      '.$curkey.' => '.$tablesvals->{$table}->{$curkey}.','."\n";
+            }
+            print '   };'."\n";
+         }
          print '   $DB->{tables}->{"'.$table.'"}->{columns}->{"'.$column.'"} = {'."\n";
-         print '      type => "'.$curdef->{type}.'",'."\n";
+         print '      type => '.$curdef->{type}.','."\n";
          print '   };'."\n";
       }
    }
@@ -108,13 +130,19 @@ sub printSperateResult {
 sub printHumanResult {
    foreach my $table (keys %$tables) {
       print '   $DB->{tables}->{"'.$table.'"} = {'."\n";
+      if ($tablesvals->{$table}) {
+         foreach my $curkey (keys %{$tablesvals->{$table}}) {
+            print '      '.$curkey.' => '.$tablesvals->{$table}->{$curkey}.','."\n";
+         }
+      }
       #print '      rights => $RIGHTS,'."\n";
       #print '      dbuser => $DBUSER,'."\n";
       print '      columns => {'."\n";
-      foreach my $column (keys %{$tables->{$table}}) {
+      foreach my $column (sort { ($tables->{$table}->{$b}->{type} eq '$UNIQIDCOLUMNNAME') <=>
+                                 ($tables->{$table}->{$a}->{type} eq '$UNIQIDCOLUMNNAME') } keys %{$tables->{$table}}) {
          my $curdef = $tables->{$table}->{$column};
          print '         "'.$column.'" => {'."\n";
-         print '            type => "'.$curdef->{type}.'",'."\n";
+         print '            type => '.$curdef->{type}.','."\n";
          print '         },'."\n";
       }
       print '      }'."\n";

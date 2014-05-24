@@ -67,11 +67,18 @@ sub new {
    return $self;
 }
 
+sub getIdColumnName {
+   my $self = shift;
+   my $table = shift;
+   my $db = $self->getDBBackend($table);
+   return $db->getIdColumnName($table);
+}
+
 sub contextAllowed {
    my $self = shift;
    my $contextid = shift;
    my $options = shift;
-   return undef if ($contextid eq $options->{curSession}->{$USERSTABLENAME.$TSEP.$UNIQIDCOLUMNNAME});
+   return undef if ($contextid eq $options->{curSession}->{$USERSTABLENAME.$TSEP.$self->getIdColumnName($USERSTABLENAME)});
    return undef if (exists($options->{curSession}->{context}->{cache}->{$contextid}) && !($options->{mustRevalidate}));
    my $err = $self->checkRights($options->{curSession}, $ADMIN);
    return (defined($err) ? $err->[0] : undef);
@@ -656,7 +663,7 @@ sub NewUpdateData {
    } elsif ($options->{cmd} eq "UPDATE") {
       $ret = $db->updateDataSet({
          table => $options->{table},
-         id => $options->{uniqid},
+         $UNIQIDCOLUMNNAME => $options->{uniqid},
          nodeleted => $options->{nodeleted},
          searchdef => $self->getFilter({ curSession => $options->{curSession}, table => $options->{table} }),
          columns => $options->{columns},
@@ -770,7 +777,7 @@ sub LineHandler {
          my $db = $self->getDBBackend($table);
          unless (defined($ret = $db->getDataSet({
             table => $table,
-            id => $uniqid,
+            $UNIQIDCOLUMNNAME => $uniqid,
             skip => $from,
             rows => $linecount,
             searchdef => $searchdef,
@@ -877,13 +884,13 @@ sub LineHandler {
             }
          }
          my $ok = undef;
-         $connection->{columns}->{$table.$TSEP.$UNIQIDCOLUMNNAME} = $uniqid;
+         $connection->{columns}->{$table.$TSEP.$self->getIdColumnName($table)} = $uniqid;
          if (defined(my $err = $self->BeforeNewUpdate($table, $cmd, $connection->{columns}, $curSession))) {
             return $client->send($cmd." ".$table." FAILED ".$err."\n");
          }
          my $params = {
             table => $table,
-            id => $uniqid,
+            $UNIQIDCOLUMNNAME => $uniqid,
             session => $curSession
          };         if (uc($cmd) eq "UNDEL") {
             $ok = $db->undeleteDataSet($params);
@@ -909,7 +916,7 @@ sub LineHandler {
             return $client->send("PASSWD".($username ? " ".$username : "")." FAILED Empty password!\n");
          }
          my $db = $self->getDBBackend($USERSTABLENAME);
-         my $userid = $curSession->{$USERSTABLENAME.$TSEP.$UNIQIDCOLUMNNAME};
+         my $userid = $curSession->{$USERSTABLENAME.$TSEP.$self->getIdColumnName($USERSTABLENAME)};
          my $ret = undef;
          if ($username) {
             $userid = undef;
@@ -923,7 +930,7 @@ sub LineHandler {
                return $client->send("PASSWD".($username ? " ".$username : "")." FAILED Internal error.\n")
             }
             if (scalar(@{$ret->[0]}) == 1) {
-               $userid = $ret->[0]->[0]->{$USERSTABLENAME.$TSEP.$UNIQIDCOLUMNNAME};
+               $userid = $ret->[0]->[0]->{$USERSTABLENAME.$TSEP.$self->getIdColumnName($USERSTABLENAME)};
             } else { 
                Log("DBManager: onNewLineServer: PASSWD: More than one user for username ".$username, $ERROR);
                return $client->send("PASSWD".($username ? " ".$username : "")." FAILED Internal error.\n");
@@ -936,7 +943,7 @@ sub LineHandler {
          my $curcolumn = mergeColumnInfos($db->{config}->{DB}, $db->{config}->{DB}->{tables}->{$USERSTABLENAME}->{columns}->{$PASSWORDCOLUMNNAME});
          $ret = $db->updateDataSet({
             table   => $USERSTABLENAME,
-            id      => $userid,
+            $UNIQIDCOLUMNNAME      => $userid,
             session => {},
             columns => { $USERSTABLENAME.$TSEP.$PASSWORDCOLUMNNAME => ($curcolumn->{secret} ? md5pw($password) : $password) },
             user    => $curSession->{$USERSTABLENAME.$TSEP.$USERNAMECOLUMNNAME},
@@ -1162,7 +1169,6 @@ sub LineHandler {
             })));
          }
       } elsif ((($connection->{state} == $self->{NEW_DATA}) || ($connection->{state} == $self->{NEW_DATA_LOG})) && (/^(\S+):\s(.*)$/)) {
-         #return if lc($1) eq $UNIQIDCOLUMNNAME;
          if ($self->{config}->{changelog} && ($connection->{state} == $self->{NEW_DATA_LOG})) {
             unless (syswrite($self->{config}->{changelog}, localtime(time)." ".
                $curSession->{$USERSTABLENAME.$TSEP.$USERNAMECOLUMNNAME}." ".$_."\n")) {
@@ -1240,7 +1246,7 @@ sub checkRights {
       unless ($session) {
          return ["No active session, please first login!", $WARNING];
       }
-      unless ($session->{$USERSTABLENAME.$TSEP.$UNIQIDCOLUMNNAME}) {
+      unless ($session->{$USERSTABLENAME.$TSEP.$self->getIdColumnName($USERSTABLENAME)}) {
          return ["No UserID in current session! CAPITAL ERROR!", $ERROR];
       }
    }

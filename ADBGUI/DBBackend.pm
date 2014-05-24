@@ -38,6 +38,12 @@ sub checkPid {
    }
 }
 
+sub getIdColumnName {
+   my $self = shift;
+   my $table = shift;
+   return $self->{config}->{DB}->{tables}->{$table}->{idcolumnname} || $UNIQIDCOLUMNNAME;
+}
+
 sub getContext {
    my $self = shift;
    my $curSession = shift;
@@ -45,7 +51,7 @@ sub getContext {
    my $forceNew = shift || 0;
    my $contextID = $curSession->{context}->{$contextkey}->{id} || 0;
    if ($contextID) {
-      return $curSession if ($curSession->{$USERSTABLENAME.$TSEP.$UNIQIDCOLUMNNAME} && ($contextID eq $curSession->{$USERSTABLENAME.$TSEP.$UNIQIDCOLUMNNAME}));
+      return $curSession if ($curSession->{$USERSTABLENAME.$TSEP.$self->getIdColumnName($USERSTABLENAME)} && ($contextID eq $curSession->{$USERSTABLENAME.$TSEP.$self->getIdColumnName($USERSTABLENAME)}));
       return $curSession->{context}->{cache}->{$contextID}
          if (!$forceNew &&
              exists($curSession->{context}->{cache}->{$contextID}) &&
@@ -124,7 +130,7 @@ sub getUsersSessionData {
    if ($username) {
       $statement .= " WHERE (".$table.$TSEP.$USERNAMECOLUMNNAME." ".$conjunction." ".normaliseLine($username, 1).') ';
    } elsif ($userid) {
-      $statement .= " WHERE (".$table.$TSEP.$UNIQIDCOLUMNNAME." ".$conjunction." ".normaliseLine($userid, 1).') ';
+      $statement .= " WHERE (".$table.$TSEP.$self->getIdColumnName($table)." ".$conjunction." ".normaliseLine($userid, 1).') ';
    } else {
       Log("DBBackend: getUsersSessionData: PREPARE: No username and no id!", $INFO);
       return undef;
@@ -406,8 +412,8 @@ sub getDataSet {
    my $alllist = [];
    my $line = $sth->fetchrow_hashref;
    foreach my $ctable (keys %{$self->{config}->{DB}->{tables}}) {
-      next unless ($line && (ref($line) eq "HASH") && (exists($line->{$ctable.$TSEP.$UNIQIDCOLUMNNAME}) ||
-                                                   exists($line->{'"'.$ctable.$TSEP.$UNIQIDCOLUMNNAME.'"'})));
+      next unless ($line && (ref($line) eq "HASH") && (exists($line->{$ctable.$TSEP.$self->getIdColumnName($ctable)}) ||
+                                                   exists($line->{'"'.$ctable.$TSEP.$self->getIdColumnName($ctable).'"'})));
       my $tabledef = $self->{config}->{DB}->{tables}->{$ctable};
       foreach my $thecolumn (hashKeysRightOrder($tabledef->{columns}, "dborder")) {
          push(@$alllist, [$ctable, $tabledef, $thecolumn])
@@ -477,7 +483,7 @@ sub getTableInfo {
          next;
       }
       # ToDo: Bricht das Auskommentieren dieser Zeile etwas beim URLFilter?! Testen!
-      $curcolumn->{info} .= " max " if (($column eq $UNIQIDCOLUMNNAME) && (!(defined($curcolumn->{info}) && ($curcolumn->{info} =~ /max/i))));
+      $curcolumn->{info} .= " max " if (($column eq $self->getIdColumnName($table)) && (!(defined($curcolumn->{info}) && ($curcolumn->{info} =~ /max/i))));
       next unless $curcolumn->{info};
       foreach (split(/\s+/, $curcolumn->{info})) {
          my $func = '';
@@ -575,7 +581,7 @@ sub insertDataSet {
    $ret = undef;
    my $id = undef;
    my $retx = undef;
-   if (exists($self->{config}->{DB}->{tables}->{$params->{table}}->{columns}->{$UNIQIDCOLUMNNAME})) {
+   if (exists($self->{config}->{DB}->{tables}->{$params->{table}}->{columns}->{$self->getIdColumnName($params->{table})})) {
       unless (defined($ret = getTableInfo($self, $params->{table})) && (ref($ret) eq "ARRAY")) {
          Log("DBBackend: insertDataSet: GETTABLEINFO: SQL Query failed for table :".$params->{table}.":", $ERROR);
          die;
@@ -603,7 +609,7 @@ sub insertDataSet {
          return undef;
       }
    }
-   unless (logDBChange($self, $params->{user}, hashDiff($self->{config}->{DB}, {}, defined($retx) ? $retx->[0]->[0] : $params->{columns}, $params->{table}, 1), $params->{table}, "INSERT", $id)) {
+   unless (logDBChange($self, $params->{user}, $self->hashDiff($self->{config}->{DB}, {}, defined($retx) ? $retx->[0]->[0] : $params->{columns}, $params->{table}, 1), $params->{table}, "INSERT", $id)) {
       Log("DBBackend: insertDataSet: Unable to Log AFTER INSERT USER=".$params->{user}." TABLE=".$params->{table}, $ERROR);
    }
    return $id;
@@ -659,7 +665,7 @@ sub deleteDataSet {
       Log("DBBackend: deleteDataSet: Wanted one line, but got :".scalar(@{$retx->[0]}).":", $ERROR);
       return undef;
    }
-   return undef unless logDBChange($self, $params->{user}, hashDiff($self->{config}->{DB}, $retx->[0]->[0], {deleted => 1}, $params->{table}, 1), $params->{table}, $real?"REMOVE":"DELETE", $params->{id});
+   return undef unless logDBChange($self, $params->{user}, $self->hashDiff($self->{config}->{DB}, $retx->[0]->[0], {deleted => 1}, $params->{table}, 1), $params->{table}, $real?"REMOVE":"DELETE", $params->{id});
 
    my $statement = '';
    if ($real) {
@@ -668,10 +674,10 @@ sub deleteDataSet {
       $statement = "UPDATE ".$params->{table}." SET ".$DELETEDCOLUMNNAME." ".$conjunction." ".normaliseLine("1",1)." WHERE ";
    }
 
-   my $curcolumn = mergeColumnInfos($self->{config}->{DB}, $self->{config}->{DB}->{tables}->{$params->{table}}->{columns}->{$UNIQIDCOLUMNNAME});
+   my $curcolumn = mergeColumnInfos($self->{config}->{DB}, $self->{config}->{DB}->{tables}->{$params->{table}}->{columns}->{$self->getIdColumnName($params->{table})});
    $conjunction = $curcolumn->{"dbcompare"} || "=";
 
-   $statement .= $UNIQIDCOLUMNNAME." ".$conjunction." ".normaliseLine($params->{id},1).";";
+   $statement .= $self->getIdColumnName($params->{table})." ".$conjunction." ".normaliseLine($params->{id},1).";";
 
    Log( "DBBackend: deleteDataSet: PREPARE:".$statement.":", $DEBUG, );
    $self->checkPid();
@@ -730,20 +736,20 @@ sub undeleteDataSet {
       Log("DBBackend: undeleteDataSet: Wanted one line, but got :".scalar(@{$retx->[0]}).":", $ERROR);
       return undef;
    }
-   return undef unless logDBChange($self, $params->{user}, hashDiff($self->{config}->{DB}, {
+   return undef unless logDBChange($self, $params->{user}, $self->hashDiff($self->{config}->{DB}, {
       $params->{table}.$TSEP.$DELETEDCOLUMNNAME => $retx->[0]->[0]->{$params->{table}.$TSEP.$DELETEDCOLUMNNAME},
-      $params->{table}.$TSEP.$UNIQIDCOLUMNNAME => $retx->[0]->[0]->{$params->{table}.$TSEP.$UNIQIDCOLUMNNAME}
+      $params->{table}.$TSEP.$self->getIdColumnName($params->{table}) => $retx->[0]->[0]->{$params->{table}.$TSEP.$self->getIdColumnName($params->{table})}
    }, {
       $params->{table}.$TSEP.$DELETEDCOLUMNNAME => 0,
-      $params->{table}.$TSEP.$UNIQIDCOLUMNNAME => $retx->[0]->[0]->{$params->{table}.$TSEP.$UNIQIDCOLUMNNAME}
+      $params->{table}.$TSEP.$self->getIdColumnName($params->{table}) => $retx->[0]->[0]->{$params->{table}.$TSEP.$self->getIdColumnName($params->{table})}
    }, $params->{table}, 1), $params->{table}, "UNDELETE", $params->{id});
 
    my $statement = "UPDATE ".$params->{table}." SET ".$DELETEDCOLUMNNAME." ".$conjunction." ".normaliseLine("0",1)." WHERE ";
 
-   $curcolumn = mergeColumnInfos($self->{config}->{DB}, $self->{config}->{DB}->{tables}->{$params->{table}}->{columns}->{$UNIQIDCOLUMNNAME});
+   $curcolumn = mergeColumnInfos($self->{config}->{DB}, $self->{config}->{DB}->{tables}->{$params->{table}}->{columns}->{$self->getIdColumnName($params->{table})});
    $conjunction = $curcolumn->{"dbcompare"} || "=";
 
-   $statement .= $UNIQIDCOLUMNNAME." ".$conjunction." ".normaliseLine($params->{id},1).";";
+   $statement .= $self->getIdColumnName($params->{table})." ".$conjunction." ".normaliseLine($params->{id},1).";";
 
    Log( "DBBackend: undeleteDataSet: PREPARE:".$statement.":", $DEBUG, );
    $self->checkPid();
@@ -808,7 +814,7 @@ sub updateDataSet {
    my $i = 0;
    $statement = "UPDATE ".$params->{table}." SET ";
    $statement .= join(", ", map { $_." = ?" } @{$ret->[0]});
-   $statement .= " WHERE ID=".normaliseLine($params->{id},1).";";
+   $statement .= " WHERE ".$self->getIdColumnName($params->{table})."=".normaliseLine($params->{id},1).";";
 
    Log( "DBBackend: updateDataSet: PREPARE:".$statement.":", $DEBUG);
    $self->checkPid();
@@ -841,7 +847,7 @@ sub updateDataSet {
          Log("DBBackend: updateDataSet: Wanted one line, but got :".scalar(@{$rety->[0]}).":", $ERROR);
          die;
       }
-      unless (logDBChange($self, $params->{user}, hashDiff($self->{config}->{DB}, $retx->[0]->[0], $rety->[0]->[0], $params->{table}, 1), $params->{table}, "UPDATE", $params->{id})) {
+      unless (logDBChange($self, $params->{user}, $self->hashDiff($self->{config}->{DB}, $retx->[0]->[0], $rety->[0]->[0], $params->{table}, 1), $params->{table}, "UPDATE", $params->{id})) {
          Log("DBBackend: updateDataSet: can't log change!", $ERROR);
          die;
       }
@@ -918,6 +924,7 @@ sub getBabelFor {
 }
 
 sub hashDiff {
+   my $self = shift;
    my $DB = shift;
    my $hash1 = shift;
    my $hash2 = shift;
@@ -928,6 +935,7 @@ sub hashDiff {
       my $tmp = $_;
       my $real = $_;
       $tmp =~ s/^(Y|X)_//;
+      # TODO:XXX:FIXME: $UNIQIDCOLUMNNAME ist hier ziemlich unsinning... Das ist alt und muss an neue Mechanismen angepasst werden.
       next if (($tmp =~ /^.*\_$UNIQIDCOLUMNNAME$/i) || ($tmp eq $DELETEDCOLUMNNAME));
       my $babel = getBabelFor($DB, $tmp, $table);
       if (!exists($hash2->{$real})) {
@@ -943,6 +951,7 @@ sub hashDiff {
       my $tmp = $_;
       my $real = $_;
       $tmp =~ s/^(Y|X)_//;
+      # TODO:XXX:FIXME: $UNIQIDCOLUMNNAME ist hier ziemlich unsinning... Das ist alt und muss an neue Mechanismen angepasst werden.
       next if (($tmp =~ /^(|.*\_)$UNIQIDCOLUMNNAME$/i) || ($tmp eq $DELETEDCOLUMNNAME));
       my $babel = getBabelFor($DB, $tmp, $table);
       unless (exists($hash1->{$real}) || ($hash2->{$real} eq '')) {
@@ -967,8 +976,8 @@ sub hashDiff {
                  } keys %$change) {
       $tmp .= $change->{$_};
    }
-   my $babel = getBabelFor($DB, $table.$TSEP.$UNIQIDCOLUMNNAME, $table);
-   $tmp .= $babel.": ".($hash1->{$table.$TSEP.$UNIQIDCOLUMNNAME} || $hash2->{$table.$TSEP.$UNIQIDCOLUMNNAME});
+   my $babel = getBabelFor($DB, $table.$TSEP.$self->getIdColumnName($table), $table);
+   $tmp .= $babel.": ".($hash1->{$table.$TSEP.$self->getIdColumnName($table)} || $hash2->{$table.$TSEP.$self->getIdColumnName($table)});
    return $tmp;
 }
 
@@ -983,7 +992,7 @@ sub wohinVerweistTabelle {
          push(@$tmp, [$curtable, $column])
             if (($self->{config}->{DB}->{tables}->{$table}->{columns}->{$column}->{linkto} &&
                 ($self->{config}->{DB}->{tables}->{$table}->{columns}->{$column}->{linkto} eq $curtable)) ||
-                ($self->{config}->{oldlinklogic} && ($column eq $curtable."_".$UNIQIDCOLUMNNAME)));
+                ($self->{config}->{oldlinklogic} && ($column eq $curtable."_".$self->getIdColumnName($curtable))));
       }
    }
    return $tmp;
@@ -999,7 +1008,7 @@ sub werVerweistAufTabelle {
          push(@$tmp, [$table, $column]) if
             (($self->{config}->{DB}->{tables}->{$table}->{columns}->{$column}->{linkto} &&
              ($self->{config}->{DB}->{tables}->{$table}->{columns}->{$column}->{linkto} eq $searchtable)) ||
-             ($self->{config}->{oldlinklogic} && ($column eq $searchtable."_".$UNIQIDCOLUMNNAME)));
+             ($self->{config}->{oldlinklogic} && ($column eq $searchtable."_".$self->getIdColumnName($searchtable))));
       };
    } 
    return $tmp;
@@ -1226,10 +1235,10 @@ sub getSQLStringForTable {
    # Nur bestimmte ID? -> Entsprechendes WHERE fabrizieren.
    my $tabledef = $self->{config}->{DB}->{tables}->{$param->{table}};
    @where = ("(".join(($param->{filter}->{orsearch} ? " OR ":" AND "), @where).")") if scalar(@where);
-   if ($param->{id} && $tabledef->{columns}->{$UNIQIDCOLUMNNAME}) {
-      my $curcolumn = mergeColumnInfos($self->{config}->{DB}, $tabledef->{columns}->{$UNIQIDCOLUMNNAME});
+   if ($param->{id} && $tabledef->{columns}->{$self->getIdColumnName($param->{table})}) {
+      my $curcolumn = mergeColumnInfos($self->{config}->{DB}, $tabledef->{columns}->{$self->getIdColumnName($param->{table})});
       my $conjunction = $curcolumn->{"dbcompare"} || "=";
-      push(@where, "(".$param->{table}.$TSEP.$UNIQIDCOLUMNNAME." ".$conjunction." '".$param->{id}."')");
+      push(@where, "(".$param->{table}.$TSEP.$self->getIdColumnName($param->{table})." ".$conjunction." '".$param->{id}."')");
    }
    # Wird deleted selbst gefiltert? -> Wenn nein, entsprechendes WHERE fabrizieren.
    if ((!$param->{nodeleted}) && $tabledef->{columns}->{$DELETEDCOLUMNNAME} &&
@@ -1248,7 +1257,7 @@ sub getSQLStringForTable {
          unless scalar(@groupByList = grep { ($param->{groupby} eq $_) } @alltables);
    }
 
-   push(@groupByList, $param->{table}.$TSEP.$UNIQIDCOLUMNNAME)
+   push(@groupByList, $param->{table}.$TSEP.$self->getIdColumnName($param->{table}))
       if ($param->{onlymax});
    
    # SORTBY
@@ -1273,7 +1282,7 @@ sub getSQLStringForTable {
       $self->getSelectColumnsForTable($param->{table}, $param->{all} || 0, 1),   
       # JOINS
       join(" LEFT JOIN ", ($param->{table}, (map {
-         my $a = ($_->{back} ? $_->{sourceas} || $_->{to} : $_->{as} || $_->{to}).$TSEP.$UNIQIDCOLUMNNAME;
+         my $a = ($_->{back} ? $_->{sourceas} || $_->{to} : $_->{as} || $_->{to}).$TSEP.$self->getIdColumnName($_->{to});
          my $b = ($_->{back} ? $_->{as} || $_->{from} : $_->{sourceas} || $_->{from}).$TSEP.($_->{column}||Log("No column in join!", $ERROR));
          ($_->{back} ? $_->{from} : $_->{to}).($_->{as} ? " AS ".$_->{as} : '')." ON ".$a."=".$b
       #} grep {
@@ -1333,7 +1342,7 @@ sub makeEvilColumnDataGood {
    }
 
    if ($allColumnsMustBeThere) {
-      @_ = grep { ((! exists($columns->{lc($_)})) && (!$self->{config}->{DB}->{tables}->{$table}->{columns}->{$_}->{secret})) && (!($_ eq $UNIQIDCOLUMNNAME))} keys(%{$self->{config}->{DB}->{tables}->{$table}->{columns}});
+      @_ = grep { ((! exists($columns->{lc($_)})) && (!$self->{config}->{DB}->{tables}->{$table}->{columns}->{$_}->{secret})) && (!($_ eq $self->getIdColumnName($table)))} keys(%{$self->{config}->{DB}->{tables}->{$table}->{columns}});
       if (@_) {
          Log("DBBackend: makeEvilColumnDataGood: There are missing ".scalar(@_)." required column(s): ".'"'.join(",", @_).'"', $ERROR);
          return undef;

@@ -309,7 +309,7 @@ sub new {
                crossid =>    $heap->{connection}->{"q"}->param("crossid") || '',
                crosstable => $heap->{connection}->{"q"}->param("crosstable") || '',
                table =>      $heap->{connection}->{"q"}->param("table") || '',
-               id =>         $heap->{connection}->{"q"}->param("id"   ) || '',
+               $UNIQIDCOLUMNNAME => $heap->{connection}->{"q"}->param($UNIQIDCOLUMNNAME) || '',
                ids => [split(";", $heap->{connection}->{"q"}->param("ids") || "")],
                oid =>        $heap->{connection}->{"q"}->param("oid"  ) || '',
                job =>        $heap->{connection}->{"q"}->param("job"  ) || '',
@@ -569,7 +569,7 @@ sub doContext {
    my $options = shift;
    my $return = $options->{curSession};
    my $db = $options->{db} || $self->{dbm}->getDBBackend($USERSTABLENAME);
-   if ($contextid && ($contextid ne $options->{curSession}->{$USERSTABLENAME.$TSEP.$UNIQIDCOLUMNNAME})) {
+   if ($contextid && ($contextid ne $options->{curSession}->{$USERSTABLENAME.$TSEP.$self->{dbm}->getIdColumnName($USERSTABLENAME)})) {
       my $err = $self->{dbm}->contextAllowed($contextid, $options);
       if (defined($err)) {
          #$poe_kernel->yield(sendToQX => "showmessage ".
@@ -624,7 +624,7 @@ sub onClientData {
          crosstable => $options->{crosstable},
          curSession => $options->{curSession},
          oid => $options->{oid},
-         id => $options->{id},
+         $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          table => $options->{table}
       });
    } elsif ($options->{job} eq "treechange") {
@@ -634,7 +634,7 @@ sub onClientData {
          crosstable => $options->{crosstable},
          curSession => $options->{curSession},
          oid => $options->{oid},
-         id => $options->{id},
+         $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          table => $options->{table},
          "q" => $options->{heap}->{connection}->{"q"},
       });
@@ -690,7 +690,7 @@ sub onClientData {
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
          table => $options->{table},
-         id => $options->{id},
+         $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          oid => $options->{oid},
          ids => $options->{ids},
          curSession => $options->{curSession},
@@ -740,12 +740,12 @@ sub onClientData {
       });
    } elsif($options->{job} eq "listcreateentry") {
       my $column = $options->{heap}->{connection}->{"q"}->param("column") || '';
-      my $id = $options->{heap}->{connection}->{"q"}->param("id") || undef;
+      my $id = $options->{heap}->{connection}->{"q"}->param($UNIQIDCOLUMNNAME) || undef;
       my $table = undef,
       my $basetabledef = $self->{dbm}->getTableDefiniton($options->{table});      
       if ($basetabledef->{columns}->{$column} && $basetabledef->{columns}->{$column}->{linkto}) {
          $table = $basetabledef->{columns}->{$column}->{linkto};
-      } elsif ($self->{dbm}->{config}->{oldlinklogic} && ($column =~ m,^(.+)_id$,)) {
+      } elsif ($self->{dbm}->{config}->{oldlinklogic} && ($column =~ m,^(.+)_$UNIQIDCOLUMNNAME$,)) {
          $table = $1;
       }
       if ($table) {
@@ -754,7 +754,7 @@ sub onClientData {
                table => $table,
                oid => $options->{oid},
                curSession => $options->{curSession},
-               id => $id,
+               $UNIQIDCOLUMNNAME => $id,
                # TODO:XXX:FIXME: Das wird ueber overridecolumns gemacht... Gute idee?
                override => {
                   AddAndSelectOID => $options->{heap}->{connection}->{"q"}->param("oid") || '',
@@ -779,7 +779,7 @@ sub onClientData {
          crosstable => $options->{crosstable},
          oid => $options->{oid},
          table => $options->{table},
-         id => $options->{id},
+         $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          curSession => $options->{curSession},
          "q" => $options->{heap}->{connection}->{"q"}
       });
@@ -790,7 +790,7 @@ sub onClientData {
          oid => $options->{oid},
          crosstable => $options->{crosstable},
          table => $options->{table},
-         id => $options->{id},
+         $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          curSession => $options->{curSession}
       });
    } elsif($options->{job} eq "updatelist") {
@@ -800,7 +800,7 @@ sub onClientData {
          crosstable => $options->{crosstable},
          table => $options->{table},
          oid => $options->{oid},
-         id => $options->{id},
+         $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          name => $options->{heap}->{connection}->{"q"}->param("oid") || undef,
          curSession => $options->{curSession}
       });
@@ -827,7 +827,7 @@ sub onClientData {
          foreach my $curcolumn (keys(%{$curtabledef->{columns}})) {
             if ($orderby eq $options->{table}.$TSEP.$curcolumn.$suffix) {
                if (($curtabledef->{columns}->{$curcolumn}->{type} eq "virtual") && !($curtabledef->{columns}->{$curcolumn}->{usevirtualoderby})) {
-                  $orderby = $options->{table}.$TSEP.$UNIQIDCOLUMNNAME.$suffix;
+                  $orderby = $options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table}).$suffix;
                }
                last;
             }
@@ -839,7 +839,7 @@ sub onClientData {
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
          table => $options->{table},
-         id => $options->{id},
+         $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          curSession => $options->{curSession},
          oid => $options->{oid},
          sortby => $orderby,
@@ -854,7 +854,7 @@ sub onClientData {
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
          table => $options->{table},
-         id => $options->{id},
+         $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME} || $options->{heap}->{connection}->{"q"}->param($self->{dbm}->getIdColumnName($options->{table})),
          oid => $options->{oid},
          curSession => $options->{curSession},
          "q" => $options->{heap}->{connection}->{"q"},
@@ -865,7 +865,7 @@ sub onClientData {
    } elsif($options->{job} eq "htmlpreview") {
       $self->onHTMLPreview({
          table => $options->{table},
-         id => $options->{id},
+         $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          oid => $options->{oid},
          curSession => $options->{curSession},
          value => $options->{heap}->{connection}->{"q"}->param("value") || "",
@@ -897,13 +897,13 @@ sub onClientData {
            ($self->{dbm}->{sessions}->{$a}->{lastSessionAccessTime} || 0))
          } keys %{$self->{dbm}->{sessions}}) {
          my $cursession = $self->{dbm}->{sessions}->{$session};
-         $value .= "<hr>" if ($last ne ($cursession->{$USERSTABLENAME.$TSEP.$UNIQIDCOLUMNNAME} || 0));
-         $value .= $session." (Username: ".($cursession->{$USERSTABLENAME.$TSEP."username"} || "-")." / ID:".($cursession->{$USERSTABLENAME.$TSEP.$UNIQIDCOLUMNNAME} || "-");
+         $value .= "<hr>" if ($last ne ($cursession->{$USERSTABLENAME.$TSEP.$self->{dbm}->getIdColumnName($USERSTABLENAME)} || 0));
+         $value .= $session." (Username: ".($cursession->{$USERSTABLENAME.$TSEP."username"} || "-")." / ID:".($cursession->{$USERSTABLENAME.$TSEP.$self->{dbm}->getIdColumnName($USERSTABLENAME)} || "-");
          $value .= " IP: ".($cursession->{ip} || "-").")";
          $value .= " Timeout: ".($cursession->{lastSessionAccessTime} ? (time()-$cursession->{lastSessionAccessTime}) : "-")." / QX: ".($cursession->{lastQXAccessTime} ? (time()-$cursession->{lastQXAccessTime}) : "-")." seconds ";
          $value .= " Size: ".length(freeze($cursession))." Bytes";
          $value .= "<br>\n";
-         $last = $cursession->{$USERSTABLENAME.$TSEP.$UNIQIDCOLUMNNAME} || 0;
+         $last = $cursession->{$USERSTABLENAME.$TSEP.$self->{dbm}->getIdColumnName($USERSTABLENAME)} || 0;
       }
       $value .= "<hr><input type=button onClick='window.location = ".'"'.$url.'"'."' value='Aktualisieren'>";
       $options->{response}->code(RC_OK);
@@ -923,7 +923,7 @@ sub parseFormularData {
       foreach my $column (hashKeysRightOrder($curtabledef->{columns})) {
          #next if $curtabledef->{columns}->{$column}->{hidden};
          $columns->{$options->{table}.$TSEP.$column} = htmlUnEscape(CGI::unescape($options->{"q"}->param($column)))
-            if (defined($options->{"q"}->param($column)) || ($column eq $UNIQIDCOLUMNNAME));
+            if (defined($options->{"q"}->param($column)) || ($column eq $self->{dbm}->getIdColumnName($options->{table})));
          delete $columns->{$options->{table}.$TSEP.$column}
             if (($columns->{$options->{table}.$TSEP.$column} eq "") && $curtabledef->{columns}->{$column}->{hidden});
       }
@@ -953,18 +953,18 @@ sub onTreeChange {
    if ($treeaction eq "filter") {
       if (my $popupid = $options->{q}->param("popupid")) {
          my $loid = $options->{q}->param("loid");
-         if ($options->{id}) {
+         if ($options->{$UNIQIDCOLUMNNAME}) {
             #if ($options->{q}->param("entry")) {
-               if ($self->addFilterEntry($options->{q}->param("entry"), $options->{curSession}, $options->{table}, $options->{id})) {
+               if ($self->addFilterEntry($options->{q}->param("entry"), $options->{curSession}, $options->{table}, $options->{$UNIQIDCOLUMNNAME})) {
                   $poe_kernel->yield(sendToQX => "destroy ".$popupid);
                   $poe_kernel->yield(sendToQX => "destroy ".CGI::escape($loid."_filter_iframe"));
                   $poe_kernel->yield(sendToQX => "createiframe ".CGI::escape($loid."_filter_iframe")." ".CGI::escape("/ajax?nocache=".rand(999999999999)."&job=filterhtml&table=".$options->{table}."&sessionid=".$options->{curSession}->{sessionid}."&oid=".$loid));
                   $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($loid."_filter")." ".CGI::escape($loid."_filter_iframe"));
                }
-            #} elsif(($options->{id} =~ m,^[^\.]+$,) && ($options->{id} ne "undefined")) {
-            #   $self->addFilterEntry($loid, $options->{oid}, $popupid, $options->{curSession}, $options->{table}, $options->{id}.$TSEP.$UNIQIDCOLUMNNAME);
+            #} elsif(($options->{$UNIQIDCOLUMNNAME} =~ m,^[^\.]+$,) && ($options->{$UNIQIDCOLUMNNAME} ne "undefined")) {
+            #   $self->addFilterEntry($loid, $options->{oid}, $popupid, $options->{curSession}, $options->{table}, $options->{$UNIQIDCOLUMNNAME}.$TSEP.$self->{dbm}->getIdColumnName($options->{$UNIQIDCOLUMNNAME}));
             #} else {
-            #   $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Info")." 400 200 ".CGI::escape("You selected ".$options->{id}." for table ".$options->{table}));
+            #   $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Info")." 400 200 ".CGI::escape("You selected ".$options->{$UNIQIDCOLUMNNAME}." for table ".$options->{table}));
             #}
          }
       }
@@ -991,13 +991,13 @@ sub addFilterEntry {
          $linktable = $basetabledef->{columns}->{$column}->{linkto};
       } elsif ($self->{dbm}->{config}->{oldlinklogic}) {
          my ($linktable) = (grep {
-            $column eq $table.$TSEP.$_."_".$UNIQIDCOLUMNNAME
+            $column eq $table.$TSEP.$_."_".$self->{dbm}->getIdColumnName($table)
          } keys %{$self->{dbm}->getDBBackend($table)->getTableList()});
       }   
       if ($linktable) {
          my $curtabledef = $self->{dbm}->getTableDefiniton($linktable);
          if ($curtabledef->{useAsFilterTable}) {
-            $filter->{$linktable.$TSEP.$UNIQIDCOLUMNNAME} ||= [];
+            $filter->{$linktable.$TSEP.$self->{dbm}->getIdColumnName($linktable)} ||= [];
             $accepted++;
          }
       } else {
@@ -1007,7 +1007,7 @@ sub addFilterEntry {
    } elsif(($column =~ m,^[^\.]+$,) && ($column ne "undefined")) {
       my $curtabledef = $self->{dbm}->getTableDefiniton($column);
       if ($curtabledef->{useAsFilterTable}) {
-         $filter->{$column.$TSEP.$UNIQIDCOLUMNNAME} ||= [];
+         $filter->{$column.$TSEP.$self->{dbm}->getIdColumnName($column)} ||= [];
          $accepted++;
       }
    }
@@ -1027,11 +1027,11 @@ sub onDelRow {
       Log("onDelRow: Missing parameters: connection:".$options->{table}.": !", $ERROR);
       return undef;
    }
-   if ($options->{id} =~ /^\d+$/) {
+   if ($options->{$UNIQIDCOLUMNNAME} =~ /^\d+$/) {
       if ($options->{oid}) {
          my $cmd = $options->{cmd} || "DEL";
          my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
-         if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $MODIFY, $options->{table}, $options->{id}))) {
+         if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $MODIFY, $options->{table}, $options->{$UNIQIDCOLUMNNAME}))) {
             $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 50 ".CGI::escape("Keine Berechtigung!"));
             return Log("DBManager: onNewLineServer: ".$cmd.": ACCESS DENIED: ".$err->[0], $err->[1]);
          }
@@ -1046,7 +1046,7 @@ sub onDelRow {
          #      die;
          #   }
          #}
-         if (defined(my $err = $self->{dbm}->BeforeNewUpdate($options->{table}, $cmd, { $options->{table}.$TSEP.$UNIQIDCOLUMNNAME => $options->{id} }, $options->{curSession}))) {
+         if (defined(my $err = $self->{dbm}->BeforeNewUpdate($options->{table}, $cmd, { $options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table}) => $options->{$UNIQIDCOLUMNNAME} }, $options->{curSession}))) {
             Log("ADBGUI::Qooxdoo::onDelRow: BeforeNewUpdate failed: ".$err, $INFO);
             $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("DELROW FAILED!"));
             return;
@@ -1054,7 +1054,7 @@ sub onDelRow {
          my $ret = $self->{dbm}->deleteUndeleteDataset({
             table => $options->{table},
             cmd => $cmd,
-            id => $options->{id},
+            $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
             session => $options->{curSession},
             wherePre => $self->{dbm}->Where_Pre($options)
          });
@@ -1063,14 +1063,14 @@ sub onDelRow {
             $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("DELROW FAILED: ".$ret));
          } else {
             # TODO:FIXME:XXX: Das sollte an alle anderen user auch gehen, die auf der tabelle sind!
-            $poe_kernel->yield(sendToQX => "delrow ".CGI::escape($options->{table})." ".CGI::escape($options->{id}));
+            $poe_kernel->yield(sendToQX => "delrow ".CGI::escape($options->{table})." ".CGI::escape($options->{$UNIQIDCOLUMNNAME}));
          }
          return $ret;
       } else {
          return "DELROW: Bad Object-ID Format: ".$options->{oid}."\n";
       }
    } else {
-      return "DELROW: Bad ID Format: ".$options->{id}."\n";
+      return "DELROW: Bad ID Format: ".$options->{$UNIQIDCOLUMNNAME}."\n";
    }
 }
 
@@ -1156,7 +1156,7 @@ sub getBasicDataDefine {
       join(",", (@{$options->{columns}}, @{$options->{overridecolumns}})),                                             # 5. Der Spaltenname in der Datenbank
       join(",", ((map {
                                     # TODO:XXX:FIXME: Linkto Bug!
-         ($options->{crosslink} && ($options->{crosstable}."_".$UNIQIDCOLUMNNAME eq $_)) ? "hidden" :
+         ($options->{crosslink} && ($options->{crosstable}."_".$self->{dbm}->getIdColumnName($options->{crosstable}) eq $_)) ? "hidden" :
          # TODO:XXX:FIXME: Potentielles OR-Filterprobelm...
          (($_ eq $DELETEDCOLUMNNAME) && exists($filter->{$options->{table}.$TSEP.$DELETEDCOLUMNNAME})) ? "writeonly" :
          CGI::escape( $self->{gui}->getViewStatus({
@@ -1191,7 +1191,7 @@ sub handleCrossLink {
    if ($options->{crosslink}) {
       if ($options->{crossid} && $options->{crosstable}) {
          # TODO:XXX:FIXME: Die cross* auf Sonderzeichen ueberpruefen!!! SQL Injection!!!
-         push(@$where, "(".$options->{table}.$TSEP.$options->{crosstable}."_".$UNIQIDCOLUMNNAME."=".$options->{crossid}.")");
+         push(@$where, "(".$options->{table}.$TSEP.$options->{crosstable}."_".$self->{dbm}->getIdColumnName($options->{crosstable})."=".$options->{crossid}.")");
       } else {
          $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("No crosslink id\n"));
          push(@$where, "(1 == 2)");
@@ -1214,7 +1214,7 @@ sub onGetLines {
    $options->{sortby} ||= '';
    #$oid = $options->{table}."_".$suffix."_data";
    my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
-   my $columns = [grep { $_ ne $UNIQIDCOLUMNNAME } grep {
+   my $columns = [grep { $_ ne $self->{dbm}->getIdColumnName($options->{table}) } grep {
       my $status = $self->{gui}->getViewStatus({
          %$options,
          column => $_,
@@ -1225,8 +1225,8 @@ sub onGetLines {
    } grep {
       $self->{dbm}->isMarked($options->{onlyWithMark}, $curtabledef->{columns}->{$_}->{marks})
    } hashKeysRightOrder($curtabledef->{columns})];
-   unshift(@$columns, $UNIQIDCOLUMNNAME) if exists($curtabledef->{columns}->{$UNIQIDCOLUMNNAME});
-   if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}, $options->{id}))) {
+   unshift(@$columns, $self->{dbm}->getIdColumnName($options->{table})) if exists($curtabledef->{columns}->{$self->{dbm}->getIdColumnName($options->{table})});
+   if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}, $options->{$UNIQIDCOLUMNNAME}))) {
       $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("ACCESS DENIED\n"));
       return Log("DBManager: onGetLines: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
    }
@@ -1239,7 +1239,7 @@ sub onGetLines {
    $tablebackrefs = 1 if ($curtabledef->{defaulttablebackrefs});
    unless (defined($ret = $db->getDataSet({
       table => $options->{table}, 
-      id => $options->{id},
+      $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
       skip => $options->{start},
       rows => $count,
       searchdef => $self->{dbm}->getFilter($options),
@@ -1300,14 +1300,14 @@ sub updateList {
       return undef;
    }
    $options->{sortby} ||= '';
-   if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}, $options->{id}))) {
+   if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}, $options->{$UNIQIDCOLUMNNAME}))) {
       $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("ACCESS DENIED\n"));
       Log("Qooxdoo: updateList: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
       return undef;
    }
    my $ret = undef;
    my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
-   my $columns = [grep { $_ ne $UNIQIDCOLUMNNAME } grep { my $status = $self->{gui}->getViewStatus({
+   my $columns = [grep { $_ ne $self->{dbm}->getIdColumnName($options->{table}) } grep { my $status = $self->{gui}->getViewStatus({
       %$options,
       column => $_,
       table => $options->{table},
@@ -1327,7 +1327,7 @@ sub updateList {
    $tablebackrefs = 1 if ($curtabledef->{defaulttablebackrefs});
    unless (defined($ret = $db->getDataSet({
       table => $options->{table},
-      id => $options->{id},
+      $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
       skip => $options->{start},
       rows => $count,
       searchdef => $self->{dbm}->getFilter($options),
@@ -1363,13 +1363,13 @@ sub updateListloopPre {
    }
    return undef if ($options->{folderid} &&
             $curtabledef->{foldertable} &&
-            $dbline->{$options->{table}.$TSEP.$curtabledef->{foldertable}."_".$UNIQIDCOLUMNNAME} &&
-           ($dbline->{$options->{table}.$TSEP.$curtabledef->{foldertable}."_".$UNIQIDCOLUMNNAME} ne $options->{folderid}));
-   if ($options->{lastid} && ($options->{lastid} eq $dbline->{$options->{table}.$TSEP.$UNIQIDCOLUMNNAME})) {
+            $dbline->{$options->{table}.$TSEP.$curtabledef->{foldertable}."_".$self->{dbm}->getIdColumnName($curtabledef->{foldertable})} &&
+           ($dbline->{$options->{table}.$TSEP.$curtabledef->{foldertable}."_".$self->{dbm}->getIdColumnName($curtabledef->{foldertable})} ne $options->{folderid}));
+   if ($options->{lastid} && ($options->{lastid} eq $dbline->{$options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table})})) {
       Log("Qooxdoo: updateListloopPre: More than one line for one id! Skipping the duplicated ones.", $WARNING);
       return undef;
    }
-   $options->{lastid} = $dbline->{$options->{table}.$TSEP.$UNIQIDCOLUMNNAME} || 0;
+   $options->{lastid} = $dbline->{$options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table})} || 0;
    my $line = ($curtabledef->{listtextcolumn} &&
          $dbline->{$options->{table}.$TSEP.$curtabledef->{listtextcolumn}}) ?
          $dbline->{$options->{table}.$TSEP.$curtabledef->{listtextcolumn}} :
@@ -1377,14 +1377,14 @@ sub updateListloopPre {
          $self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $_)
          # TODO/FIXME/XXX: Vermutlich kann das hier ne Funktion aus ABDGUI::GUI besser? getAffectedColumns oder so?
       } grep {
-         ($options->{crosslink} && ($options->{crosstable}."_".$UNIQIDCOLUMNNAME eq $_)) ? 0 :
+         ($options->{crosslink} && ($options->{crosstable}."_".$self->{dbm}->getIdColumnName($options->{crosstable}) eq $_)) ? 0 :
          (exists($curtabledef->{columns}->{$_}) &&
           exists($curtabledef->{columns}->{$_}->{showInSelect}) &&
                  $curtabledef->{columns}->{$_}->{showInSelect}) &&
         !(exists($curtabledef->{listimagecolumn}) &&
                  $curtabledef->{listimagecolumn}  &&
           ($_ eq $curtabledef->{listimagecolumn})) } @$columns);
-   return $line ? $line : $options->{noidefault} ? undef : $dbline->{$options->{table}.$TSEP.$UNIQIDCOLUMNNAME};
+   return $line ? $line : $options->{noidefault} ? undef : $dbline->{$options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table})};
 }
 
 sub updateListloop {
@@ -1395,12 +1395,12 @@ sub updateListloop {
    my $dbline = shift;
    my $line = shift;
    my $moreparams = shift;
-   my $curid = $options->{name}."_".($dbline->{$options->{table}.$TSEP.$UNIQIDCOLUMNNAME} || $options->{tmpcounter}++);
+   my $curid = $options->{name}."_".($dbline->{$options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table})} || $options->{tmpcounter}++);
    unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{name}) {
       Log("Qooxdoo: updateListloop: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
       return undef;
    }
-   $poe_kernel->yield(sendToQX => "createlistitem ".CGI::escape($curid)." ".CGI::escape($dbline->{$options->{table}.$TSEP.$UNIQIDCOLUMNNAME})." ".CGI::escape($line)." ".CGI::escape(
+   $poe_kernel->yield(sendToQX => "createlistitem ".CGI::escape($curid)." ".CGI::escape($dbline->{$options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table})})." ".CGI::escape($line)." ".CGI::escape(
       ($curtabledef->{listimagecolumn} && $dbline->{$curtabledef->{listimagecolumn}}) ?
          $dbline->{$curtabledef->{listimagecolumn}} :
                    $curtabledef->{listimagedefault} ?
@@ -1420,7 +1420,7 @@ sub createTable {
    my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
    my $columns = [
       grep {
-         $_ ne $UNIQIDCOLUMNNAME
+         $_ ne $self->{dbm}->getIdColumnName($options->{table})
       } grep {
          my $status = $self->{gui}->getViewStatus({
             %$options,
@@ -1438,7 +1438,7 @@ sub createTable {
    if ($buttons->[0] eq "JSON") {
       $buttons->[1] = CGI::escape(JSON->new->allow_nonref->encode($buttons->[1]));
    }
-   unshift(@$columns, $UNIQIDCOLUMNNAME) if (exists($curtabledef->{columns}->{$UNIQIDCOLUMNNAME}));
+   unshift(@$columns, $self->{dbm}->getIdColumnName($options->{table})) if (exists($curtabledef->{columns}->{$self->{dbm}->getIdColumnName($options->{table})}));
    $poe_kernel->yield(sendToQX => "createtable ".join(" ", (
       CGI::escape($options->{name}),  # 1. Interne Objekt ID
       @{$self->getBasicDataDefine({
@@ -1468,6 +1468,7 @@ sub createTable {
       CGI::escape($options->{hilfe} || ''), # 9. Hilfetext
       CGI::escape(($options->{crosslink} ? ",crosslink=".CGI::escape($options->{crosslink}).",crossid=".CGI::escape($options->{crossid}).",crosstable=".CGI::escape($options->{crosstable}) : '').($options->{urlappend} || '')), # 10. URLAppend
       CGI::escape($curtabledef->{qxrowheight} || ""),
+      CGI::escape($self->{dbm}->getIdColumnName($options->{table}) || ""),
    )));
    #print "Affected columns: ".join(",", @$columns).":\n";
 }
@@ -1681,7 +1682,7 @@ sub onHTMLPreview {
                                               $curtabledef->{columns}->{$options->{column}}->{label} ? 
                                               $curtabledef->{columns}->{$options->{column}}->{label} :
                                                                         $options->{column}).
-                                             ($options->{id} ? " von Eintrag ".$options->{id} : "Neuer Eintrag").
+                                             ($options->{$UNIQIDCOLUMNNAME} ? " von Eintrag ".$options->{$UNIQIDCOLUMNNAME} : "Neuer Eintrag").
                                       " in ".($curtabledef->{label} || $options->{table}))." ".
                                    CGI::escape($curtabledef->{icon}));
    $poe_kernel->yield(sendToQX => "open ".$options->{table}."_".$options->{column}."_".$suffix." 1");
@@ -1722,7 +1723,7 @@ sub onSaveEditEntry {
       return undef;
    }
    my $ret = undef;
-   my $id = $options->{"q"}->param($UNIQIDCOLUMNNAME);
+   my $id = $options->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
    if (defined($ret = $self->{dbm}->NewUpdateData({
       %$options,
       cmd => ($id ? "UPDATE" : "NEW"),
@@ -1732,8 +1733,8 @@ sub onSaveEditEntry {
    }))) {
       # TODO:FIXME:XXX: Das sollte an alle anderen user auch gehen, die auf der tabelle sind!
       # TODO:FIXME:XXX: ID sollte vom Rückgabewert des NewUpdateData genommen werden, und nicht vom CGI Objekt!
-      $poe_kernel->yield(sendToQX => "updaterow ".CGI::escape($options->{table})." ".CGI::escape($options->{"q"}->param($UNIQIDCOLUMNNAME)));
-      if ($ret =~ /^\d+$/) {# || ((!exists($curtabledef->{columns}->{$UNIQIDCOLUMNNAME})) && defined($ret))) {
+      $poe_kernel->yield(sendToQX => "updaterow ".CGI::escape($options->{table})." ".CGI::escape($options->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}))));
+      if ($ret =~ /^\d+$/) {# || ((!exists($curtabledef->{columns}->{$self->{dbm}->getIdColumnName($options->{table})})) && defined($ret))) {
          if (($self->{dbm}->{config}->{autocloseeditwindow} || $options->{close}) && $options->{"q"}->param("wid") && !$options->{noclose}) {
             $self->onCloseObject({
                "curSession" => $options->{curSession},
@@ -1743,7 +1744,7 @@ sub onSaveEditEntry {
             $poe_kernel->yield(sendToQX => "destroy ".CGI::escape($options->{table}."_edit"));
             $self->onNewEditEntry({
                %$options,
-               id => $ret,
+               $UNIQIDCOLUMNNAME => $ret,
             });
          }
          $self->afterNewUpdate($options, $options->{columns}, $ret);
@@ -1773,7 +1774,7 @@ sub afterNewUpdate {
       my $basetabledef = $self->{dbm}->getTableDefiniton($table);      
       if ($basetabledef->{columns}->{$column} && $basetabledef->{columns}->{$column}->{linkto}) {
          $curtable = $basetabledef->{columns}->{$column}->{linkto};
-      } elsif ($self->{dbm}->{config}->{oldlinklogic} && ($column =~ m,^(.+)_id$,)) {
+      } elsif ($self->{dbm}->{config}->{oldlinklogic} && ($column =~ m,^(.+)_$UNIQIDCOLUMNNAME$,)) {
          $curtable = $1;
       }
       my $value = "".($curtable ? $self->{gui}->getValueForTable($curtable, $columns) : undef) || "Erstellter Eintrag";
@@ -1994,7 +1995,7 @@ sub onFilterHTML {
                $columntype  = $curtabledef->{columns}->{$column}->{type}
                            if $curtabledef->{columns}->{$column}->{type};
             }
-            if ($column eq $UNIQIDCOLUMNNAME) {
+            if ($column eq $self->{dbm}->getIdColumnName($table)) {
                $columnlabel = $tablelabel;
                $tablelabel = "";
             }
@@ -2002,7 +2003,7 @@ sub onFilterHTML {
             my $doTableColumn = (($table ne $options->{table}) && $tablelabel) ? 1 : 0;
             ${$options->{content}} .= " colspan=2"
                if !$doTableColumn;
-            ${$options->{content}} .= "><img src='resource/qx/icon/Tango/16/".(($columntype eq $UNIQIDCOLUMNNAME) ? "places/folder" : "mimetypes/office-document").".png' align=absmiddle> ".encode("utf8", $columnlabel);
+            ${$options->{content}} .= "><img src='resource/qx/icon/Tango/16/".(($columntype eq $self->{dbm}->getIdColumnName($table)) ? "places/folder" : "mimetypes/office-document").".png' align=absmiddle> ".encode("utf8", $columnlabel);
             if ($doTableColumn) {
                ${$options->{content}} .= "</td><td>";
                ${$options->{content}} .= "<nobr><img src='resource/qx/icon/Tango/16/places/folder.png' align=absmiddle><font size=2> ".encode("utf8", $tablelabel)."</font></nobr>";
@@ -2018,12 +2019,12 @@ sub onFilterHTML {
                ${$options->{content}} .= "</tr><tr><td></td><td colspan=".(2 + ($showtype ? 1 : 0)).">";
                my $plusimg = "<img src='resource/qx/icon/Tango/16/actions/list-add.png' align=absmiddle>";
                my $minusimg = "<img src='resource/qx/icon/Tango/16/actions/list-remove.png' align=absmiddle>";
-               if ($columntype eq $UNIQIDCOLUMNNAME) {
+               if ($column eq $self->{dbm}->getIdColumnName($table)) {
                   my $tableslist = $self->{dbm}->getDBBackend($table)->getTableList();
                   if ($tableslist->{$table}) {
                      ${$options->{content}} .= "<font size=2>";
                      my $wherePre = $self->{dbm}->Where_Pre({ %$options, table => $table, prgcontext => "" });
-                     #push(@$wherePre, join(" OR ", map { "( ".$table.$TSEP.$UNIQIDCOLUMNNAME." = '".$_."' )" } @{$filter->{$curfilter}}))
+                     #push(@$wherePre, join(" OR ", map { "( ".$table.$TSEP.$self->{dbm}->getIdColumnName($table)." = '".$_."' )" } @{$filter->{$curfilter}}))
                      #   if ($filter->{$curfilter} && (ref($filter->{$curfilter}) eq "ARRAY"));
                      my $db = $self->{dbm}->getDBBackend($table);
                      my $ret = $db->getDataSet({
@@ -2039,7 +2040,7 @@ sub onFilterHTML {
                            my $label = $id;
                            if (defined($ret) && (ref($ret) eq "ARRAY") && (ref($ret->[0]) eq "ARRAY")) {
                               foreach my $dbline (@{$ret->[0]}) {
-                                 if ($dbline->{$table.$TSEP.$UNIQIDCOLUMNNAME} eq $_) {
+                                 if ($dbline->{$table.$TSEP.$self->{dbm}->getIdColumnName($table)} eq $_) {
                                     $label = $self->{gui}->getLineForTable($table, $dbline, 1);
                                     last;
                                  }
@@ -2058,10 +2059,10 @@ sub onFilterHTML {
                         foreach my $dbline (@{$ret->[0]}) {
                            next if ($filter->{$curfilter} &&
                                (ref($filter->{$curfilter}) eq "ARRAY") &&
-                               scalar(grep { $dbline->{$table.$TSEP.$UNIQIDCOLUMNNAME} eq $_ } @{$filter->{$curfilter}}));
+                               scalar(grep { $dbline->{$table.$TSEP.$self->{dbm}->getIdColumnName($table)} eq $_ } @{$filter->{$curfilter}}));
                            next unless my $label = $self->{gui}->getLineForTable($table, $dbline, 1);
                            #${$options->{content}} .= $label."<br>";
-                           ${$options->{content}} .= "<option value='".$dbline->{$table.$TSEP.$UNIQIDCOLUMNNAME}."'>".encode("utf8", $label)."</option>\n";
+                           ${$options->{content}} .= "<option value='".$dbline->{$table.$TSEP.$self->{dbm}->getIdColumnName($table)}."'>".encode("utf8", $label)."</option>\n";
                         }
                         ${$options->{content}} .= "</select><input type=submit value=Hinzufügen></form>";
                         #${$options->{content}} .= "</nobr></font></td></tr></table>";
@@ -2256,7 +2257,7 @@ sub addFilterTables {
    if ($tree->{name}) {
       $curtabledef = $self->{dbm}->getTableDefiniton($tree->{name});
       foreach my $curcolum (grep {
-      #   $_ ne $UNIQIDCOLUMNNAME
+      #   $_ ne $self->{dbm}->getIdColumnName($tree->{name})
       #} grep {
          my $status = $self->{gui}->getViewStatus({
             column => $_,
@@ -2290,7 +2291,7 @@ sub getDefaults {
                     $options->{q} &&
                     $options->{q}->param($options->{table}.$TSEP.$column));
       $mydefaults->{$options->{table}.$TSEP.$column} ||= $params->{ret}->[0]->[0]->{$options->{table}.$TSEP.$column}
-         if (defined($params->{ret}->[0]->[0]->{$options->{table}.$TSEP.$column}) && ($options->{id}));
+         if (defined($params->{ret}->[0]->[0]->{$options->{table}.$TSEP.$column}) && ($options->{$UNIQIDCOLUMNNAME}));
       if ((!defined($mydefaults->{$options->{table}.$TSEP.$column})) ||
                   (($params->{curtabledef}->{columns}->{$column}->{defaultoverwritesnull}) &&
                     # TODO:XXX:FIXME: Hier sollte die Überprüfung auf undef im Datentypenliegen, und nicht manuell selbst gemacht werden
@@ -2326,7 +2327,7 @@ sub onNewEditEntry {
       return undef;
    }
    my $suffix = "edit";
-   if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}, $options->{id}))) {
+   if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}, $options->{$UNIQIDCOLUMNNAME}))) {
       $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("ACCESS DENIED\n"));
       Log("Qooxdoo: onNewEditEntry: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
       return undef;
@@ -2347,12 +2348,12 @@ sub onNewEditEntry {
    # TODO:FIXME:XXX: Typ "virtual" hier rausfiltern oder als readonly schicken?
       hashKeysRightOrder($curtabledef->{columns})];
    my $ret = [];
-   if ($options->{id}) {
+   if ($options->{$UNIQIDCOLUMNNAME}) {
       my $db = $self->{dbm}->getDBBackend($options->{table});
       unless (defined($ret = $db->getDataSet({
          table => $options->{table},
          nodeleted => 1,
-         id => $options->{id},
+         $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          wherePre => $self->{dbm}->Where_Pre($options),
          session => $options->{curSession}
       })) && (ref($ret) eq "ARRAY") && (scalar(@{$ret->[0]}) >= 1)) {
@@ -2370,7 +2371,7 @@ sub onNewEditEntry {
    } else {
       $window = $options->{table}."_".$suffix;
       $poe_kernel->yield(sendToQX => "destroy ".$window);
-      $poe_kernel->yield(sendToQX => "createwin ".$window." ".($curtabledef->{qxeditwidth} || $qxwidth)." ".($curtabledef->{qxeditheight} || $qxheight)." ".CGI::escape(($options->{id} ? "Details von Eintrag ".$options->{id} : "Neuer Eintrag")." in ".($curtabledef->{label} || $options->{table}))." ".(CGI::escape($curtabledef->{icon} || '')));
+      $poe_kernel->yield(sendToQX => "createwin ".$window." ".($curtabledef->{qxeditwidth} || $qxwidth)." ".($curtabledef->{qxeditheight} || $qxheight)." ".CGI::escape(($options->{$UNIQIDCOLUMNNAME} ? "Details von Eintrag ".$options->{$UNIQIDCOLUMNNAME} : "Neuer Eintrag")." in ".($curtabledef->{label} || $options->{table}))." ".(CGI::escape($curtabledef->{icon} || '')));
       $poe_kernel->yield(sendToQX => "open ".$window." 1");
       # TODO:FIXME:XXX: Modal sollte konfigurierbar sein!
       #$poe_kernel->yield(sendToQX => "modal ".$window." 1");
@@ -2403,10 +2404,10 @@ sub onNewEditEntry {
             links => $links,
             curSession => $options->{curSession},
             realtype => 1,
-            action => ($options->{id} ? $UPDATEACTION : $NEWACTION),
+            action => ($options->{$UNIQIDCOLUMNNAME} ? $UPDATEACTION : $NEWACTION),
          })},
          join(",", ((map {
-            ($options->{crosslink} && ($options->{crosstable}."_".$UNIQIDCOLUMNNAME eq $_)) ? $options->{crossid} :
+            ($options->{crosslink} && ($options->{crosstable}."_".$self->{dbm}->getIdColumnName($options->{crosstable}) eq $_)) ? $options->{crossid} :
             CGI::escape($self->{gui}->doFormularColumn({ 
                table => $options->{table},
                column => $_,
@@ -2436,7 +2437,7 @@ sub onNewEditEntry {
       defaults => $ret->[0]->[0],
       oid => $options->{oid},
       onlyWithMark => $options->{onlyWithMark},
-      id => $options->{id}
+      $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
    });
    #$poe_kernel->yield(sendToQX => "createbutton ".CGI::escape($window."_button")." ".
    #                                               CGI::escape("Schliessen")." ".
@@ -2462,7 +2463,7 @@ sub onNewEditEntry {
       if ($ret->[0]->[0]->{$options->{table}.$TSEP.$column}) {
          $curwhere = [map { "((".$_.")".
                              ($nodeleted ? "" : " AND (".$curTable.$TSEP.$DELETEDCOLUMNNAME." != 1)").
-                             ") OR (".$curTable.$TSEP.$UNIQIDCOLUMNNAME." = ".$ret->[0]->[0]->{$options->{table}.$TSEP.$column}.")" } @$curwhere];
+                             ") OR (".$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)." = ".$ret->[0]->[0]->{$options->{table}.$TSEP.$column}.")" } @$curwhere];
          $nodeleted++;
       }
       my $curret = undef;
@@ -2485,11 +2486,11 @@ sub onNewEditEntry {
             (CGI::escape(
                #$self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $column
                $self->{gui}->getValueForTable($curTable, $dbline)
-            )||$dbline->{$curTable.$TSEP.$UNIQIDCOLUMNNAME})." ".
-          ((exists($options->{override}->{$curTable.$TSEP.$UNIQIDCOLUMNNAME}) &&
-           defined($options->{override}->{$curTable.$TSEP.$UNIQIDCOLUMNNAME}) &&
-                   $options->{override}->{$curTable.$TSEP.$UNIQIDCOLUMNNAME}) ?
-                   $options->{override}->{$curTable.$TSEP.$UNIQIDCOLUMNNAME} : $dbline->{$curTable.$TSEP.$UNIQIDCOLUMNNAME})
+            )||$dbline->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)})." ".
+          ((exists($options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) &&
+           defined($options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) &&
+                   $options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) ?
+                   $options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)} : $dbline->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)})
          );
       }
    }
@@ -2517,7 +2518,7 @@ sub doSpecialColumns {
       Log("doSpecialColumns: Missing parameters: table:".$options->{table}.":window=".$options->{window}.":defaults=".$options->{defaults}.":session=".$options->{curSession}.": !", $ERROR);
       return undef;
    }
-   return unless $options->{id};
+   return unless $options->{$UNIQIDCOLUMNNAME};
    my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
    foreach my $column (hashKeysRightOrder($curtabledef->{columns})) {
       next unless $self->{dbm}->isMarked($options->{onlyWithMark}, $curtabledef->{columns}->{$column}->{marks});
@@ -2527,7 +2528,7 @@ sub doSpecialColumns {
       $poe_kernel->yield(sendToQX => "create".(($curtabledef->{columns}->{$column}->{type} eq "htmltext") ? "html" : "")."textedit ".CGI::escape($options->{window}."_tabs_".$column."_data")." ".
          CGI::escape($options->{table})." ".
          CGI::escape($column)." ".
-         CGI::escape($options->{id}||defined($options->{id}) ? $options->{id} : Log("ID is undefined!", $ERROR))." ".
+         CGI::escape($options->{$UNIQIDCOLUMNNAME}||defined($options->{$UNIQIDCOLUMNNAME}) ? $options->{$UNIQIDCOLUMNNAME} : Log("ID is undefined!", $ERROR))." ".
          CGI::escape($options->{defaults}->{$options->{table}.$TSEP.$column} || '')." ".
          CGI::escape($curtabledef->{columns}->{$column}->{help} || ''));
       $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($options->{window}."_tabs_".$column)." ".CGI::escape($options->{window}."_tabs_".$column."_data")."\n"); 
@@ -2549,14 +2550,14 @@ sub doSpecialColumns {
                if defined($crosslinktablename);
          } else {
             $self->{dbm}->getTableDefiniton($crosstable);
-            $crosslinktablename = exists($linktabledef->{columns}->{$options->{table}."_".$UNIQIDCOLUMNNAME}) &&
-                                 defined($linktabledef->{columns}->{$options->{table}."_".$UNIQIDCOLUMNNAME}) ? $crosstable : undef;
+            $crosslinktablename = exists($linktabledef->{columns}->{$options->{table}."_".$self->{dbm}->getIdColumnName($options->{table})}) &&
+                                 defined($linktabledef->{columns}->{$options->{table}."_".$self->{dbm}->getIdColumnName($options->{table})}) ? $crosstable : undef;
             # TODO:FIXME:XXX: Das zeigt Tabellen an, die per 1:n auf mich zeigen koennen. Das ist derzeit unschoen,
             #                 da man in diesem Fall die Eintraege an sich sieht und diese aendert/loescht und nicht
             #                 die Verknuepfung. Das sollte man ueberarbeiten und dann ggf. hier wieder einschalten.
          }
          if ($crosslinktablename && ($crosslinktabledef = $self->{dbm}->getTableDefiniton($crosslinktablename))) {
-            next if $self->noCrossShowTable($options->{table}, $crosslinktablename, $options->{curSession}, $options->{id});
+            next if $self->noCrossShowTable($options->{table}, $crosslinktablename, $options->{curSession}, $options->{$UNIQIDCOLUMNNAME});
             $poe_kernel->yield(sendToQX => "addtab ".CGI::escape($options->{window}."_tabs")." ".CGI::escape($options->{window}."_tabs_cross_".$crosslinktablename)." ".CGI::escape(($linktabledef->{crosslinklabel} || $linktabledef->{label} || $crosslinktabledef->{crosslinklabel} || "Zugeordnete ".$crosstable)));
             if ($crosslinktabledef->{crossshowastable}) {
                $self->createTable({
@@ -2564,7 +2565,7 @@ sub doSpecialColumns {
                   table      => $crosslinktablename,
                   crosslink  => $crosstable,
                   crosstable => $options->{table},
-                  crossid    => $options->{id},
+                  crossid    => $options->{$UNIQIDCOLUMNNAME},
                   oid        => $options->{oid},
                   #crossdst   => "hidden",
                   name       => $options->{window}."_tabs_cross_".$crosslinktablename."_data",
@@ -2578,17 +2579,17 @@ sub doSpecialColumns {
                   crosslink  => $crosstable,
                   crosstable => $options->{table},
                   oid        => $options->{oid},
-                  crossid    => $options->{id},
+                  crossid    => $options->{$UNIQIDCOLUMNNAME},
                   name       => $options->{window}."_tabs_cross_".$crosslinktablename."_data",
                   hilfe      => $curtabledef->{infotext},
                   #nobuttons  => 1,
-                  #urlappend  => ",crosslink=".CGI::escape($crosstable).",crossid=".CGI::escape($options->{id}).",crosstable=".CGI::escape($options->{table})
+                  #urlappend  => ",crosslink=".CGI::escape($crosstable).",crossid=".CGI::escape($options->{$UNIQIDCOLUMNNAME}).",crosstable=".CGI::escape($options->{table})
                });
                $self->onUpdateList({
                   table      => $crosslinktablename,
                   crosslink  => $crosstable,
                   crosstable => $options->{table},
-                  crossid    => $options->{id},
+                  crossid    => $options->{$UNIQIDCOLUMNNAME},
                   curSession => $options->{curSession},
                   oid        => $options->{oid},
                   name       => $options->{window}."_tabs_cross_".$crosslinktablename."_data",

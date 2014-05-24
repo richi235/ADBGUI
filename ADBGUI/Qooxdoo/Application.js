@@ -2118,7 +2118,7 @@ qx.Class.define("myproject.Application", {
                      //   this.debug("bla");
   						   //   for (var i = 0; i < this.getSelection().lenght; i++) {
                      //      this.debug("Selected item: " + this.getSelection()[i]);
-                     //	   //this.main.sendRequest("job=dblclick,type=list,oid=" + this.id.toString() + ",table=" + this.tablename + ",id=" + this.getTableModel().getValueById("id", ind));
+                     //	   //this.main.sendRequest("job=dblclick,type=list,oid=" + this.id.toString() + ",table=" + this.tablename + ",id=" + this.getTableModel().getValueById(this.idcol, ind));
                      //	}
                      //}, curlist);
                      curlist.addListener("delobject", function(e) {
@@ -2253,6 +2253,10 @@ qx.Class.define("myproject.Application", {
                            return new qx.ui.table.columnmodel.Resize(obj);
                         }
                      });
+                     this.debug("idcol4");
+                     curtable.idcol = unescape(cmdparam.shift());
+                     if ((typeof(curtable.idcol) == "undefined") || (curtable.idcol == "")) curtable.idcol = "id";
+                     //curtable.idcol = "id";
                      curtable.flex = 1;
                      tableModel.curtable = curtable;
                      curtable.tablename = table;
@@ -2307,7 +2311,8 @@ qx.Class.define("myproject.Application", {
                      curtable.getSelectionModel().addListener("changeSelection", function(e) {
                         var i = 0;
                         this.getSelectionModel().iterateSelection(function(ind) {
-                           if (this.getTableModel().getValueById("id", ind) != null) {
+                           this.debug("idcol2");
+                           if (this.getTableModel().getValueById(this.idcol, ind) != null) {
                               i++;
                            }
                         }, this);
@@ -2323,8 +2328,9 @@ qx.Class.define("myproject.Application", {
                      }, curtable);
                      curtable.addListener("cellDblclick", function(e) {
   							   this.getSelectionModel().iterateSelection(function(ind) {
-                           //this.debug("job=dblclick,type=table,oid=" + this.id.toString() + ",table=" + this.tablename + ",id=" + this.getTableModel().getValueById("id", ind));
-                           var id = this.getTableModel().getValueById("id", ind);
+                           //this.debug("job=dblclick,type=table,oid=" + this.id.toString() + ",table=" + this.tablename + ",id=" + this.getTableModel().getValueById(this.idcol, ind));
+                           this.debug("idcol1");
+                           var id = this.getTableModel().getValueById(this.idcol, ind);
                            if ((id != "") && (id != "null") && (id != null)) {
                               this.main.sendRequest("job=dblclick,type=table,oid=" + this.id.toString() + ",table=" + this.tablename + ",id=" + id + this.urlappend);
                            }
@@ -2392,7 +2398,8 @@ qx.Class.define("myproject.Application", {
                                           var id = "";
                                           var ids = "";
                                           this.parent.getSelectionModel().iterateSelection(function(ind) {
-                                             var curid = this.parent.getTableModel().getValueById("id", ind);
+                                             this.parent.debug("idcol3");
+                                             var curid = this.parent.getTableModel().getValueById(this.parent.idcol, ind);
                                              if (id == "") {
                                                 id = curid;
                                              }
