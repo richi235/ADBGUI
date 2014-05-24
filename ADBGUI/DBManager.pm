@@ -71,6 +71,7 @@ sub getIdColumnName {
    my $self = shift;
    my $table = shift;
    my $db = $self->getDBBackend($table);
+   return $UNIQIDCOLUMNNAME unless $db;
    return $db->getIdColumnName($table);
 }
 
