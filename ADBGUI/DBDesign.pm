@@ -96,6 +96,14 @@ sub getDB {
       syntaxcheck => '^\d+$',
       dbcompare => "="
    };
+   $DB->{types}->{timestamp} = {
+      postgres => {
+         dbtype => "int"
+      },
+      dbtype => "timestamp",
+      syntaxcheck => '^\d+$',
+      dbcompare => "="
+   };
    $DB->{types}->{datavolume} = {
       postgres => {
          dbtype => "bigint"
@@ -108,6 +116,7 @@ sub getDB {
       postgres => {
          dbtype => "bigint",
       },
+      prioautodblayout => 1,
       dbtype => "INT(64)",
       dbcompare => "="
    };
@@ -198,6 +207,7 @@ sub getDB {
       mysql => {
          instr => 1,
       },
+      prioautodblayout => 1,
       dbtype => "VARCHAR(255)",
       dbcompare => "="
    };
@@ -220,7 +230,8 @@ sub getDB {
       booleanlabel => ["[ ]", "[X]"],
       dbtype => "INT(1)",
       "default" => "0",
-      dbcompare => "LIKE"
+      dbcompare => "LIKE",
+      prioautodblayout => 1,
    };
    $DB->{types}->{virtual} = {
       readonly => 1
