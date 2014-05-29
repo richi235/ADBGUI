@@ -10,7 +10,7 @@ BEGIN {
    our @EXPORT = qw/$LOG_SYSLOG $LOG_STDERR $LOG_STDOUT $loglevel $logdst/;
    our @EXPORT_OK = qw/daemonize mergeColumnInfos hashKeysRightOrder ensureLength
                        getAffectedColumns simplehashclone arraycompare getFileUploadJavascriptForIDs
-                       hashcompare padNumber time2human time2sql normaliseLine
+                       hashcompare padNumber time2human time2sql normaliseLine queryLDAP
                        Log MakeTime getIncludedTables makeInfoLine new_anon_scalar
                        getTimeLineHTML printLine printLineNospan htmlUnEscape removeTime
                        beschriftung cutDateInfos preZero toDateObj hidebegin hideend
@@ -22,6 +22,7 @@ use Unix::Syslog qw(:macros :subs);
 use POSIX qw(errno_h setsid);
 use ADBGUI::BasicVariables;
 use Time::HiRes qw(gettimeofday);
+use POE;
 #use DateTime;
 
 # Logarten

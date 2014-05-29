@@ -2,7 +2,7 @@
 
 use strict;
 use POE qw(Component::Client::LDAP);
-use ABGUI::Tools qw(queryLDAP);
+use ADBGUI::Tools qw(queryLDAP);
 
 my $password = `cat password.txt`;
 chomp $password;        
