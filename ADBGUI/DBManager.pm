@@ -1220,6 +1220,8 @@ sub Where_Pre {
    my $self = shift;
    my $a = shift;
    my $b = shift;
+   Log("INVALID OLD FORMAT!", $ERROR)
+      if $b;
    my $moreparams = shift;
    my $options = undef;
    if ($b) {

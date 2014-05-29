@@ -1313,7 +1313,6 @@ sub updateList {
    my $columns = [grep { $_ ne $self->{dbm}->getIdColumnName($options->{table}) } grep { my $status = $self->{gui}->getViewStatus({
       %$options,
       column => $_,
-      table => $options->{table},
       targetself => $options->{curSession},
       action => $LISTACTION,
    }); ($status ne "hidden") #&& ($status ne "writeonly")
@@ -2552,7 +2551,8 @@ sub doSpecialColumns {
             delete $tables->{crosslinktablename}
                if defined($crosslinktablename);
          } else {
-            $crosslinktablename = ((grep { $linktabledef->{columns}->{$_}->{linkto} eq $options->{table} } (keys %{$linktabledef->{columns}})) ||
+            $crosslinktablename = (($linktabledef->{columns}->{$_}->{linkto} &&
+                            (grep { $linktabledef->{columns}->{$_}->{linkto} eq $options->{table} } (keys %{$linktabledef->{columns}}))) ||
                                    (exists($linktabledef->{columns}->{$options->{table}."_".$self->{dbm}->getIdColumnName($options->{table})}) &&
                                    defined($linktabledef->{columns}->{$options->{table}."_".$self->{dbm}->getIdColumnName($options->{table})}))) ? $crosstable : undef;
             # TODO:FIXME:XXX: Das zeigt Tabellen an, die per 1:n auf mich zeigen koennen. Das ist derzeit unschoen,
