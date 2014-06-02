@@ -90,11 +90,11 @@ sub queryLDAP {
          search => sub {
             my ($heap, $session, $ldap_return) = @_[HEAP, SESSION, ARG1];
             my $ldap_search = shift @$ldap_return;
-            $poe_kernel->post($heap->{config}->{dstsession} || $session => $heap->{config}->{dstevent} || "done" => [$ldap_search->entries] => ($ldap_search->code ? ($ldap_search->error || "unknown") : undef));
-            #if ($ldap_search->done) {
+            if ($ldap_search->done) {
+               $poe_kernel->post($heap->{config}->{dstsession} || $session => $heap->{config}->{dstevent} || "done" => [$ldap_search->entries] => ($ldap_search->code ? ($ldap_search->error || "unknown") : undef));
                delete $heap->{ldap} ;
                $poe_kernel->delay("timeout" => undef);
-            #}
+            }
          },
          timeout => sub {
             my ($heap, $session) = @_[HEAP, SESSION];
