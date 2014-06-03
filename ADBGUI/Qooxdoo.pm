@@ -1216,10 +1216,8 @@ sub onGetLines {
       Log("onGetLines: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}." q=".$options->{"q"}.": !", $ERROR);
       return undef;
    }
-   #my $suffix = "show";
    my $oid = $options->{oid};
    $options->{sortby} ||= '';
-   #$oid = $options->{table}."_".$suffix."_data";
    my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
    my $columns = [grep { $_ ne $self->{dbm}->getIdColumnName($options->{table}) } grep {
       my $status = $self->{gui}->getViewStatus({
@@ -1239,7 +1237,7 @@ sub onGetLines {
    }
    my $ret = undef;
    my $count = ($options->{end}-$options->{start}+1);
-   my $db = $self->{dbm}->getDBBackend($options->{table});
+   my $db    = $self->{dbm}->getDBBackend($options->{table});
    my $where = $self->{dbm}->Where_Pre($options);
    my $tablebackrefs = 0;
    ($where, $tablebackrefs) = $self->handleCrossLink($options, $where);
@@ -1441,9 +1439,8 @@ sub createTable {
       } hashKeysRightOrder($curtabledef->{columns})
    ];
    my $buttons = $self->getTableButtonsDef($options);
-   if ($buttons->[0] eq "JSON") {
-      $buttons->[1] = CGI::escape(JSON->new->allow_nonref->encode($buttons->[1]));
-   }
+   $buttons->[1] = CGI::escape(JSON->new->allow_nonref->encode($buttons->[1]))
+      if ($buttons->[0] eq "JSON");
    unshift(@$columns, $self->{dbm}->getIdColumnName($options->{table})) if (exists($curtabledef->{columns}->{$self->{dbm}->getIdColumnName($options->{table})}));
    $poe_kernel->yield(sendToQX => "createtable ".join(" ", (
       CGI::escape($options->{name}),  # 1. Interne Objekt ID
@@ -1567,8 +1564,8 @@ sub onShow {
    $poe_kernel->yield(sendToQX => "createwin ".$options->{table}."_".$suffix." ".($curtabledef->{qxwidth} || $qxwidth)." ".($curtabledef->{qxheight} || $qxheight)." ".CGI::escape($curtabledef->{label} || $options->{table})." ".CGI::escape($curtabledef->{icon}||''));
    $self->createTable({
       %$options,
-      name       => $options->{table}."_".$suffix."_data",
-      hilfe      => $curtabledef->{infotext},
+      name  => $options->{table}."_".$suffix."_data",
+      hilfe => $curtabledef->{infotext},
    });
    $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($options->{table}."_".$suffix)." ".CGI::escape($options->{table}."_".$suffix."_data")); 
    $poe_kernel->yield(sendToQX => "open ".$options->{table}."_".$suffix." 1");
@@ -1591,8 +1588,8 @@ sub onShowList {
    $poe_kernel->yield(sendToQX => "destroy ".CGI::escape($options->{table}."_".$suffix."_data"));
    $self->createList({
       %$options,
-      name       => $options->{table}."_".$suffix."_data",
-      hilfe      => $curtabledef->{infotext},
+      name  => $options->{table}."_".$suffix."_data",
+      hilfe => $curtabledef->{infotext},
    });
    $self->onUpdateList($options);
    #$poe_kernel->yield(sendToQX => "createtext ".CGI::escape($options->{table}."_".$suffix."_text")." rich ".CGI::escape("blah<br>blah<br>blah"));
