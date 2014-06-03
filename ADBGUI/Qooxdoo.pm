@@ -812,6 +812,7 @@ sub onClientData {
          crosstable => $options->{crosstable},
          table => $options->{table},
          curSession => $options->{curSession},
+         connection => $options->{heap}->{connection},
          oid => $options->{oid},
       });
    } elsif($options->{job} eq "closeobject") {
@@ -846,6 +847,7 @@ sub onClientData {
          start => $options->{heap}->{connection}->{"q"}->param("start"),
          end =>   $options->{heap}->{connection}->{"q"}->param("end"),
          ionum => $options->{heap}->{connection}->{"q"}->param("ionum"),
+         connection => $options->{heap}->{connection},
       });
    } elsif(($options->{job} eq "saveedit") ||
            ($options->{job} eq "newedit"))  {
@@ -1230,7 +1232,7 @@ sub onGetLines {
    } hashKeysRightOrder($curtabledef->{columns})];
    unshift(@$columns, $self->{dbm}->getIdColumnName($options->{table})) if exists($curtabledef->{columns}->{$self->{dbm}->getIdColumnName($options->{table})});
    if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}, $options->{$UNIQIDCOLUMNNAME}))) {
-      $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("ACCESS DENIED\n"));
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("ACCESS DENIED\n"));
       return Log("DBManager: onGetLines: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
    }
    my $ret = undef;
@@ -1253,7 +1255,7 @@ sub onGetLines {
       onlymax => $tablebackrefs,
    })) && (ref($ret) eq "ARRAY")) {
       Log("DBManager: onGetLines: GET ".$options->{table}." FAILED SQL Query failed.", $WARNING);
-      $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("FAILED\n"));
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("FAILED\n"));
       return;
    }
    if ($options->{end} > 0) {
@@ -1265,10 +1267,10 @@ sub onGetLines {
             # TODO/FIXME/XXX: Ausgabeformat beliebig ändern?
             CGI::escape($self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $curcolumn))
          } @$columns);
-         $poe_kernel->yield(sendToQX => $line);
+         $self->sendToQXForSession($options->{connection}->{sessionid} || 0, $line);
       }
    }
-   $poe_kernel->yield(sendToQX => "addrowsdone ".$oid." ".$ret->[1].($options->{ionum} ? " ".$options->{ionum} : ""));
+   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addrowsdone ".$oid." ".($ret->[1]+($options->{rowsadded}||0)).($options->{ionum} ? " ".$options->{ionum} : ""));
 }
 
 sub createList {
