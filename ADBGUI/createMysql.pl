@@ -48,7 +48,9 @@ sub writeMySQLScript {
          push(@tmp, $line);
       }
       push(@tmp, $space."PRIMARY KEY (".join(", ", @{$curtabledef->{primarykey}}).")")
-         if (scalar(@{$curtabledef->{primarykey}}));
+         if ($curtabledef->{primarykey} &&
+        (ref($curtabledef->{primarykey}) eq "ARRAY") &&
+    scalar(@{$curtabledef->{primarykey}}));
       print $handle join(",\n",@tmp);
       print $handle "\n);\n";
    }
