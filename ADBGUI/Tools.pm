@@ -43,7 +43,7 @@ sub removeTime {
 
 sub queryLDAP {
    my $config = shift;
-   return undef
+   return $config->{callback}($config, undef, "Incomplete config")
       unless (
          $config->{host} &&
          $config->{callback} &&
