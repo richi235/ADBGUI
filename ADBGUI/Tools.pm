@@ -50,7 +50,7 @@ sub queryLDAP {
          $config->{ldapbase} && 
  defined($config->{ldapfilter}) &&
          $config->{username} &&
-         $config->{password});
+ defined($config->{password}));
    POE::Session->create(
       inline_states => {
          _start => sub {
