@@ -843,6 +843,7 @@ sub onClientData {
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          curSession => $options->{curSession},
          oid => $options->{oid},
+         rowsadded => 0,
          sortby => $orderby,
          start => $options->{heap}->{connection}->{"q"}->param("start"),
          end =>   $options->{heap}->{connection}->{"q"}->param("end"),
@@ -1182,6 +1183,7 @@ sub onGetRowCount {
    }
    $options->{start} = 0;
    $options->{end} = 0;
+   $options->{rowsadded} = 0;
    $self->onGetLines($options);
 }
 
