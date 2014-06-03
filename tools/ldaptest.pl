@@ -13,7 +13,7 @@ my $ret = queryLDAP({
    host       => 'localhost',
    username   => 'ldapbind',
    password   => $password,
-   timeout    => 5, # Sekunden
+   timeout    => 30, # Sekunden
    callback   => sub {
       my $config = shift;
       my $data   = shift;
@@ -24,13 +24,13 @@ my $ret = queryLDAP({
       print "done: ".($data ? "".(join("\n\n----------\n\n", map {
          my $curattr = $_;
          join("\n", map {
-            $_."=".join("#", @{$curattr->get_value( $_, asref => 1 )});
+            $_."=".join("#", map { length($_) } @{$curattr->get_value( $_, asref => 1 )});
          } $curattr->attributes())
       } @$data))." " : "").
       "\n\n".($error ? "error: ".$error : "ok")."\n\n=========\n\n";
    },
 });
 
-print "RET:".($ret || "UNDEF").":\n";
+#print "RET:".($ret || "UNDEF").":\n";
 
 $poe_kernel->run();
