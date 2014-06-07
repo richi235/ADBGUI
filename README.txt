@@ -1,4 +1,4 @@
-This software allows to have an gui for a database and the internal links of the tables. For office people you can say its an opensource access in the browser.
+This software allows you to create a gui for a database and the internal links of the tables. For office people you can say its an opensource (M$) access in the browser.
 
 More details you can find here:
 
