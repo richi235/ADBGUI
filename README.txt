@@ -1,3 +1,10 @@
+This software allows to have an gui for a database and the internal links of the tables. For office people you can say its an opensource access in the browser.
+
+More details you can find here:
+
+http://www.adbgui.org/
+http://www.adbgui.org/lib/exe/detail.php?id=start&media=howto:screenshot.jpg
+
 Autoinstall on debian:
 
 export PROJECTNAME=myproject
