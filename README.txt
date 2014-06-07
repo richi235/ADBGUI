@@ -4,7 +4,7 @@ export PROJECTNAME=myproject
 apt-get update
 apt-get --force-yes -y install git libjson-perl
 cd /opt/
-git clone https://git.saytec.ag/pRiVi/adbgui.git
+git clone git@github.com:pRiVi/ADBGUI.git
 mv adbgui $PROJECTNAME
 cd $PROJECTNAME
 # If you want to use the qooxdoo feature   : paramter "qx"
