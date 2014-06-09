@@ -1196,7 +1196,8 @@ sub handleCrossLink {
       if ($options->{crossid} && $options->{crosstable}) {
          # TODO:XXX:FIXME: Hier wird derzeit nur ein Link verarbeitet, wenn mehrere von der gleichen Tabelle auf eine Tabelle zeigen werden diese nicht aktiv oder doppelt.
          my $linktabledef = $self->{dbm}->getTableDefiniton($options->{table});
-         my $link = [grep { $linktabledef->{columns}->{$_}->{linkto} eq $options->{crosstable} } (keys %{$linktabledef->{columns}})];
+         my $link = [grep { ($linktabledef->{columns}->{$_}->{linkto} &&
+                            ($linktabledef->{columns}->{$_}->{linkto} eq $options->{crosstable})) } (keys %{$linktabledef->{columns}})];
          # TODO:XXX:FIXME: Die cross* auf Sonderzeichen ueberpruefen!!! SQL Injection!!!
          push(@$where, "(".$options->{table}.$TSEP.(scalar(@$link) ? $link->[0] : $options->{crosstable}."_".$self->{dbm}->getIdColumnName($options->{crosstable}))."=".$options->{crossid}.")");
       } else {
