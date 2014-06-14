@@ -2570,7 +2570,8 @@ sub doSpecialColumns {
          CGI::escape($column)." ".
          CGI::escape($options->{$UNIQIDCOLUMNNAME}||defined($options->{$UNIQIDCOLUMNNAME}) ? $options->{$UNIQIDCOLUMNNAME} : Log("ID is undefined!", $ERROR))." ".
          CGI::escape($options->{defaults}->{$options->{table}.$TSEP.$column} || '')." ".
-         CGI::escape($curtabledef->{columns}->{$column}->{help} || '')); # , $options->{connection}->{sessionid} || 0);
+         CGI::escape($curtabledef->{columns}->{$column}->{help} || '')." ".
+         CGI::escape($options->{urlappend}));
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($options->{window}."_tabs_".$column)." ".CGI::escape($options->{window}."_tabs_".$column."_data")."\n"); # , $options->{connection}->{sessionid} || 0);
    }
    my $tables = $self->{dbm}->getDBBackend($options->{table})->getTableList();

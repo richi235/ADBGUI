@@ -1309,6 +1309,7 @@ qx.Class.define("myproject.Application", {
                      var forid = unescape(cmdparam.shift());
                      var textarea = new myproject.myTextArea(unescape(cmdparam.shift()).replace(/\&lt;/g, "<"));
                      textarea.infotext = unescape(cmdparam.shift());
+                     textarea.urlappend = unescape(cmdparam.shift());
                      textarea.flex = 1;
                      textarea.autoSize = true;
                      if (cmd == "createhtmltextedit") {
@@ -1358,14 +1359,14 @@ qx.Class.define("myproject.Application", {
                               this.main.processCommands("setactive " + this.lockable[i] + " ");
                            }
                            this.main.processCommands("setactive " + this.id + " ");
-                           this.main.sendRequest("job=saveedit,oid=" + this.id.toString() + ",id=" + this.forid + ",table=" + this.table + "," + this.columnname + "=" + escape(this.getValue()));
+                           this.main.sendRequest("job=saveedit,oid=" + this.id.toString() + ",id=" + this.forid + ",table=" + this.table + "," + this.columnname + "=" + escape(this.getValue()) + this.urlappend);
                            dstitem.changed = 0;
                         }, dstitem);
                         this.main.processCommands("addobject " + dstid + "_toolbar " + dstid + "_toolbar_speichern");
                         this.lockable.push(dstid + "_toolbar_speichern");
                         if (dstitem.htmloption == 1) {
                            this.main.processCommands("createtoolbarbutton " + dstid + "_toolbar_preview Vorschau resource/qx/icon/Tango/32/actions/system-search.png", function(e) {
-                              this.main.sendRequest("job=htmlpreview,oid=" + this.id.toString() + ",id=" + this.forid + ", "+ ",table=" + this.table + ",column=" + this.columnname + ",value=" + escape(this.getValue()));
+                              this.main.sendRequest("job=htmlpreview,oid=" + this.id.toString() + ",id=" + this.forid + ", "+ ",table=" + this.table + ",column=" + this.columnname + ",value=" + escape(this.getValue()) + this.urlappend);
                            }, dstitem);
                            this.main.processCommands("addobject " + dstid + "_toolbar " + dstid + "_toolbar_preview");
                            this.lockable.push(dstid + "_toolbar_preview");
