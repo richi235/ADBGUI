@@ -622,6 +622,7 @@ sub onClientData {
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
+         "q" => $options->{heap}->{connection}->{"q"},
          curSession => $options->{curSession},
          oid => $options->{oid},
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
