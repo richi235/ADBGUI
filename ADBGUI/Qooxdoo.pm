@@ -935,7 +935,9 @@ sub parseFormularData {
          $columns->{$options->{table}.$TSEP.$column} = htmlUnEscape(CGI::unescape($options->{"q"}->param($column)))
             if (defined($options->{"q"}->param($column)) || ($column eq $self->{dbm}->getIdColumnName($options->{table})));
          delete $columns->{$options->{table}.$TSEP.$column}
-            if (($columns->{$options->{table}.$TSEP.$column} eq "") && $curtabledef->{columns}->{$column}->{hidden});
+            if ((exists($columns->{$options->{table}.$TSEP.$column}) &&
+                defined($columns->{$options->{table}.$TSEP.$column}) &&
+                ($columns->{$options->{table}.$TSEP.$column} eq "")) && $curtabledef->{columns}->{$column}->{hidden});
       }
    #} else {
    #   foreach my $column (grep { (exists($curtabledef->{columns}->{$_}) &&
@@ -1293,7 +1295,7 @@ sub onGetLines {
                $self->sendToQXForSession($options->{connection}->{sessionid} || 0, $line);
             }
          }
-         print "TABLE:".$options->{table}.":NUM:".$ret->[1].":".($options->{rowsadded}||0).":\n";
+         #print "TABLE:".$options->{table}.":NUM:".$ret->[1].":".($options->{rowsadded}||0).":\n";
          $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addrowsdone ".$oid." ".($ret->[1]+($options->{rowsadded}||0)).($options->{ionum} ? " ".$options->{ionum} : ""));
       },
    });
@@ -2568,7 +2570,6 @@ sub doSpecialColumns {
          CGI::escape($options->{$UNIQIDCOLUMNNAME}||defined($options->{$UNIQIDCOLUMNNAME}) ? $options->{$UNIQIDCOLUMNNAME} : Log("ID is undefined!", $ERROR))." ".
          CGI::escape($options->{defaults}->{$options->{table}.$TSEP.$column} || '')." ".
          CGI::escape($curtabledef->{columns}->{$column}->{help} || '')); # , $options->{connection}->{sessionid} || 0);
-      print "ID=".$options->{$UNIQIDCOLUMNNAME}."\n";
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($options->{window}."_tabs_".$column)." ".CGI::escape($options->{window}."_tabs_".$column."_data")."\n"); # , $options->{connection}->{sessionid} || 0);
    }
    my $tables = $self->{dbm}->getDBBackend($options->{table})->getTableList();
