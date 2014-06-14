@@ -11,7 +11,7 @@ BEGIN {
    our @EXPORT_OK = qw/daemonize mergeColumnInfos hashKeysRightOrder ensureLength
                        getAffectedColumns simplehashclone arraycompare getFileUploadJavascriptForIDs
                        hashcompare padNumber time2human time2sql normaliseLine queryLDAP
-                       Log MakeTime getIncludedTables makeInfoLine new_anon_scalar
+                       Log MakeTime getIncludedTables makeInfoLine new_anon_scalar generatePassword
                        getTimeLineHTML printLine printLineNospan htmlUnEscape removeTime
                        beschriftung cutDateInfos preZero toDateObj hidebegin hideend
                        md5crypt md5pw secsToHours hoursToHourMinute getURL ReadConfig/;
@@ -32,6 +32,16 @@ our $LOG_SYSLOG = 2**2;
 
 our $logdst = $LOG_STDOUT;
 our $loglevel = $INFO;
+
+sub generatePassword {
+   my $length = shift;
+   my $possible = 'abcdefghijkmnpqrstuvwxyz23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+   my $password = '';
+   while (length($password) < $length) {
+     $password .= substr($possible, (int(rand(length($possible)))), 1);
+   }
+   return $password
+}
 
 sub removeTime {
    my $text = shift;
