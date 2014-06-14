@@ -2,10 +2,13 @@ cd install 2>/dev/null
 
 cd ..
 
-echo WARNING: You are deleting and reinitialising all your database content if you enter your db password now!!!
-
-# MySQL
-perl ADBGUI/createMysql.pl dropdb $1|mysql -p
+if [[ $1 == "dropdb" || $2 == "dropdb" ]]; then
+   echo WARNING: You are deleting and reinitialising all your database content if you enter your db password now!!!;
+   # MySQL
+   perl ADBGUI/createMysql.pl dropdb $1|mysql -p;
+else
+   echo DB is not reinitalised. use "dropdb" to do this.
+fi
 
 # Bilder aller Projekte joinen
 rm -R bilder 2>/dev/null
