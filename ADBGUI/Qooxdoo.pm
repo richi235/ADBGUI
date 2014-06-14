@@ -1755,7 +1755,6 @@ sub onSaveEditEntry {
       Log("onSaveEditEntry: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
       return undef;
    }
-   my $ret = undef;
    my $id = $options->{"q"}->param($UNIQIDCOLUMNNAME) || $options->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
    $self->{dbm}->NewUpdateData({
       %$options,
