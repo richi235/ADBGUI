@@ -2468,15 +2468,16 @@ sub onNewEditEntry {
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($window."_data_toolbar")." ".CGI::escape($window."_data_toolbar_close")); # , $options->{connection}->{sessionid} || 0);
 
    $self->doSpecialColumns({
+      %$options,
       basetable => $options->{table},
-      table => $options->{table},
+      #table => $options->{table},
       window => $window,
-      curSession => $options->{curSession},
+      #curSession => $options->{curSession},
       defaults => $ret->[0]->[0],
       oid => $options->{oid},
-      connection => $options->{connection},
-      onlyWithMark => $options->{onlyWithMark},
-      $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
+      #connection => $options->{connection},
+      #onlyWithMark => $options->{onlyWithMark},
+      #$UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
    });
    #$self->sendToQXForSession($options->{connection}->{sessionid} || 0, $options->{connection}->{sessionid} || 0, "createbutton ".CGI::escape($window."_button")." ".
    #                                               CGI::escape("Schliessen")." ".
