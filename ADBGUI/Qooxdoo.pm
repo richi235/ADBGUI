@@ -856,12 +856,13 @@ sub onClientData {
       });
    } elsif(($options->{job} eq "saveedit") ||
            ($options->{job} eq "newedit"))  {
+      my $id = $options->{$UNIQIDCOLUMNNAME} || $options->{heap}->{connection}->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
       my $params = {
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
          table => $options->{table},
-         $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME} || $options->{heap}->{connection}->{"q"}->param($self->{dbm}->getIdColumnName($options->{table})),
+         $UNIQIDCOLUMNNAME => $id,
          oid => $options->{oid},
          connection => $options->{heap}->{connection},
          curSession => $options->{curSession},
@@ -869,6 +870,7 @@ sub onClientData {
          job => $options->{job},
       };
       $params->{columns} = $self->parseFormularData($params);
+      $params->{columns}->{$options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table})} = $id;
       $self->onSaveEditEntry($params);
    } elsif($options->{job} eq "htmlpreview") {
       $self->onHTMLPreview({
@@ -1751,7 +1753,7 @@ sub onSaveEditEntry {
       return undef;
    }
    my $ret = undef;
-   my $id = $options->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
+   my $id = $options->{"q"}->param($UNIQIDCOLUMNNAME) || $options->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
    $self->{dbm}->NewUpdateData({
       %$options,
       cmd => ($id ? "UPDATE" : "NEW"),
