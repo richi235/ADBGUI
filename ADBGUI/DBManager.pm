@@ -63,7 +63,7 @@ sub new {
    #unlink($PIDFILE);
    #$kernel->run();
    #exit(0);
-
+   
    return $self;
 }
 
@@ -584,9 +584,13 @@ sub NewUpdateData {
    my $self = shift;
    my $options = shift;
    my $moreparams = shift;
-   unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{cmd} && $options->{columns}) {
+   unless ($options->{onDone}) {
+      Log("DBManager: NewUpdateData: Internal structure change: You now have to use onDone!", $ERROR);
+      return $options->{onDone}("INTERNAL ERROR 1", $options, $self);
+   }
+   unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{cmd} && $options->{columns} && $options->{onDone}) {
       Log("DBManager: NewUpdateData: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
-      return "ACCESS DENIED";
+      return $options->{onDone}("ACCESS DENIED", $options, $self);
    }
    my $db = $self->getDBBackend($options->{table});
    # ACHTUNG: Wenn irgendwann mal nicht nur der Admin Eintraege Updaten/Anlegen
@@ -597,10 +601,10 @@ sub NewUpdateData {
    # Beides ist hier im Moment nicht behandelt und ueberprueft!!11!11einselfelfeins
    if (defined(my $err = $self->checkRights($options->{curSession}, $MODIFY, $options->{table}, $options->{uniqid}))) {
       Log("DBManager: NewUpdateData: NEW/UPDATE: ".$options->{cmd}.": ACCESS DENIED: ".$err->[0], $err->[1]);
-      return "ACCESS DENIED";
+      return $options->{onDone}("ACCESS DENIED", $options, $self);
    }
    if (defined(my $err = $self->BeforeNewUpdate($options->{table}, $options->{cmd}, $options->{columns}, $options->{curSession}))) {
-      return $err;
+      return $options->{onDone}($err, $options, $self);
    }
    foreach (keys(%{$options->{columns}})) {
       Log("DBManager: NewUpdateData: NEW/UPDATE: COL:".$_."=".((
@@ -616,7 +620,7 @@ sub NewUpdateData {
       #}
       unless ($matchingcolumns[0]) {
          Log("DBManager: NewUpdateData: NEW/UPDATE: Column: Unknown column :".$column.": in table :".$options->{table}.":", $WARNING);
-         return "Unknown column :".$column.": in table :".$options->{table}.":";
+         return $options->{onDone}("Unknown column :".$column.": in table :".$options->{table}.":", $options, $self);
       }      
       my $curcolumndef = mergeColumnInfos($db->{config}->{DB}, $db->{config}->{DB}->{tables}->{$options->{table}}->{columns}->{$matchingcolumns[0]});
       if (!(defined($options->{columns}->{$column}) &&
@@ -625,7 +629,7 @@ sub NewUpdateData {
                                                                            ($curcolumndef->{type} eq "boolean")) && defined($options->{columns}->{$column})))) {
             # TODO:XXX:FIXME: Man sollte im Qooxdooformular die entsprechende Spalte rot highlight und den Cursor gleich reinsetzen.
             Log("DBManager: NewUpdateData: NEW/UPDATE: Column: :".$column.": must have a value!", $WARNING);
-            return '"'.($curcolumndef->{label} || $matchingcolumns[0]).'"'." darf nicht leer sein!";
+            return $options->{onDone}('"'.($curcolumndef->{label} || $matchingcolumns[0]).'"'." darf nicht leer sein!", $options, $self);
          }
       } else {
          $options->{columns}->{$column} =~ s/,/./gi
@@ -634,12 +638,12 @@ sub NewUpdateData {
             if ($curcolumndef->{notnull}) {
                # TODO:XXX:FIXME: Man sollte im Qooxdooformular die entsprechende Spalte rot highlight und den Cursor gleich reinsetzen.
                Log("DBManager: NewUpdateData: NEW/UPDATE: Column: :".$column.": failed syntaxcheck ".$curcolumndef->{syntaxcheck}." !", $WARNING);
-               return "".((!$curcolumndef->{label} || ($curcolumndef->{label} =~ m,^\s*$,)) ? $matchingcolumns[0] : '"'.$curcolumndef->{label}.'"')." darf nicht leer sein!";
+               return $options->{onDone}("".((!$curcolumndef->{label} || ($curcolumndef->{label} =~ m,^\s*$,)) ? $matchingcolumns[0] : '"'.$curcolumndef->{label}.'"')." darf nicht leer sein!", $options, $self);
             }
          } elsif ($curcolumndef->{syntaxcheck} && ($options->{columns}->{$column} !~ $curcolumndef->{syntaxcheck})) {
             # TODO:XXX:FIXME: Man sollte im Qooxdooformular die entsprechende Spalte rot highlight und den Cursor gleich reinsetzen.
             Log("DBManager: NewUpdateData: NEW/UPDATE: Column: :".$column.": failed syntaxcheck ".$curcolumndef->{syntaxcheck}." !", $WARNING);
-            return "".((!$curcolumndef->{label} || ($curcolumndef->{label} =~ m,^\s*$,)) ? $matchingcolumns[0] : '"'.$curcolumndef->{label}.'"')." hat mit ".'"'.$options->{columns}->{$column}.'"'." ein falsches Format!".($curcolumndef->{syntaxchecktext} ? " ".$curcolumndef->{syntaxcheck} : "");
+            return $options->{onDone}("".((!$curcolumndef->{label} || ($curcolumndef->{label} =~ m,^\s*$,)) ? $matchingcolumns[0] : '"'.$curcolumndef->{label}.'"')." hat mit ".'"'.$options->{columns}->{$column}.'"'." ein falsches Format!".($curcolumndef->{syntaxchecktext} ? " ".$curcolumndef->{syntaxcheck} : ""), $options, $self);
          }
       }
       # Secrets koennen nicht mit "" ueberschrieben werden.
@@ -676,9 +680,9 @@ sub NewUpdateData {
    }
    unless (defined($ret)) {
       Log("DBManager: onNewLineServer: NEW/UPDATE: ".$options->{cmd}." ".$options->{table}." FAILED: SQL Query failed.", $WARNING);
-      return "INTERNAL ERROR";
+      return $options->{onDone}("INTERNAL ERROR 2", $options, $self);
    }
-   return $ret;
+   return $options->{onDone}($ret, $options, $self);
 }
 
 sub loginUser {
@@ -1044,17 +1048,24 @@ sub LineHandler {
             # seine Daten schickt, gibts den Connection Close, und der Client
             # checked gar nix mehr. Also warten wir ab bis er gesagt hat was er
             # sagen will, und verweigern dann.
-            if (defined($ret = $self->NewUpdateData({
+            $self->NewUpdateData({
                cmd => $cmd,
                table => $table,
                columns => $connection->{columns},
                uniqid => $uniqid,
-               curSession => $curSession
-            })) && ($ret !~ /^\d+/)) {
-               $client->send($cmd." ".$table." FAILED".($ret ? " ".$ret : "")."\n");
-            } else {
-               $client->send($cmd." ".$table." OK\n");
-            }
+               client => $client,
+               curSession => $curSession,
+               onDone => sub {
+                  my $ret = shift;
+                  my $options = shift;
+                  my $self = shift;
+                  if (!defined($ret) || ($ret !~ /^\d+/)) {
+                     $options->{client}->send($options->{cmd}." ".$options->{table}." FAILED".($ret ? " ".$ret : "")."\n");
+                  } else {
+                     $options->{client}->send($options->{cmd}." ".$options->{table}." OK\n");
+                  }
+               },
+            }),
             delete $connection->{columns};
          } else {
             return $self->protokolError($client);

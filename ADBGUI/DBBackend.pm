@@ -459,7 +459,11 @@ sub getDataSet {
       $line = $sth->fetchrow_hashref;
    }
    $sth->finish();
-   return [$ret, $linecount];
+   if ($params->{onDone}) {
+      $params->{onDone}($params, [$ret, $linecount]);
+   } else {
+      return [$ret, $linecount];
+   }
 }
 
 sub getTableInfo {
