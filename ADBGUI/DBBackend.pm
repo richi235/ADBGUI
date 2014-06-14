@@ -594,7 +594,7 @@ sub insertDataSet {
          Log("DBBackend: insertDataSet: GETTABLEINFO: Got :".scalar(@{$ret}).": row for INFO-Question for table :".$params->{table}.":!", $WARNING);
          return undef;
       }
-      $id = $ret->[0]->{'MAX_'.$UNIQIDCOLUMNNAME} || $ret->[0]->{'max_'.$UNIQIDCOLUMNNAME};
+      $id = $ret->[0]->{'MAX_'.$self->getIdColumnName($params->{table})} || $ret->[0]->{'max_'.$self->getIdColumnName($params->{table})};
       unless ($id) {
          Log("DBBackend: insertDataSet: Unable to find the new ID!", $ERROR);
          die;
