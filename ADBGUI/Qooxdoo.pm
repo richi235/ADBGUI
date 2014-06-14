@@ -1244,7 +1244,8 @@ sub onGetLines {
       return Log("DBManager: onGetLines: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
    }
    my $ret = undef;
-   my $count = ($options->{end}-$options->{start}+1);
+   my $count = ($options->{end}-$options->{start}+1)
+      if ($options->{start} && $options->{end});
    my $db    = $self->{dbm}->getDBBackend($options->{table});
    my $where = $self->{dbm}->Where_Pre($options);
    my $tablebackrefs = 0;
