@@ -366,7 +366,7 @@ sub sendToQXForSession {
             }
          }
       } else {
-         print "Session ".$sessionid." not found.\n";
+         Log("Session ".$sessionid." not found.", $WARNING);
       }
    }
 }
