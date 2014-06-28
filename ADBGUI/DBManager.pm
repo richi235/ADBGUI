@@ -79,7 +79,7 @@ sub contextAllowed {
    my $self = shift;
    my $contextid = shift;
    my $options = shift;
-   return undef if ($contextid eq $options->{curSession}->{$USERSTABLENAME.$TSEP.$self->getIdColumnName($USERSTABLENAME)});
+   return undef if ($options->{curSession}->{$USERSTABLENAME.$TSEP.$self->getIdColumnName($USERSTABLENAME)} && ($contextid eq $options->{curSession}->{$USERSTABLENAME.$TSEP.$self->getIdColumnName($USERSTABLENAME)}));
    return undef if (exists($options->{curSession}->{context}->{cache}->{$contextid}) && !($options->{mustRevalidate}));
    my $err = $self->checkRights($options->{curSession}, $ADMIN);
    return (defined($err) ? $err->[0] : undef);
@@ -710,7 +710,7 @@ sub LineHandler {
       $connection->{state} = $self->{NOSTATE};
    } else {
       Log("DBManager: onNewLineServer: LINE:".$_.":", $DEBUG);
-      my $curSession = $self->getSession($connection->{sessionID});
+      my $curSession = $self->getSession($connection->{sessionID}) || {};
       if (/^AUTH\s(\S+)(\s(\S+))?(\s(\S+))?$/) {
          my $user = $1;
          my $pass = $3;
