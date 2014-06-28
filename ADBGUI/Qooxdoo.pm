@@ -2568,6 +2568,8 @@ sub doSpecialColumns {
       next unless $self->{dbm}->isMarked($options->{onlyWithMark}, $curtabledef->{columns}->{$column}->{marks});
       next if (($curtabledef->{columns}->{$column}->{type} ne "htmltext") &&
                ($curtabledef->{columns}->{$column}->{type} ne "longtext"));
+      next if ($curtabledef->{columns}->{$column}->{hidden} ||
+               $curtabledef->{columns}->{$column}->{readonly});
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addtab ".CGI::escape($options->{window}."_tabs")." ".CGI::escape($options->{window}."_tabs_".$column)." ".CGI::escape($curtabledef->{columns}->{$column}->{label} || $column)); # , $options->{connection}->{sessionid} || 0);
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "create".(($curtabledef->{columns}->{$column}->{type} eq "htmltext") ? "html" : "")."textedit ".CGI::escape($options->{window}."_tabs_".$column."_data")." ".
          CGI::escape($options->{table})." ".
