@@ -1886,7 +1886,7 @@ sub onFilter {
       menutype => "popup",
    }) {
       if ($self->{dbm}->{config}->{nojson}) {
-         $poe_kernel->yield(sendToQX => $options->{job}." ".CGI::escape($curButton->{id})." ".CGI::escape($curButton->{label})." ".CGI::escape($curButton->{image})." ".$curButton->{action});
+         $poe_kernel->yield(sendToQX => $curButton->{job}." ".CGI::escape($curButton->{id})." ".CGI::escape($curButton->{label})." ".CGI::escape($curButton->{image})." ".$curButton->{action});
       } else {
          $poe_kernel->yield(sendToQX => "JSON ".CGI::escape(JSON->new->allow_nonref->encode($curButton)));
       }
