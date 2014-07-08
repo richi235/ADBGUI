@@ -1,10 +1,17 @@
+This software allows you to create a gui for a database and the internal links of the tables. For office people you can say its an opensource (M$) access in the browser.
+
+More details you can find here:
+
+http://www.adbgui.org/
+http://www.adbgui.org/lib/exe/detail.php?id=start&media=howto:screenshot.jpg
+
 Autoinstall on debian:
 
 export PROJECTNAME=myproject
 apt-get update
 apt-get --force-yes -y install git libjson-perl
 cd /opt/
-git clone https://git.saytec.ag/pRiVi/adbgui.git
+git clone git@github.com:pRiVi/ADBGUI.git
 mv adbgui $PROJECTNAME
 cd $PROJECTNAME
 # If you want to use the qooxdoo feature   : paramter "qx"
