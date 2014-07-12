@@ -1,6 +1,6 @@
-# ADBGui
+# ADBGUI
 
-ADBGui allows you to create a gui for a database. 
+The ADBGUI Framework allows you to create a custom gui for your database. 
 
 For office people you can say its a lightweight, extinsible opensource  M$ Access in the browser.
 
@@ -31,8 +31,9 @@ cd $PROJECTNAME
 # If you want to use the qooxdoo feature   : paramter "qx"
 # If you do not want apache to be installed: paramter "noap"
 bash install/install.debian.sh qx
-perl install/skeleton.pl $PROJECTNAME # Here you install all your modules, or a skeleton for a new project
+
+# Here you install all your modules, or a skeleton for a new project
+perl install/skeleton.pl $PROJECTNAME 
 bash install/reconfig.debian.sh
 perl dbm.pl
 ```
-
