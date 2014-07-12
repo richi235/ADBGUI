@@ -9,6 +9,10 @@ For office people you can say its a lightweight, extinsible opensource  M$ Acces
 * http://www.adbgui.org/    
 * http://www.adbgui.org/lib/exe/detail.php?id=start&media=howto:screenshot.jpg
 
+## Supported Databases
+* MySQL
+* PostgreSQL
+* csv files
 
 
 ## Installation on Debian GNU/Linux:
