@@ -1,6 +1,6 @@
 # ADBGUI
 
-The ADBGUI Framework allows you to create a custom gui for your database. 
+The ADBGUI Framework allows you to easily create a custom Web-Gui for your database. 
 
 For office people you can say its a lightweight, extinsible opensource  M$ Access in the browser.
 
@@ -18,11 +18,13 @@ For office people you can say its a lightweight, extinsible opensource  M$ Acces
 ## Installation on Debian GNU/Linux:
 
 ```bash
+# The name of your database frontend empowerd with ADBGUI
 export PROJECTNAME=myproject
 
 apt-get update
 apt-get --force-yes -y install git libjson-perl
 
+# clone to local folder (here /opt )
 cd /opt/
 git clone https://github.com/pRiVi/ADBGUI.git
 mv adbgui $PROJECTNAME
