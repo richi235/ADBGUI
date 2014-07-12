@@ -6,8 +6,8 @@ For office people you can say its a lightweight, extinsible opensource  M$ Acces
 
 
 ## Official Documentation
-http://www.adbgui.org/
-http://www.adbgui.org/lib/exe/detail.php?id=start&media=howto:screenshot.jpg
+* http://www.adbgui.org/    
+* http://www.adbgui.org/lib/exe/detail.php?id=start&media=howto:screenshot.jpg
 
 
 
