@@ -2415,7 +2415,7 @@ sub onNewEditEntry {
    } else {
       $window = $options->{table}."_".$suffix;
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "destroy ".$window); # , , $options->{connection}->{sessionid} || 0);
-      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createwin ".$window." ".($curtabledef->{qxeditwidth} || $qxwidth)." ".($curtabledef->{qxeditheight} || $qxheight)." ".CGI::escape(($options->{$UNIQIDCOLUMNNAME} ? "Details von Eintrag ".$options->{$UNIQIDCOLUMNNAME} : "Neuer Eintrag")." in ".($curtabledef->{label} || $options->{table}))." ".(CGI::escape($curtabledef->{icon} || ''))); # , , $options->{connection}->{sessionid} || 0);
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createwin ".$window." ".($curtabledef->{qxeditwidth} || $qxwidth)." ".($curtabledef->{qxeditheight} || $qxheight)." ".CGI::escape(($options->{newedittitle} || $options->{title} || ($options->{$UNIQIDCOLUMNNAME} ? "Details von Eintrag ".$options->{$UNIQIDCOLUMNNAME} : "Neuer Eintrag")." in ".($curtabledef->{label} || $options->{table})))." ".(CGI::escape($curtabledef->{icon} || ''))); # , , $options->{connection}->{sessionid} || 0);
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "open ".$window." 1"); # , , $options->{connection}->{sessionid} || 0);
       # TODO:FIXME:XXX: Modal sollte konfigurierbar sein!
       #$self->sendToQXForSession($options->{connection}->{sessionid} || 0, "modal ".$window." 1", $options->{connection}->{sessionid} || 0);
