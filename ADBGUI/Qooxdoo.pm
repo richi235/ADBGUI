@@ -755,6 +755,7 @@ sub onClientData {
             $self->onNewEditEntry({
                table => $table,
                oid => $options->{oid},
+               connection => $options->{connection},
                curSession => $options->{curSession},
                $UNIQIDCOLUMNNAME => $id,
                # TODO:XXX:FIXME: Das wird ueber overridecolumns gemacht... Gute idee?
@@ -1272,6 +1273,9 @@ sub onGetLines {
          my $ret = shift;
          my $msg = shift;
          my $options = $params->{options};
+         $options->{onDone} = [$options->{onDone}]
+            if (ref($options->{onDone}) ne "ARRAY");
+         my $onDone = shift(@{$options->{onDone}});
          #if (ref($params->{options}->{getDataSetOnDone}) eq "CODE") {
          #   $ret = $params->{options}->{getDataSetOnDone}($params, $ret);
          #   return unless defined $ret;
@@ -1298,6 +1302,8 @@ sub onGetLines {
          }
          #print "TABLE:".$options->{table}.":NUM:".$ret->[1].":".($options->{rowsadded}||0).":\n";
          $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addrowsdone ".$oid." ".($ret->[1]+($options->{rowsadded}||0)).($options->{ionum} ? " ".$options->{ionum} : ""));
+         return $onDone($ret, $options, $self)
+            if ($onDone && ref($onDone) eq "CODE");
       },
    });
 }
@@ -2414,7 +2420,7 @@ sub onNewEditEntry {
    } else {
       $window = $options->{table}."_".$suffix;
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "destroy ".$window); # , , $options->{connection}->{sessionid} || 0);
-      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createwin ".$window." ".($curtabledef->{qxeditwidth} || $qxwidth)." ".($curtabledef->{qxeditheight} || $qxheight)." ".CGI::escape(($options->{$UNIQIDCOLUMNNAME} ? "Details von Eintrag ".$options->{$UNIQIDCOLUMNNAME} : "Neuer Eintrag")." in ".($curtabledef->{label} || $options->{table}))." ".(CGI::escape($curtabledef->{icon} || ''))); # , , $options->{connection}->{sessionid} || 0);
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createwin ".$window." ".($curtabledef->{qxeditwidth} || $qxwidth)." ".($curtabledef->{qxeditheight} || $qxheight)." ".CGI::escape(($options->{newedittitle} || $options->{title} || ($options->{$UNIQIDCOLUMNNAME} ? "Details von Eintrag ".$options->{$UNIQIDCOLUMNNAME} : "Neuer Eintrag")." in ".($curtabledef->{label} || $options->{table})))." ".(CGI::escape($curtabledef->{icon} || ''))); # , , $options->{connection}->{sessionid} || 0);
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "open ".$window." 1"); # , , $options->{connection}->{sessionid} || 0);
       # TODO:FIXME:XXX: Modal sollte konfigurierbar sein!
       #$self->sendToQXForSession($options->{connection}->{sessionid} || 0, "modal ".$window." 1", $options->{connection}->{sessionid} || 0);
