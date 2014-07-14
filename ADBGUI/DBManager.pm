@@ -584,13 +584,16 @@ sub NewUpdateData {
    my $self = shift;
    my $options = shift;
    my $moreparams = shift;
-   unless ($options->{onDone}) {
+   $options->{onDone} = [$options->{onDone}]
+      if (ref($options->{onDone}) ne "ARRAY");
+   my $onDone = shift(@{$options->{onDone}});
+   unless ($onDone && (ref($onDone) eq "CODE")) {
       Log("DBManager: NewUpdateData: Internal structure change: You now have to use onDone!", $ERROR);
-      return $options->{onDone}("INTERNAL ERROR 1", $options, $self);
+      return "ONDONE ERROR";
    }
    unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{cmd} && $options->{columns} && $options->{onDone}) {
       Log("DBManager: NewUpdateData: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
-      return $options->{onDone}("ACCESS DENIED", $options, $self);
+      return &$onDone("ACCESS DENIED", $options, $self);
    }
    my $db = $self->getDBBackend($options->{table});
    # ACHTUNG: Wenn irgendwann mal nicht nur der Admin Eintraege Updaten/Anlegen
@@ -601,10 +604,10 @@ sub NewUpdateData {
    # Beides ist hier im Moment nicht behandelt und ueberprueft!!11!11einselfelfeins
    if (defined(my $err = $self->checkRights($options->{curSession}, $MODIFY, $options->{table}, $options->{uniqid}))) {
       Log("DBManager: NewUpdateData: NEW/UPDATE: ".$options->{cmd}.": ACCESS DENIED: ".$err->[0], $err->[1]);
-      return $options->{onDone}("ACCESS DENIED", $options, $self);
+      return &$onDone("ACCESS DENIED", $options, $self);
    }
    if (defined(my $err = $self->BeforeNewUpdate($options->{table}, $options->{cmd}, $options->{columns}, $options->{curSession}))) {
-      return $options->{onDone}($err, $options, $self);
+      return &$onDone($err, $options, $self);
    }
    foreach (keys(%{$options->{columns}})) {
       Log("DBManager: NewUpdateData: NEW/UPDATE: COL:".$_."=".((
@@ -620,7 +623,7 @@ sub NewUpdateData {
       #}
       unless ($matchingcolumns[0]) {
          Log("DBManager: NewUpdateData: NEW/UPDATE: Column: Unknown column :".$column.": in table :".$options->{table}.":", $WARNING);
-         return $options->{onDone}("Unknown column :".$column.": in table :".$options->{table}.":", $options, $self);
+         return &$onDone("Unknown column :".$column.": in table :".$options->{table}.":", $options, $self);
       }      
       my $curcolumndef = mergeColumnInfos($db->{config}->{DB}, $db->{config}->{DB}->{tables}->{$options->{table}}->{columns}->{$matchingcolumns[0]});
       if (!(defined($options->{columns}->{$column}) &&
@@ -629,7 +632,7 @@ sub NewUpdateData {
                                                                            ($curcolumndef->{type} eq "boolean")) && defined($options->{columns}->{$column})))) {
             # TODO:XXX:FIXME: Man sollte im Qooxdooformular die entsprechende Spalte rot highlight und den Cursor gleich reinsetzen.
             Log("DBManager: NewUpdateData: NEW/UPDATE: Column: :".$column.": must have a value!", $WARNING);
-            return $options->{onDone}('"'.($curcolumndef->{label} || $matchingcolumns[0]).'"'." darf nicht leer sein!", $options, $self);
+            return &$onDone('"'.($curcolumndef->{label} || $matchingcolumns[0]).'"'." darf nicht leer sein!", $options, $self);
          }
       } else {
          $options->{columns}->{$column} =~ s/,/./gi
@@ -638,12 +641,12 @@ sub NewUpdateData {
             if ($curcolumndef->{notnull}) {
                # TODO:XXX:FIXME: Man sollte im Qooxdooformular die entsprechende Spalte rot highlight und den Cursor gleich reinsetzen.
                Log("DBManager: NewUpdateData: NEW/UPDATE: Column: :".$column.": failed syntaxcheck ".$curcolumndef->{syntaxcheck}." !", $WARNING);
-               return $options->{onDone}("".((!$curcolumndef->{label} || ($curcolumndef->{label} =~ m,^\s*$,)) ? $matchingcolumns[0] : '"'.$curcolumndef->{label}.'"')." darf nicht leer sein!", $options, $self);
+               return &$onDone("".((!$curcolumndef->{label} || ($curcolumndef->{label} =~ m,^\s*$,)) ? $matchingcolumns[0] : '"'.$curcolumndef->{label}.'"')." darf nicht leer sein!", $options, $self);
             }
          } elsif ($curcolumndef->{syntaxcheck} && ($options->{columns}->{$column} !~ $curcolumndef->{syntaxcheck})) {
             # TODO:XXX:FIXME: Man sollte im Qooxdooformular die entsprechende Spalte rot highlight und den Cursor gleich reinsetzen.
             Log("DBManager: NewUpdateData: NEW/UPDATE: Column: :".$column.": failed syntaxcheck ".$curcolumndef->{syntaxcheck}." !", $WARNING);
-            return $options->{onDone}("".((!$curcolumndef->{label} || ($curcolumndef->{label} =~ m,^\s*$,)) ? $matchingcolumns[0] : '"'.$curcolumndef->{label}.'"')." hat mit ".'"'.$options->{columns}->{$column}.'"'." ein falsches Format!".($curcolumndef->{syntaxchecktext} ? " ".$curcolumndef->{syntaxcheck} : ""), $options, $self);
+            return &$onDone("".((!$curcolumndef->{label} || ($curcolumndef->{label} =~ m,^\s*$,)) ? $matchingcolumns[0] : '"'.$curcolumndef->{label}.'"')." hat mit ".'"'.$options->{columns}->{$column}.'"'." ein falsches Format!".($curcolumndef->{syntaxchecktext} ? " ".$curcolumndef->{syntaxcheck} : ""), $options, $self);
          }
       }
       # Secrets koennen nicht mit "" ueberschrieben werden.
@@ -680,9 +683,9 @@ sub NewUpdateData {
    }
    unless (defined($ret)) {
       Log("DBManager: onNewLineServer: NEW/UPDATE: ".$options->{cmd}." ".$options->{table}." FAILED: SQL Query failed.", $WARNING);
-      return $options->{onDone}("INTERNAL ERROR 2", $options, $self);
+      return &$onDone("INTERNAL ERROR 2", $options, $self);
    }
-   return $options->{onDone}($ret, $options, $self);
+   return &$onDone($ret, $options, $self);
 }
 
 sub loginUser {

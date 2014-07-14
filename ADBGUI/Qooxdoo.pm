@@ -1273,6 +1273,9 @@ sub onGetLines {
          my $ret = shift;
          my $msg = shift;
          my $options = $params->{options};
+         $options->{onDone} = [$options->{onDone}]
+            if (ref($options->{onDone}) ne "ARRAY");
+         my $onDone = shift(@{$options->{onDone}});
          #if (ref($params->{options}->{getDataSetOnDone}) eq "CODE") {
          #   $ret = $params->{options}->{getDataSetOnDone}($params, $ret);
          #   return unless defined $ret;
@@ -1299,6 +1302,8 @@ sub onGetLines {
          }
          #print "TABLE:".$options->{table}.":NUM:".$ret->[1].":".($options->{rowsadded}||0).":\n";
          $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addrowsdone ".$oid." ".($ret->[1]+($options->{rowsadded}||0)).($options->{ionum} ? " ".$options->{ionum} : ""));
+         return $onDone($ret, $options, $self)
+            if ($onDone && ref($onDone) eq "CODE");
       },
    });
 }
