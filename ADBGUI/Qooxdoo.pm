@@ -755,6 +755,7 @@ sub onClientData {
             $self->onNewEditEntry({
                table => $table,
                oid => $options->{oid},
+               connection => $options->{connection},
                curSession => $options->{curSession},
                $UNIQIDCOLUMNNAME => $id,
                # TODO:XXX:FIXME: Das wird ueber overridecolumns gemacht... Gute idee?
