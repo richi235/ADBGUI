@@ -1768,12 +1768,9 @@ sub onSaveEditEntry {
          # TODO:FIXME:XXX: Das sollte an alle anderen user auch gehen, die auf der tabelle sind!
          # TODO:FIXME:XXX: ID sollte vom Rückgabewert des NewUpdateData genommen werden, und nicht vom CGI Objekt!
          if (defined($ret)) {
-            if (my $curid = $options->{"q"}->param($UNIQIDCOLUMNNAME) || $options->{"q"}->param($self->getIdColumnName($options->{table}))) {
-               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "updaterow ".CGI::escape($options->{table})." ".CGI::escape($curid));
-            } else {
-               Log("onSaveEditEntry: onDone: Cannot send updaterow notify: No curid.", $WARNING);
-            }
-            if ($ret =~ /^\d+$/) {# || ((!exists($curtabledef->{columns}->{$self->{dbm}->getIdColumnName($options->{table})})) && defined($ret))) {
+            my $curid = $options->{"q"}->param($UNIQIDCOLUMNNAME) || $options->{"q"}->param($self->getIdColumnName($options->{table}));
+            $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "updaterow ".CGI::escape($options->{table})." ".CGI::escape($curid||""));
+            if ($ret =~ /^\d+$/) {
                if (($options->{qxself}->{dbm}->{config}->{autocloseeditwindow} || $options->{close}) && $options->{"q"}->param("wid") && !$options->{noclose}) {
                   $self->onCloseObject({
                      "curSession" => $options->{curSession},
