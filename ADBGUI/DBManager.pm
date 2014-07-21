@@ -685,7 +685,15 @@ sub NewUpdateData {
       Log("DBManager: onNewLineServer: NEW/UPDATE: ".$options->{cmd}." ".$options->{table}." FAILED: SQL Query failed.", $WARNING);
       return &$onDone("INTERNAL ERROR 2", $options, $self);
    }
-   return &$onDone($ret, $options, $self);
+   while ($onDone) {
+      $ret = &$onDone($ret, $options, $self);
+      if ($ret && ($ret !~ m,^\d+$,)) {
+         Log("DBManager: NewUpdateData: onDone: ".$ret, $WARNING);
+         last;
+      }
+      $onDone = shift(@{$options->{onDone}});
+   }
+   return $ret;
 }
 
 sub loginUser {
