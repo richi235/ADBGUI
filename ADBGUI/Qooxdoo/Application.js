@@ -1701,7 +1701,7 @@ qx.Class.define("myproject.Application", {
                               dstitem.form[dstitem.dbname[j]].set({
                                  rich : true
                               });
-                           } else if (dstitem.viewstatus[j] == "readonly") {
+                           } else if ((dstitem.viewstatus[j] == "readonly") && (dstitem.types[j] != "list")) {
                               dstitem.form[dstitem.dbname[j]] = new qx.ui.basic.Label(unescape(dstitem.values[j]));
                               dstitem.form[dstitem.dbname[j]].setWrap(true);
                               //dstitem.form[dstitem.dbname[j]].setRich(true);
@@ -1770,6 +1770,8 @@ qx.Class.define("myproject.Application", {
                                  dstitem.form[dstitem.dbname[j]] = new qx.ui.form.SelectBox();
                                  dstitem.form[dstitem.dbname[j]].removeListener("mousewheel", dstitem.form[dstitem.dbname[j]]._onMouseWheel, dstitem.form[dstitem.dbname[j]]); 
                                  dstitem.form[dstitem.dbname[j]].selected = unescape(dstitem.values[j]);
+                                 if (dstitem.viewstatus[j] == "readonly")
+                                    dstitem.form[dstitem.dbname[j]].setEnabled(false);
                               } else if (dstitem.types[j] == "textarea") {
                                  dstitem.types[j] = "text";
                                  dstitem.form[dstitem.dbname[j]] = new qx.ui.form.TextArea(unescape(dstitem.values[j])).set({
@@ -1800,10 +1802,10 @@ qx.Class.define("myproject.Application", {
                                  this.parent.main.debug("changed " + this.parent.id);
                               }, dstitem.form[dstitem.dbname[j]]);
                            }
-                           if (!((dstitem.viewstatus[j] == "hidden") ||
+                           if ((!((dstitem.viewstatus[j] == "hidden") ||
                                 ((dstitem.viewstatus[j] == "readonly") &&
                                  (unescape(dstitem.columns[j]) == " ") &&
-                                 (unescape(dstitem.values[j]) == "")))) {
+                                 (unescape(dstitem.values[j]) == ""))))) {
                               var tmp = "";
                               if (unescape(dstitem.columns[j]) != " ") {
                                  tmp = unescape(dstitem.columns[j]) + " :";
@@ -1866,7 +1868,7 @@ qx.Class.define("myproject.Application", {
                            params = params + ",oid=" + escape(this.id.toString()) + ",table=" + escape(this.table) + ",wid=" + escape(this.wid) + this.urlappend;
                            for (var j = 0; j < dstitem.columns.length; j++) {
                               if (dstitem.types[j] == "composite") {
-                              } else if ((dstitem.viewstatus[j] == "readonly") ||
+                              } else if (((dstitem.viewstatus[j] == "readonly") && ((dstitem.types[j] != "list"))) ||
                                   (dstitem.types[j] == "text") ||
                                   (dstitem.types[j] == "password") ||
                                   (dstitem.types[j] == "number") ||
@@ -1917,7 +1919,8 @@ qx.Class.define("myproject.Application", {
                         var dstitem = this.main.objects.getItem(dstid);
                         for (var j = 0; j < dstitem.columns.length; j++) {
                            if (typeof(dstitem.label[j]) != 'undefined') {
-                              dstitem.label[j].setEnabled(true);
+                              if (!((dstitem.types[j] == "list") && (dstitem.viewstatus[j] == "readonly")))
+                                 dstitem.label[j].setEnabled(true);
                            }
                            if (typeof(dstitem.unit[j]) != 'undefined') {
                               dstitem.unit[j].setEnabled(true);
