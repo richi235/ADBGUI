@@ -55,6 +55,10 @@ if [[ $1 == "qx" || $2 == "qx" ]]; then
       ln -s source .;
       cd ..;
    done;
+   cd source/resource;
+   rm qx 2>/dev/null;
+   ln -s ../../build/resource/qx/ .;
+   cd ../..;
    cd ..;
 fi;
 
