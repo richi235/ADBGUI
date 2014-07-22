@@ -51,6 +51,7 @@ if [[ $1 == "qx" || $2 == "qx" ]]; then
    ln -s ../../bilder myproject/build/bilder;
 fi;
 
+# Apache2 Webserver
 if [[ $1 == "noap" || $2 == "noap" ]]; then
    /bin/true;
 else
@@ -61,6 +62,7 @@ else
    done;
 fi;
 
+# Pictures Directory
 if [[ -h /var/www/bilder ]]; then
    rm /var/www/bilder;
 fi
