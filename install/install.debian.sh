@@ -51,6 +51,7 @@ if [[ $1 == "qx" || $2 == "qx" ]]; then
       ln -s ../../bilder .;
       rm qooxdoo-*-sdk 2>/dev/null;
       ln -s ../../qooxdoo-*-sdk .;
+      rm source 2>/dev/null;
       ln -s source .;
       cd ..;
    done;
