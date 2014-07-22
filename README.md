@@ -2,7 +2,7 @@
 
 The ADBGUI Framework allows you to easily create a custom Web-Gui for your database. 
 
-For office people you can say its a lightweight, extinsible opensource  M$ Access in the browser.
+For office people you can say its a lightweight, extensible opensource  M$ Access in the browser.
 
 
 ## Official Documentation
