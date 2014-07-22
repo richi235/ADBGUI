@@ -1829,7 +1829,7 @@ qx.Class.define("myproject.Application", {
                                  dstitem.buttonedit[j].flex = 0;
                                  dstitem.buttonedit[j].main = this.main;
                                  dstitem.buttonedit[j].selectbox = dstitem.form[dstitem.dbname[j]];
-                                 dstitem.buttonedit[j].setEnabled(0);
+                                 dstitem.buttonedit[j].setEnabled(false);
                                  dstitem.buttonedit[j].selectbox.addListener("changeSelection", function(e) {
                                     var selection = this.selectbox.getSelection();
                                     if ((selection.length > 0) && (selection[0].getModel() != "") && (selection[0].getModel() != "null")) {
@@ -2273,7 +2273,7 @@ qx.Class.define("myproject.Application", {
                      curtable.urlappend = urlappend;
                      curtable.id = id;
                      curtable.main = this;
-                     if ((typeof(rowHeight) != "undefined") && (rowHeight > 0)) curtable.setRowHeight(rowHeight);
+                     if ((typeof(rowHeight) != "undefined") && (rowHeight > 0)) curtable.setRowHeight(parseInt(rowHeight));
                      curtable.setShowCellFocusIndicator(false);
                      for (var j = 0; j < columns.length; j++) {
                         if (curtable.types[j] == "id") {
