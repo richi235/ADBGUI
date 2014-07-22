@@ -44,10 +44,16 @@ if [[ $1 == "qx" || $2 == "qx" ]]; then
    bash ADBGUI/Qooxdoo/install.sh;
    perl install/setupQXConfig.pl;
    cd myproject;
-   ./generate.py build;
+   for i in build source; do
+      ./generate.py $i;
+      cd $i;
+      rm bilder 2>/dev/null;
+      ln -s ../../bilder .;
+      rm qooxdoo-*-sdk 2>/dev/null;
+      ln -s ../../qooxdoo-*-sdk .;
+      cd ..;
+   done;
    cd ..;
-   rm myproject/build/bilder 2>/dev/null;
-   ln -s ../../bilder myproject/build/bilder;
 fi;
 
 if [[ $1 == "noap" || $2 == "noap" ]]; then
