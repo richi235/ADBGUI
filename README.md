@@ -27,7 +27,7 @@ apt-get --force-yes -y install git libjson-perl
 # clone to local folder (here /opt )
 cd /opt/
 git clone https://github.com/pRiVi/ADBGUI.git
-mv adbgui $PROJECTNAME
+mv ADBGUI $PROJECTNAME
 cd $PROJECTNAME
 
 # If you want to use the qooxdoo feature   : paramter "qx"
