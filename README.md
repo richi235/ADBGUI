@@ -22,7 +22,7 @@ For office people you can say its a lightweight, extensible opensource  M$ Acces
 export PROJECTNAME=myproject
 
 apt-get update
-apt-get --force-yes -y install git libjson-perl
+apt-get --force-yes -y install git
 
 # clone to local folder (here /opt )
 cd /opt/
