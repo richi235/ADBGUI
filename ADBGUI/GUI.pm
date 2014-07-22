@@ -2524,7 +2524,7 @@ sub getValueForTable {
    my $dbline = shift;
    my $db = $self->getDBBackend($table);
    return join($COLUMNCONJUNCTION, map { 
-      $self->getValueRightFormat($table, $_, $dbline->{$table.$TSEP.$_})
+      $self->getValueRightFormat($table, $_, $dbline->{$table.$TSEP.$_}) || "UNDEF"
    } @{getAffectedColumns($db, $db->{tables}->{$table}->{columns}, 1)});
 }
 
