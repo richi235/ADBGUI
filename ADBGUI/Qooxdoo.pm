@@ -1281,6 +1281,7 @@ sub onGetLines {
          # TODO/XXX/FIXME: Derzeit wird onGetLines einmal für getRowsCount und ein zweites mal für getRows abgefragt, das könnten wir cachen!
          $self->sendToQXForSession($options->{connection}->{sessionid} || 0, $msg)
             if ($msg);
+         my $dbtype = $db->getDBType();
          if ($options->{end} > 0) {
             foreach my $dbline (@{$ret->[0]}) {
                my $line = "addrow ".$oid." ".($options->{ionum} ? $options->{ionum}." " : " ").join(",", map {
@@ -1288,7 +1289,8 @@ sub onGetLines {
                   # TODO/FIXME/XXX: Qooxdoo mag hier kein HTMl.... irgendwie besser loesen als über hidebuttons!
                   $options->{curSession}->{hidebuttons}++;
                   # TODO/FIXME/XXX: Ausgabeformat beliebig ändern?
-                  CGI::escape($self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $curcolumn))
+                  # TODO/FIXME/XXX: Hotfix fuer sayTRUST Logviewer: csv funktioniert mit Column_Handler nicht; es werden Spalten verschluckt.
+                  CGI::escape((lc($dbtype) eq "csv") ? $dbline->{$options->{table}.$TSEP.$curcolumn} : $self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $curcolumn))
                } @$columns);
                $self->sendToQXForSession($options->{connection}->{sessionid} || 0, $line);
             }
