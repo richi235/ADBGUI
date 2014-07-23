@@ -2,7 +2,7 @@
 
 The ADBGUI Framework allows you to easily create a custom Web-Gui for your database. 
 
-For office people you can say its a lightweight, extinsible opensource  M$ Access in the browser.
+For office people you can say its a lightweight, extensible opensource  M$ Access in the browser.
 
 
 ## Official Documentation
@@ -22,7 +22,7 @@ For office people you can say its a lightweight, extinsible opensource  M$ Acces
 export PROJECTNAME=myproject
 
 apt-get update
-apt-get --force-yes -y install git libjson-perl
+apt-get --force-yes -y install git
 
 # clone to local folder (here /opt )
 cd /opt/

@@ -6,6 +6,10 @@ use ADBGUI::BasicVariables;
 use strict;
 use warnings;
 
+print "\e[44;1mUsage: \e[0m \n"."\e[1m 1.\e[0m Call from the root ADBGUI Folder\n"
+. "\e[1m 2. Parameters:\e[0m perl getMysqlLayout.pl \e[32;1m<DBName> <DBuser> <DBhost> <DBpasswd> \e[0m" ;
+
+
 my $tables = {};
 my $tablesvals = {};
 

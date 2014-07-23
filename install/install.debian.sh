@@ -6,15 +6,14 @@ export apachefiles="gui.pl DBDesign.pm gui.cfg url.css"
 export apachelinks="$apachefiles ADBGUI bilder"
 export defaultfiles="dbm.pl dbm.cfg DBDesign.pm"
 
-# Apache und gui.pl
+# defaultfiles (dbm.cfg etc...) 
 for i in "$defaultfiles"; do
    cp $i ..;
 done;
-
 chmod +x dbm.pl;
 
+# Apache und gui.pl
 touch ../gui.cfg;
-
 if [[ $1 == "noap" || $2 == "noap" ]]; then
    /bin/true;
 else
@@ -23,6 +22,8 @@ else
 fi
 
 echo "\$DB->{name} = '$PROJECTNAME';" >>../DBDesign.pm
+
+
 
 # Qooxoo
 if [[ $1 == "qx" || $2 == "qx" ]]; then
@@ -62,6 +63,7 @@ if [[ $1 == "qx" || $2 == "qx" ]]; then
    cd ..;
 fi;
 
+# Apache2 Webserver
 if [[ $1 == "noap" || $2 == "noap" ]]; then
    /bin/true;
 else
@@ -72,6 +74,7 @@ else
    done;
 fi;
 
+# Pictures Directory
 if [[ -h /var/www/bilder ]]; then
    rm /var/www/bilder;
 fi
