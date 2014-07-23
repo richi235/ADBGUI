@@ -20,6 +20,7 @@ sub new {
       next if $dirname =~ m,^\.+$,;
       next if ($dirname eq "ADBGUI");
       next if ($dirname eq "install");
+      next if ($dirname eq "Documentation");
       foreach my $curdef (@{$self->{pmdef}}) {
          if (-R $dirname."/".$curdef->[1].".pm") {
             push(@{$curdef->[0]}, [$dirname, $curdef->[1]]);

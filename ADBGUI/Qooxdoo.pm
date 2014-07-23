@@ -1273,13 +1273,6 @@ sub onGetLines {
          my $ret = shift;
          my $msg = shift;
          my $options = $params->{options};
-         $options->{onDone} = [$options->{onDone}]
-            if (ref($options->{onDone}) ne "ARRAY");
-         my $onDone = shift(@{$options->{onDone}});
-         #if (ref($params->{options}->{getDataSetOnDone}) eq "CODE") {
-         #   $ret = $params->{options}->{getDataSetOnDone}($params, $ret);
-         #   return unless defined $ret;
-         #}
          unless (ref($ret) eq "ARRAY") {
             Log("DBManager: onGetLines: GET ".$options->{table}." FAILED SQL Query failed.", $WARNING);
             $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("FAILED\n"));
@@ -1302,8 +1295,6 @@ sub onGetLines {
          }
          #print "TABLE:".$options->{table}.":NUM:".$ret->[1].":".($options->{rowsadded}||0).":\n";
          $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addrowsdone ".$oid." ".($ret->[1]+($options->{rowsadded}||0)).($options->{ionum} ? " ".$options->{ionum} : ""));
-         return $onDone($ret, $options, $self)
-            if ($onDone && ref($onDone) eq "CODE");
       },
    });
 }
@@ -1777,12 +1768,9 @@ sub onSaveEditEntry {
          # TODO:FIXME:XXX: Das sollte an alle anderen user auch gehen, die auf der tabelle sind!
          # TODO:FIXME:XXX: ID sollte vom Rückgabewert des NewUpdateData genommen werden, und nicht vom CGI Objekt!
          if (defined($ret)) {
-            if (my $curid = $options->{"q"}->param($UNIQIDCOLUMNNAME) || $options->{"q"}->param($self->getIdColumnName($options->{table}))) {
-               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "updaterow ".CGI::escape($options->{table})." ".CGI::escape($curid));
-            } else {
-               Log("onSaveEditEntry: onDone: Cannot send updaterow notify: No curid.", $WARNING);
-            }
-            if ($ret =~ /^\d+$/) {# || ((!exists($curtabledef->{columns}->{$self->{dbm}->getIdColumnName($options->{table})})) && defined($ret))) {
+            my $curid = $options->{"q"}->param($UNIQIDCOLUMNNAME) || $options->{"q"}->param($self->getIdColumnName($options->{table}));
+            $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "updaterow ".CGI::escape($options->{table})." ".CGI::escape($curid||""));
+            if ($ret =~ /^\d+$/) {
                if (($options->{qxself}->{dbm}->{config}->{autocloseeditwindow} || $options->{close}) && $options->{"q"}->param("wid") && !$options->{noclose}) {
                   $self->onCloseObject({
                      "curSession" => $options->{curSession},
@@ -1807,6 +1795,7 @@ sub onSaveEditEntry {
             $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "unlock ".CGI::escape($options->{"q"}->param("oid")));
             $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape("Internal error")." 400 100 ".CGI::escape("Fatal Internal error in onSaveEditEntry"));
          }
+         return $ret;
       }
    });
 }
