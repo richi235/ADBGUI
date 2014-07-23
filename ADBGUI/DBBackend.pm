@@ -44,6 +44,12 @@ sub getIdColumnName {
    return $self->{config}->{DB}->{tables}->{$table}->{idcolumnname} || $UNIQIDCOLUMNNAME;
 }
 
+sub getDBType {
+   my $self = shift;
+   my $table = shift;
+   return $self->{config}->{DB}->{type};
+}
+
 sub getContext {
    my $self = shift;
    my $curSession = shift;
