@@ -13,6 +13,7 @@ unless ($modulename) {
 
 if (opendir(DIR, $skeletondir)) {
    mkdir($modulename);
+   system("cp", "-pvr", $skeletondir."install", $modulename."/");
    while (my $file = readdir(DIR)) {
       next unless -f $skeletondir.$file;
       print $file."...\n";
