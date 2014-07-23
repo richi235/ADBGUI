@@ -1085,24 +1085,24 @@ sub LineHandler {
          my $action = lc($1);
          my $params = [grep { /^[a-zA-Z0-9]+$/ } split(" ", $3)];
          if (exists($self->{config}->{"activatecmd".$action}) && ($self->{config}->{"activatecmd".$action})) {
-            my $tmpsession = POE::Session->create(
+            POE::Session->create(
                inline_states => {
                   _start  => sub {
-                      my ( $kernel, $heap, $session, $config ) = @_[ KERNEL, HEAP, SESSION, ARG0 ];
-                      $heap->{config} = $config;
-                      $kernel->yield("activate_startup");
+                     my ( $kernel, $heap, $session, $config, $client ) = @_[ KERNEL, HEAP, SESSION, ARG0, ARG1 ];
+                     $heap->{config} = $config;
+                     $heap->{client} = $client;
+                     $kernel->yield("activate_startup");
                   },
                   _stop   => sub {
                      Log("custom_Server_Cmd: activate_error: Stopped.", $DEBUG);
                   },
                   activate_startup  => sub {
                      my ($kernel, $heap) = @_[KERNEL, HEAP];
-                     my $config = $heap->{config};
                      my $cmdrunning;
                      eval {
                         Log("custom_Server_Cmd: params: :".join(";", @$params).":", $DEBUG); 
                         $cmdrunning = POE::Wheel::Run->new(
-                           Program     => $config->{"activatecmd".$action},
+                           Program     => $heap->{config}->{"activatecmd".$action},
                            ProgramArgs => $params,
                            StdoutEvent => 'activate_output',
                            StderrEvent => 'activate_output',
@@ -1110,38 +1110,36 @@ sub LineHandler {
                            CloseEvent  => 'activate_close'
                         );
                      };
-                     $config->{cmdrunning} = $cmdrunning;
-                     Log("custom_Server_Cmd: activate_startup: I run :"."/bin/bash -c '".$config->{"activatecmd".$action}." 2>&1'".":", $DEBUG);
+                     $heap->{config}->{cmdrunning} = $cmdrunning;
+                     Log("custom_Server_Cmd: activate_startup: I run :"."/bin/bash -c '".$heap->{config}->{"activatecmd".$action}." 2>&1'".":", $DEBUG);
                      if ($@) {
                         chomp $@;
-                        $client->send("ACTIVATE FAIL\n");
+                        $heap->{client}->send("ACTIVATE FAIL\n");
                         Log("custom_Server_Cmd: activate_error: POE::Wheel::Run-Error: ".$@, $ERROR);
-                        Log("custom_Server_Cmd: activate_error: Faild to run :"."/bin/bash -c '".$config->{"activatecmd".$action}." &'".": ".$@, $ERROR);
+                        Log("custom_Server_Cmd: activate_error: Faild to run :"."/bin/bash -c '".$heap->{config}->{"activatecmd".$action}." &'".": ".$@, $ERROR);
                      }
                   },
                   activate_output =>  sub {
                      my ($kernel, $heap, $output, $wheel_id) = @_[KERNEL, HEAP, ARG0, ARG1];
-                     my $config = $heap->{config};
                      Log("custom_Server_Cmd: activate_output: I read :".$output.":", $DEBUG);
-                     $client->send("ACTIVATE BEGIN\n") unless $heap->{sentbegin}++;
-                     $client->send($output."\n");
+                     $heap->{client}->send("ACTIVATE BEGIN\n") unless $heap->{sentbegin}++;
+                     $heap->{client}->send($output."\n");
                   },
                   activate_error  => sub {
                      my ($kernel, $heap, $operation, $errnum, $errstr, $wheel_id) = @_[KERNEL, HEAP, ARG0..ARG3];
                      # ignore senseless message
                      return if $operation eq "read" && $errnum == 0;
                      Log("custom_Server_Cmd: activate_error: ERROR: ".$operation." error ".$errnum.": ".$errstr, $ERROR);
-                     $client->send("ACTIVATE FAIL\n");
+                     $heap->{client}->send("ACTIVATE FAIL\n");
                   },
                   activate_close => sub {
                      my ($kernel, $heap, $wheel_id) = @_[KERNEL, HEAP, ARG0];
-                     my $config = $heap->{config};
-                     $client->send("* End *\n");
-                     $client->send("ACTIVATE END\n");
+                     $heap->{client}->send("* End *\n");
+                     $heap->{client}->send("ACTIVATE END\n");
                      Log("custom_Server_Cmd: activate_close: Program exited.", $INFO);
                   }
                },
-               args => [ $self->{config} ]
+               args => [ $self->{config}, $client ]
             );
          } else {
             Log("custom_Server_Cmd: activate_error: ERROR: The action :".$action.": is not configured in config file!", $ERROR);
