@@ -5,7 +5,7 @@ cd ..
 if [[ $1 == "dropdb" || $2 == "dropdb" ]]; then
    echo WARNING: You are deleting and reinitialising all your database content if you enter your db password now!!!;
    # MySQL
-   perl ADBGUI/createMysql.pl dropdb $1|mysql -p;
+   perl ADBGUI/createMysql.pl dropdb $1 | mysql  --user=root --password;
 else
    echo DB is not reinitalised. use "dropdb" to do this.
 fi
@@ -29,7 +29,11 @@ if [[ $1 == "noap" || $2 == "noap" ]]; then
    /bin/true;
 else
    for i in `ls|grep -v install|grep -vi qooxdoo|grep -v myproject|grep -v bilder`; do
-      if [ -d /usr/lib/cgi-bin/$i ]; then rm /usr/lib/cgi-bin/$i; ln -s `pwd`/$i /usr/lib/cgi-bin/$i; fi;
+      if [ -d /usr/lib/cgi-bin/$i ]; then 
+			  echo -e "\nNeeding sudo to clean up stuff from Apache:"
+			  sudo rm /usr/lib/cgi-bin/$i; 
+			  sudo ln -s `pwd`/$i /usr/lib/cgi-bin/$i; 
+	  fi;
    done;
 fi
 
