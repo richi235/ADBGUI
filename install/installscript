@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Installing some dependencies via "sudo apt-get install" : "
+echo "Installing some dependencies via \"sudo apt-get install\" : "
 sudo apt-get --force-yes -y install libwww-perl libgd-graph3d-perl libunix-syslog-perl libpoe-perl mysql-server libpoe-component-client-http-perl libdate-calc-perl libjson-perl libclone-perl libemail-mime-createhtml-perl libemail-send-perl
 
 cd install 2>/dev/null
@@ -39,7 +39,11 @@ fi
 cd ..
 
 # MySQL
-perl ADBGUI/createMysql.pl createdb|mysql -p
+echo -e "\n"
+echo -e "\e[1m#### Creating Database #####\e[0m"
+echo -e "Installscript needs Password of Database User \"root\" to create Database for your Project:\n"
+perl ADBGUI/createMysql.pl createdb | mysql  --user=root --password
+echo -e "\n"
 
 # QX
 if [[ $1 == "qx" || $2 == "qx" ]]; then
