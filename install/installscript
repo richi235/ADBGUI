@@ -72,14 +72,14 @@ if [[ $1 == "noap" || $2 == "noap" ]]; then
 else
    sudo apt-get --force-yes -y install apache2
    for i in $apachelinks; do
-      rm /usr/lib/cgi-bin/$i 2>/dev/null;
-      ln -s `pwd`/$i /usr/lib/cgi-bin/$i;
+      sudo rm /usr/lib/cgi-bin/$i 2>/dev/null;
+      sudo ln -s `pwd`/$i /usr/lib/cgi-bin/$i;
    done;
 fi;
 
 # Pictures Directory
 if [[ -h /var/www/bilder ]]; then
-   rm /var/www/bilder;
+   sudo rm /var/www/bilder;
 fi
-ln -s `pwd`/bilder/ /var/www/bilder
+sudo ln -s `pwd`/bilder/ /var/www/bilder
 
