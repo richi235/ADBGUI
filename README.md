@@ -32,10 +32,10 @@ cd $PROJECTNAME
 
 # If you want to use the qooxdoo feature   : paramter "qx"
 # If you do not want apache to be installed: paramter "noap"
-bash install/install.debian.sh qx
+bash install/install.debian.sh qx noap
 
 # Here you install all your modules, or a skeleton for a new project
 perl install/skeleton.pl $PROJECTNAME 
-bash install/reconfig.debian.sh
+bash install/reconfig.debian.sh noap  # same parameters here
 perl dbm.pl
 ```

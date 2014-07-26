@@ -6,8 +6,13 @@ use ADBGUI::BasicVariables;
 use strict;
 use warnings;
 
-print "\e[44;1mUsage: \e[0m \n"."\e[1m 1.\e[0m Call from the root ADBGUI Folder\n"
-. "\e[1m 2. Parameters:\e[0m perl getMysqlLayout.pl \e[32;1m<DBName> <DBuser> <DBhost> <DBpasswd> \e[0m" ;
+# print some helping output to the user About script and parameters (ANSI Colored)
+#   printing to STDERR is needed, if using STDOUT the STDERR output from DBI interupts this help lines which looks ugly and confusing.
+print STDERR "\n\e[1m         ##### The ADBGUI getMySQLLayout tool #####  \e[0m "
+. "\nThis tool connects to a specified MySQL Database, takes the Database Layout \nand generates the needed Perl Code for the \e[34;1mDBDesign.pm\e[0m slice of your Project."
+. "\nNOTE: You may still want to edit your DBDesign.pm  slice manually since this is only the very basic layout content.\n" ;
+print STDERR "\e[44;1mUsage: \e[0m \n"."\e[1m 1.\e[0m Call from the root ADBGUI Folder\n"
+. "\e[1m 2. Parameters:\e[0m perl getMysqlLayout.pl \e[32;1m<DBName> <DBuser> <DBhost> <DBpasswd> \e[0m\n\n" ;
 
 
 my $tables = {};
