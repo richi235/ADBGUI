@@ -1774,7 +1774,7 @@ sub onSaveEditEntry {
             $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "updaterow ".CGI::escape($options->{table})." ".CGI::escape($curid||""));
             if ($ret =~ /^\d+$/) {
                if (($options->{qxself}->{dbm}->{config}->{autocloseeditwindow} || $options->{close}) && $options->{"q"}->param("wid") && !$options->{noclose}) {
-                  $self->onCloseObject({
+                  $options->{qxself}->onCloseObject({
                      "curSession" => $options->{curSession},
                      "oid" => CGI::escape($options->{"q"}->param("wid"))
                   }) ;
