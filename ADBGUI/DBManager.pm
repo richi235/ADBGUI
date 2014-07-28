@@ -1265,6 +1265,7 @@ sub checkRights {
    my $id      = shift || undef;
 
    return [$ERROR, "No needed rights given!"] unless defined($rights);
+   
    if ($rights & $ACTIVESESSION) {
       unless ($session) {
          return ["No active session, please first login!", $WARNING];
@@ -1273,22 +1274,26 @@ sub checkRights {
          return ["No UserID in current session! CAPITAL ERROR!", $ERROR];
       }
    }
+
    my $tmp = 0;
    $tmp |= $ADMIN if $session->{$USERSTABLENAME.$TSEP.$ADMINFLAGCOLUMNNAME};
    $tmp |= $MODIFY if $session->{$USERSTABLENAME.$TSEP.$MODIFYFLAGCOLUMNNAME};
-   foreach ([$ADMIN,                  "No summary permission!"],
-            [$MODIFY,                 "No change permission!" ]
-            )
+
+   foreach ( [$ADMIN, "No summary permission!"], [$MODIFY,"No change permission!"] )
    {
       return [$_->[1], $WARNING] unless ((!($rights & $_->[0])) || ($tmp & $_->[0]));
    }
+
    my $db = $self->getDBBackend($table);
+
    unless ((!defined($table)) || grep { $table eq $_ } keys(%{$db->{config}->{DB}->{tables}})) {
       return ["Requested Table :".$table.": doesn't exist in its DB Manager !", $ERROR];
    }
+
    unless ((!defined($id)) || ($id =~ /^\d+$/)) {
       return ["ID '".$id."' not numeric!", $ERROR];
    }
+
    return undef;
 }
 
