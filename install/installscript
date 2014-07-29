@@ -88,3 +88,13 @@ if [[ -h /var/www/bilder ]]; then
 fi
 sudo ln -s `pwd`/bilder/ /var/www/bilder
 
+# create the skeleton slice files:
+perl install/skeleton.pl $PROJECTNAME
+
+# call the reconfig script (needed for installation)
+if [[ $1 == "noap" || $2 == "noap" ]]; then
+    bash install/reconfig.debian.sh noap
+else
+    bash install/reconfig.debian.sh noap
+fi
+
