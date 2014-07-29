@@ -1,6 +1,4 @@
-cd install 2>/dev/null
-
-cd ..
+### ADBGUI reconfigure script ###
 
 if [[ $1 == "dropdb" || $2 == "dropdb" ]]; then
    echo WARNING: You are deleting and reinitialising all your database content if you enter your db password now!!!;
