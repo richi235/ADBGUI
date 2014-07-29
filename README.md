@@ -23,7 +23,7 @@ export PROJECTNAME=myproject
 
 # Dependencies: git, sudo
 
-# clone to local folder (here /opt )
+# clone to local folder
 git clone https://github.com/pRiVi/ADBGUI.git
 mv ADBGUI $PROJECTNAME
 cd $PROJECTNAME
