@@ -1,5 +1,7 @@
 #!/bin/bash
+### ADBGUI Install script v2 ###
 
+# Install dependencies via apt-get
 echo "Installing some dependencies via \"sudo apt-get install\" : "
 sudo apt-get update
 sudo apt-get --force-yes -y install libwww-perl libgd-graph3d-perl libunix-syslog-perl libpoe-perl mysql-server libpoe-component-client-http-perl libdate-calc-perl libjson-perl libclone-perl libemail-mime-createhtml-perl libemail-send-perl
@@ -29,7 +31,7 @@ echo "\$DB->{name} = '$PROJECTNAME';" >>../DBDesign.pm
 
 
 
-# Qooxoo
+# Qooxdoo
 if [[ $1 == "qx" || $2 == "qx" ]]; then
    sudo apt-get --force-yes -y install unzip python;
    rm -R qooxdoo-*-sdk ../qooxdoo-*-sdk 2>/dev/null;
