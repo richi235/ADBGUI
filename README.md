@@ -31,12 +31,14 @@ cd $PROJECTNAME
 # If you want to use the qooxdoo feature   : paramter "qx"
 # If you do not want apache to be installed: paramter "noap"
 install/installscript qx noap
-
-# To customize your Software, edit
-# your own module slices in the subfolder $PROJECTNAME
-
-
-# Your Project now already works in a basic configuration.
-# start your database Frontend with:
+```
+## Usage
+Your Project now already works with basic configuration.
+Start your database Frontend with:
+```bash
 perl dbm.pl
 ```
+
+## Customization
+To customize your Software, edit the module slices files
+in the subfolder $PROJECTNAME of the installation.
