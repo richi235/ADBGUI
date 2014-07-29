@@ -38,7 +38,30 @@ Start your database Frontend with:
 ```bash
 perl dbm.pl
 ```
+* Per default your Database Frontend listens on Port 8181
+  * can be changed in dbm.cfg
+* Pre defined user:      admin
+* Pre defined password: "bitteaendern"
+
+Beeing logged in as admin you can access the standard Framework functionalities which is:
+* add/change Users and their permissions
+* view the built in log
+* view live statistics
+
+### Screenshot
+![admin_interface](./Documentation/screenshot_admin_user.png)
+The interface for normal Users looks exactly the same, with the difference,
+that they can't access the user or log table.
+
 
 ## Customization
 To customize your Software, edit the module slices files
-in the subfolder $PROJECTNAME of the installation.
+in the subfolder `$PROJECTNAME` of the installation.  
+Like:
+* `$PROJECTNAME/DBDesign.pm` for your database tables and linkings.
+* `$PROJECTNAME/Qooxdoo.pm ` for GUI customizations.
+* `$PROJECTNAME/DBManager.pm` for additional business logic.  
+
+Those so called "Slices" or "Slice Modules" get loaded after the Framework modules, use them
+and can customize their functionality.   
+See the diagrams in Documentation Folder for further Info about the ADBGUI Modules and our slicing approach.
