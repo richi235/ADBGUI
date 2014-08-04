@@ -2386,7 +2386,7 @@ sub onNewEditEntry {
          $self->{dbm}->isMarked($options->{onlyWithMark}, $curtabledef->{columns}->{$_}->{marks})
       }
    # TODO:FIXME:XXX: Typ "virtual" hier rausfiltern oder als readonly schicken?
-      hashKeysRightOrder($curtabledef->{columns})];
+      hashKeysRightOrder($curtabledef->{columns}, 0, $options->{specialordercolumn})];
    my $ret = [];
    if ($options->{$UNIQIDCOLUMNNAME}) {
       my $db = $self->{dbm}->getDBBackend($options->{table});

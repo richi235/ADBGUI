@@ -298,9 +298,12 @@ sub mergeColumnInfos {
 sub hashKeysRightOrder {
    my $hash = shift;
    my $dborder = shift;
-   return sort { return 1 unless (my $tmpa = (($dborder && $hash->{$a}->{dborder}) ? $hash->{$a}->{dborder} : $hash->{$a}->{order}));
-   return -1 unless (my $tmpb = ($dborder && $hash->{$b}->{dborder}) ? $hash->{$b}->{dborder} : $hash->{$b}->{order});
-   return ($tmpa <=> $tmpb)} keys %$hash;
+   my $specialorder = shift;
+   return sort {
+      return 1  unless (my $tmpa = ($dborder && $hash->{$a}->{dborder}) ? $hash->{$a}->{dborder} : $specialorder ? $hash->{$a}->{$specialorder} || $hash->{$a}->{order} : $hash->{$a}->{order});
+      return -1 unless (my $tmpb = ($dborder && $hash->{$b}->{dborder}) ? $hash->{$b}->{dborder} : $specialorder ? $hash->{$b}->{$specialorder} || $hash->{$b}->{order} : $hash->{$b}->{order});
+      return ($tmpa <=> $tmpb)
+   } keys %$hash;
 }
 
 sub getAffectedColumns {
