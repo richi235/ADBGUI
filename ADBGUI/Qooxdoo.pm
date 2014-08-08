@@ -1584,7 +1584,7 @@ sub onShow {
    my $options = shift;
    my $moreparams = shift;
    unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{connection}) {
-      Log("onShow: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
+      Log("onShow: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.":connection:".$options->{connection}.": !", $ERROR);
       return undef;
    }
    my $suffix = "show";
