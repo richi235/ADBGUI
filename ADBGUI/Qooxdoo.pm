@@ -582,7 +582,7 @@ sub doQxContext {
          $poe_kernel->yield(sendToQX => "destroy ".$window);
          $poe_kernel->yield(sendToQX => "createwin ".$window." 500 160 ".CGI::escape("Zugriff auf ".$username)." ".CGI::escape(''));
          $poe_kernel->yield(sendToQX => "open ".$window." 1");
-         $poe_kernel->yield(sendToQX => "createedit contextedit contexttagebuch ".
+         $poe_kernel->yield(sendToQX => "createedit contextedit ".$options->{loginjob}." ".
             CGI::escape("Username").",".CGI::escape("Passwort").",".CGI::escape("Context")." ".
             CGI::escape("text")    .",".CGI::escape("password").",".CGI::escape("text")." ".
             CGI::escape("username").",".CGI::escape("password").",".CGI::escape("contextid")." ".
@@ -595,10 +595,11 @@ sub doQxContext {
          #                                               CGI::escape("resource/qx/icon/Tango/32/actions/dialog-close.png")." ".
          #                                               CGI::escape("job=closeobject,oid=".$window));
          $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape($window."_button")); 
+         return undef;
       } else {
          $poe_kernel->yield(sendToQX => "showmessage ".
             CGI::escape("Internal error")." 400 50 ".
-            CGI::escape("INTERNAL ERROR (tagebuch::Qooxdoo::CreateContext: ".$contextid.")"));
+            CGI::escape("INTERNAL ERROR (Qooxdoo::CreateContext: ".$contextid.")"));
       }
    }
    return $contextSession;
