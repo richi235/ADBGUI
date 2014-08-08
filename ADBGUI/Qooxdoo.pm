@@ -563,6 +563,47 @@ sub resetQX {
    $poe_kernel->yield(sendToQX => "reset");
 }
 
+sub doQxContext {
+   my $self = shift;
+   my $options = shift;
+   my $moreparams = shift;
+   unless ((!$moreparams) && $options->{curSession} && $options->{connection}) {
+      Log("onClientData: Missing parameters: session:".$options->{curSession}." connection:".$options->{connection}."!", $ERROR);
+      return undef;
+   }
+   my $contextSession = undef;
+   my $contextid = $options->{contextid};
+   if (ref($contextSession = $self->doContext($contextid, $options)) ne "HASH") {
+      if ($options->{dologin} && defined($contextSession) && ($contextSession == 0)) {
+         my $window = "context";
+         my $db = $self->{dbm}->getDBBackend($USERSTABLENAME);
+         my $line = $db->getUsersSessionData("", 0, $contextid);
+         my $username = $line->{$USERSTABLENAME.$TSEP.$USERNAMECOLUMNNAME};
+         $poe_kernel->yield(sendToQX => "destroy ".$window);
+         $poe_kernel->yield(sendToQX => "createwin ".$window." 500 160 ".CGI::escape("Zugriff auf ".$username)." ".CGI::escape(''));
+         $poe_kernel->yield(sendToQX => "open ".$window." 1");
+         $poe_kernel->yield(sendToQX => "createedit contextedit contexttagebuch ".
+            CGI::escape("Username").",".CGI::escape("Passwort").",".CGI::escape("Context")." ".
+            CGI::escape("text")    .",".CGI::escape("password").",".CGI::escape("text")." ".
+            CGI::escape("username").",".CGI::escape("password").",".CGI::escape("contextid")." ".
+            CGI::escape("hidden")  .",".CGI::escape("")        .",".CGI::escape("hidden")." ".
+            CGI::escape($username) .",".CGI::escape("")        .",".CGI::escape($contextid)." ".
+            CGI::escape("")        .",".CGI::escape("")        .",".CGI::escape(""));
+         $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape("contextedit")); 
+         #$poe_kernel->yield(sendToQX => "createbutton ".CGI::escape($window."_button")." ".
+         #                                               CGI::escape("Schliessen")." ".
+         #                                               CGI::escape("resource/qx/icon/Tango/32/actions/dialog-close.png")." ".
+         #                                               CGI::escape("job=closeobject,oid=".$window));
+         $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape($window."_button")); 
+      } else {
+         $poe_kernel->yield(sendToQX => "showmessage ".
+            CGI::escape("Internal error")." 400 50 ".
+            CGI::escape("INTERNAL ERROR (tagebuch::Qooxdoo::CreateContext: ".$contextid.")"));
+      }
+   }
+   return $contextSession;
+}
+
 sub doContext {
    my $self = shift;
    my $contextid = shift;
