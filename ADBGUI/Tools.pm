@@ -132,7 +132,7 @@ sub ReadConfig {
    open (CONFIG, "<".$configfile) || die("Can't open config file ".$configfile.":".$!);
    while (<CONFIG>) {
       chomp;
-      s/\#.*$//g;
+      s/\s*\#.*$//g;
       if (/^\s*(\S+)\s+([^\n\r]*)/) {
          Log("ToolsLib: ReadConfigAndInit: FOUND KEY:".$1.":".$2.":", $DEBUG);
          my $key = lc($1);
