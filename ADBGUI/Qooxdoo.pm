@@ -658,13 +658,13 @@ sub onClientData {
       }
       return;
    }
-   #print "INPUT: ".$options->{heap}->{connection}->{sessionid}."\n";
+   #print "INPUT: ".$options->{connection}->{sessionid}."\n";
    if ($options->{job} eq "delrow") {
       $self->onDelRow({
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
-         "q" => $options->{heap}->{connection}->{"q"},
+         "q" => $options->{connection}->{"q"},
          curSession => $options->{curSession},
          oid => $options->{oid},
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
@@ -679,7 +679,7 @@ sub onClientData {
          oid => $options->{oid},
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          table => $options->{table},
-         "q" => $options->{heap}->{connection}->{"q"},
+         "q" => $options->{connection}->{"q"},
       });
   # } elsif($options->{job} eq "prefilter") {
   #    $options->{response}->code(RC_OK);
@@ -724,7 +724,7 @@ sub onClientData {
   #    }
    } elsif($options->{job} eq "auth") {
       $self->onAuthenticate({
-         connection => $options->{heap}->{connection},
+         connection => $options->{connection},
          curSession => $options->{curSession}
       });
    } elsif($options->{job} eq "neweditentry") {
@@ -733,21 +733,21 @@ sub onClientData {
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
          table => $options->{table},
-         connection => $options->{heap}->{connection},
+         connection => $options->{connection},
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          oid => $options->{oid},
          ids => $options->{ids},
          curSession => $options->{curSession},
-         "q" => $options->{heap}->{connection}->{"q"},
+         "q" => $options->{connection}->{"q"},
       });
    } elsif($options->{job} eq "filterselecttable") {
-      if (my $popupid = $options->{heap}->{connection}->{"q"}->param("popupid")) {
+      if (my $popupid = $options->{connection}->{"q"}->param("popupid")) {
          #$poe_kernel->yield(sendToQX => "show ".$popupid." 1");
          $self->onTableSelect({
             table => $options->{table},
             oid => $options->{oid},
             curSession => $options->{curSession},
-            "q" => $options->{heap}->{connection}->{"q"},
+            "q" => $options->{connection}->{"q"},
             urlappend => ",popupid=".$popupid.",table=".$options->{table},
          });
          $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($popupid)." ".CGI::escape($options->{oid}."_tableselect_tree"));
@@ -756,7 +756,7 @@ sub onClientData {
       }
    } elsif(($options->{job} eq "filteropen") ||
            ($options->{job} eq "filtersave")) {
-      if (my $popupid = $options->{heap}->{connection}->{"q"}->param("popupid")) {
+      if (my $popupid = $options->{connection}->{"q"}->param("popupid")) {
          my $urlappend = ",popupid=".$popupid.",table=".$options->{table};
          $poe_kernel->yield(sendToQX => "createtree ".CGI::escape($popupid."_".$options->{job})." ".CGI::escape("Gespeicherte Filter")." ".CGI::escape(",treeaction=select".$options->{job}.",table=".$options->{table}.",loid=".$options->{oid}.$urlappend));
          $poe_kernel->yield(sendToQX => "addtreeentry ".CGI::escape($popupid."_".$options->{job})." ".CGI::escape("")." ".CGI::escape("1")." ".CGI::escape("Erster Eintrag")." ".CGI::escape("resource/qx/icon/Tango/16/actions/system-search.png"));
@@ -771,7 +771,7 @@ sub onClientData {
          table => $options->{table},
          oid => $options->{oid},
          curSession => $options->{curSession},
-         "q" => $options->{heap}->{connection}->{"q"},
+         "q" => $options->{connection}->{"q"},
       });
    } elsif($options->{job} eq "filterhtml") {
       $self->onFilterHTML({
@@ -780,11 +780,11 @@ sub onClientData {
          curSession => $options->{curSession},
          response => $options->{response},
          content => $options->{content},
-         "q" => $options->{heap}->{connection}->{"q"},
+         "q" => $options->{connection}->{"q"},
       });
    } elsif($options->{job} eq "listcreateentry") {
-      my $column = $options->{heap}->{connection}->{"q"}->param("column") || '';
-      my $id = $options->{heap}->{connection}->{"q"}->param($UNIQIDCOLUMNNAME) || undef;
+      my $column = $options->{connection}->{"q"}->param("column") || '';
+      my $id = $options->{connection}->{"q"}->param($UNIQIDCOLUMNNAME) || undef;
       my $table = undef,
       my $basetabledef = $self->{dbm}->getTableDefiniton($options->{table});      
       if ($basetabledef->{columns}->{$column} && $basetabledef->{columns}->{$column}->{linkto}) {
@@ -802,7 +802,7 @@ sub onClientData {
                $UNIQIDCOLUMNNAME => $id,
                # TODO:XXX:FIXME: Das wird ueber overridecolumns gemacht... Gute idee?
                override => {
-                  AddAndSelectOID => $options->{heap}->{connection}->{"q"}->param("oid") || '',
+                  AddAndSelectOID => $options->{connection}->{"q"}->param("oid") || '',
                   AddAndSelectColumn => $column,
                   AddAndSelectTable => $options->{table},
                }
@@ -821,20 +821,20 @@ sub onClientData {
       $self->onShow({
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
-         connection => $options->{heap}->{connection},
+         connection => $options->{connection},
          crosstable => $options->{crosstable},
          oid => $options->{oid},
          table => $options->{table},
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          curSession => $options->{curSession},
-         "q" => $options->{heap}->{connection}->{"q"}
+         "q" => $options->{connection}->{"q"}
       });
    } elsif($options->{job} eq "showlist") {
       $self->onShowList({
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          oid => $options->{oid},
-         connection => $options->{heap}->{connection},
+         connection => $options->{connection},
          crosstable => $options->{crosstable},
          table => $options->{table},
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
@@ -845,22 +845,22 @@ sub onClientData {
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
-         connection => $options->{heap}->{connection},
+         connection => $options->{connection},
          table => $options->{table},
          oid => $options->{oid},
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
-         name => $options->{heap}->{connection}->{"q"}->param("oid") || undef,
+         name => $options->{connection}->{"q"}->param("oid") || undef,
          curSession => $options->{curSession}
       });
    } elsif($options->{job} eq "getrowcount") {
       $self->onGetRowCount({
-         "q" => $options->{heap}->{connection}->{q},
+         "q" => $options->{connection}->{q},
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
          table => $options->{table},
          curSession => $options->{curSession},
-         connection => $options->{heap}->{connection},
+         connection => $options->{connection},
          oid => $options->{oid},
       });
    } elsif($options->{job} eq "closeobject") {
@@ -869,7 +869,7 @@ sub onClientData {
          oid => $options->{oid},
       });
    } elsif($options->{job} eq "getrow") {
-      my $orderby = $options->{heap}->{connection}->{"q"}->param("orderby");
+      my $orderby = $options->{connection}->{"q"}->param("orderby");
       # TODO:FIXME:XXX: Das backend sollte orderby bei virutal Spalten ummappen können, im DBDesign sollte eine Spalte dafuer angegeben werden koennen
       my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
       foreach my $suffix ("", "_") {
@@ -883,7 +883,7 @@ sub onClientData {
          }
       }
       $self->onGetLines({
-         "q" => $options->{heap}->{connection}->{"q"},
+         "q" => $options->{connection}->{"q"},
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -893,14 +893,14 @@ sub onClientData {
          oid => $options->{oid},
          rowsadded => 0,
          sortby => $orderby,
-         start => $options->{heap}->{connection}->{"q"}->param("start"),
-         end =>   $options->{heap}->{connection}->{"q"}->param("end"),
-         ionum => $options->{heap}->{connection}->{"q"}->param("ionum"),
-         connection => $options->{heap}->{connection},
+         start => $options->{connection}->{"q"}->param("start"),
+         end =>   $options->{connection}->{"q"}->param("end"),
+         ionum => $options->{connection}->{"q"}->param("ionum"),
+         connection => $options->{connection},
       });
    } elsif(($options->{job} eq "saveedit") ||
            ($options->{job} eq "newedit"))  {
-      my $id = $options->{$UNIQIDCOLUMNNAME} || $options->{heap}->{connection}->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
+      my $id = $options->{$UNIQIDCOLUMNNAME} || $options->{connection}->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
       my $params = {
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
@@ -908,9 +908,9 @@ sub onClientData {
          table => $options->{table},
          $UNIQIDCOLUMNNAME => $id,
          oid => $options->{oid},
-         connection => $options->{heap}->{connection},
+         connection => $options->{connection},
          curSession => $options->{curSession},
-         "q" => $options->{heap}->{connection}->{"q"},
+         "q" => $options->{connection}->{"q"},
          job => $options->{job},
       };
       $params->{columns} = $self->parseFormularData($params);
@@ -922,8 +922,8 @@ sub onClientData {
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          oid => $options->{oid},
          curSession => $options->{curSession},
-         value => $options->{heap}->{connection}->{"q"}->param("value") || "",
-         column => $options->{heap}->{connection}->{"q"}->param("column")
+         value => $options->{connection}->{"q"}->param("value") || "",
+         column => $options->{connection}->{"q"}->param("column")
       });
    } elsif($options->{job} eq "statswin") {
       my $winname = "statswin";
