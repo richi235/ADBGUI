@@ -605,6 +605,8 @@ sub doQxContext {
    return $contextSession;
 }
 
+# TODO:XXX:FIXME: doContext gehort eigentlich in den DBManager... man sollte nicht den Error hier
+# per QX rausgeben sondern zurückgeben und im Aufrufer dann ausgeben.
 sub doContext {
    my $self = shift;
    my $contextid = shift;
