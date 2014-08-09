@@ -416,6 +416,7 @@ sub Log {
          cluck();
       }
    }
+   cluck() if (($severity == $WARNING) && ($loglevel <= $DEBUG));
 }
 
 sub MakeTime {
