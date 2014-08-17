@@ -560,7 +560,7 @@ sub resetQX {
       return undef;
    }
    $options->{curSession}->{openObjects} = {};
-   $poe_kernel->yield(sendToQX => "reset");
+   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "reset");
 }
 
 sub doQxContext {
