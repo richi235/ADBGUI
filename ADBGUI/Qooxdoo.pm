@@ -1294,7 +1294,8 @@ sub onGetLines {
    my $ret = undef;
    my $count = ($options->{end}-$options->{start}+1)
       if (($options->{start} =~ m,^\d+$,) &&
-          ($options->{end}   =~ m,^\d+$,));
+          ($options->{end}   =~ m,^\d+$,) &&
+          ($options->{end} > $options->{start}));
    my $db    = $self->{dbm}->getDBBackend($options->{table});
    my $where = $self->{dbm}->Where_Pre($options);
    my $tablebackrefs = 0;
