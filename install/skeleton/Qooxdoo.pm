@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use ADBGUI::BasicVariables;
 use ADBGUI::Tools qw(Log);
+use POE;
 
 our @ISA;
 
