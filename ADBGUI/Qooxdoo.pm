@@ -1637,7 +1637,7 @@ sub onShow {
    my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "destroy ".  $options->{table}."_".$suffix."_data");
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "destroy ".  $options->{table}."_".$suffix);
-   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createwin ".$options->{table}."_".$suffix." ".($curtabledef->{qxwidth} || $qxwidth)." ".($curtabledef->{qxheight} || $qxheight)." ".CGI::escape($curtabledef->{label} || $options->{table})." ".CGI::escape($curtabledef->{icon}||''));
+   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createwin ".$options->{table}."_".$suffix." ".($curtabledef->{qxwidth} || $qxwidth)." ".($curtabledef->{qxheight} || $qxheight)." ". .CGI::escape($options->{windowtitle} || $options->{title} || $curtabledef->{label} || $options->{table})." ".CGI::escape($curtabledef->{icon}||''));
    $self->createTable({
       %$options,
       name  => $options->{table}."_".$suffix."_data",
