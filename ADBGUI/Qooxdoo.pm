@@ -1214,7 +1214,7 @@ sub getBasicDataDefine {
       join(",", (@{$options->{columns}}, @{$options->{overridecolumns}})),                                             # 5. Der Spaltenname in der Datenbank
       join(",", ((map {
                                     # TODO:XXX:FIXME: Linkto Bug!
-         ($options->{crosslink} && ($options->{crosstable}."_".$self->{dbm}->getIdColumnName($options->{crosstable}) eq $_)) ? "hidden" :
+         $self->determineCrossLink($_, $options->{crosslink}, $options->{crosstable}) ? "hidden" :
          # TODO:XXX:FIXME: Potentielles OR-Filterprobelm...
          (($_ eq $DELETEDCOLUMNNAME) && exists($filter->{$options->{table}.$TSEP.$DELETEDCOLUMNNAME})) ? "writeonly" :
          CGI::escape( $self->{gui}->getViewStatus({
@@ -1456,7 +1456,7 @@ sub updateListloopPre {
          $self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $_)
          # TODO/FIXME/XXX: Vermutlich kann das hier ne Funktion aus ABDGUI::GUI besser? getAffectedColumns oder so?
       } grep {
-         ($options->{crosslink} && ($options->{crosstable}."_".$self->{dbm}->getIdColumnName($options->{crosstable}) eq $_)) ? 0 :
+         $self->determineCrossLink($_, $options->{crosslink}, $options->{crosstable}) ? 0 :
          (exists($curtabledef->{columns}->{$_}) &&
           exists($curtabledef->{columns}->{$_}->{showInSelect}) &&
                  $curtabledef->{columns}->{$_}->{showInSelect}) &&
@@ -2404,6 +2404,14 @@ sub getDefaults {
    return $mydefaults;
 }
 
+sub determineCrossLink {
+   my $self = shift;
+   my $column = shift;
+   my $crosslink = shift;
+   my $crosstable = shift;
+   return ($crosslink && ($crosstable."_".$self->{dbm}->getIdColumnName($crosstable) eq $column)) ? 1 : 0;
+}
+
 sub onNewEditEntry {
    my $self = shift;
    my $options = shift;
@@ -2493,8 +2501,8 @@ sub onNewEditEntry {
             action => ($options->{$UNIQIDCOLUMNNAME} ? $UPDATEACTION : $NEWACTION),
          })},
          join(",", ((map {
-            ($options->{crosslink} && ($options->{crosstable}."_".$self->{dbm}->getIdColumnName($options->{crosstable}) eq $_)) ? $options->{crossid} :
-            CGI::escape($self->{gui}->doFormularColumn({ 
+            $self->determineCrossLink($_, $options->{crosslink}, $options->{crosstable}) ? $options->{crossid} :
+            CGI::escape($self->{gui}->doFormularColumn({
                table => $options->{table},
                column => $_,
                targetself => $options->{curSession},
