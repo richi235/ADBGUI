@@ -2409,7 +2409,16 @@ sub determineCrossLink {
    my $column = shift;
    my $crosslink = shift;
    my $crosstable = shift;
-   return ($crosslink && ($crosstable."_".$self->{dbm}->getIdColumnName($crosstable) eq $column)) ? 1 : 0;
+   my $curtabledef = $self->{dbm}->getTableDefiniton($crosslink);
+   return 0 unless $crosslink;
+   if ($self->{dbm}->{config}->{oldlinklogic}) {
+      return ($crosstable."_".$self->{dbm}->getIdColumnName($crosstable) eq $column) ? 1 : 0;
+   } else {
+      #print "Q\tCOLUMN=".$column."\tXTABLE=".$crosstable."\tXLINK=".$crosslink."\tLINKTO=".$curtabledef->{columns}->{$column}->{linkto}."\n";
+      return (exists($curtabledef->{columns}->{$column}->{linkto}) &&
+             defined($curtabledef->{columns}->{$column}->{linkto}) &&
+                     $curtabledef->{columns}->{$column}->{linkto} eq $crosstable) ? 1 : 0;
+   }
 }
 
 sub onNewEditEntry {
