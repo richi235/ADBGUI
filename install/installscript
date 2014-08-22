@@ -1,10 +1,24 @@
 #!/bin/bash
 ### ADBGUI Install script v2 ###
 
+# check if sudo is installed
+if hash sudo 2>/dev/null; then
+    # sudo is installed proceed as normal
+    sudocommand="sudo"
+else     # check if we are root
+    if (( $EUID == 0 )); then
+        sudocommand= ''  # we are, so we will simply install everything as root
+    else
+        echo "sudo is not installed and you are not root"
+        echo "please install sudo or execute as root"
+        exit
+     fi   
+fi
+
 # Install dependencies via apt-get
-echo "Installing some dependencies via \"sudo apt-get install\" : "
-sudo apt-get update
-sudo apt-get --force-yes -y install libwww-perl libgd-graph3d-perl libunix-syslog-perl libpoe-perl mysql-server libpoe-component-client-http-perl libdate-calc-perl libjson-perl libclone-perl libemail-mime-createhtml-perl libemail-send-perl
+echo "Installing some dependencies via \"(sudo) apt-get install\" : "
+$sudocommand apt-get update
+$sudocommand apt-get --force-yes -y install libwww-perl libgd-graph3d-perl libunix-syslog-perl libpoe-perl mysql-server libpoe-component-client-http-perl libdate-calc-perl libjson-perl libclone-perl libemail-mime-createhtml-perl libemail-send-perl
 
 cd install 2>/dev/null
 
@@ -33,7 +47,7 @@ echo "\$DB->{name} = '$PROJECTNAME';" >>../DBDesign.pm
 
 # Qooxdoo
 if [[ $1 == "qx" || $2 == "qx" ]]; then
-   sudo apt-get --force-yes -y install unzip python;
+   $sudocommand apt-get --force-yes -y install unzip python;
    rm -R qooxdoo-*-sdk ../qooxdoo-*-sdk 2>/dev/null;
    unzip qooxdoo-*-sdk.zip;
    mv qooxdoo-*-sdk ..;
@@ -77,18 +91,18 @@ fi;
 if [[ $1 == "noap" || $2 == "noap" ]]; then
    /bin/true;
 else
-   sudo apt-get --force-yes -y install apache2
+   $sudocommand apt-get --force-yes -y install apache2
    for i in $apachelinks; do
-      sudo rm /usr/lib/cgi-bin/$i 2>/dev/null;
-      sudo ln -s `pwd`/$i /usr/lib/cgi-bin/$i;
+      $sudocommand rm /usr/lib/cgi-bin/$i 2>/dev/null;
+      $sudocommand ln -s `pwd`/$i /usr/lib/cgi-bin/$i;
    done;
 fi;
 
 # Pictures Directory
 if [[ -h /var/www/bilder ]]; then
-   sudo rm /var/www/bilder;
+   $sudocommand rm /var/www/bilder;
 fi
-sudo ln -s `pwd`/bilder/ /var/www/bilder
+$sudocommand ln -s `pwd`/bilder/ /var/www/bilder
 
 # create the skeleton slice files:
 perl install/skeleton.pl $PROJECTNAME
