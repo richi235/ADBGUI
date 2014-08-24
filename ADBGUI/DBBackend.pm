@@ -50,6 +50,11 @@ sub getDBType {
    return $self->{config}->{DB}->{type};
 }
 
+sub getDBName {
+   my $self = shift;
+   return $self->{config}->{DB}->{name};
+}
+
 sub getContext {
    my $self = shift;
    my $curSession = shift;
