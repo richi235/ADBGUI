@@ -19,10 +19,12 @@ sub new {
       WRONG_FORMAT     => ' does have wrong format',
       WRONG_SYNTAX     => ' does not have the right syntax',
       IS_MISSING       => ' is missing!',
+
+      # Images
       I_REFRESH        => '/bilder/redo.gif',
       I_FILTER         => '/bilder/find.gif',
       I_ENTRY          => '/bilder/go_to_program_s_website.gif',
-      #I_ADD            => '/bilder/add.jpg',
+       #I_ADD            => '/bilder/add.jpg',
       I_LOGOUT         => '/bilder/exit.gif',
       I_SHOW_ALL       => '/bilder/find.gif',
       I_SHOW_OPENED    => '/bilder/find.gif',
