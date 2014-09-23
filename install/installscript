@@ -50,7 +50,7 @@ if [[ $1 == "qx" || $2 == "qx" ]]; then
    $sudocommand apt-get --force-yes -y install unzip python;
    rm -R qooxdoo-*-sdk ../qooxdoo-*-sdk 2>/dev/null;
 
-   echo -e "\e[1mExtracting Qooxdoo Webgui Framework Archive:\e[0m"
+   echo -e "\e[1m#### Extracting Qooxdoo Webgui Framework Archive ####\e[0m"
    unzip -q qooxdoo-*-sdk.zip;
    mv qooxdoo-*-sdk ..;
 fi
@@ -68,7 +68,7 @@ echo -e "\n"
 if [[ $1 == "qx" || $2 == "qx" ]]; then
    rm -R myproject 2>/dev/null;
 
-   echo -e "\e[1mCompiling(actually minimizing) Qooxdoo Framework: \e[0m"
+   echo -e "\e[1m#### Compiling(actually minimizing) Qooxdoo Framework: ####\e[0m"
    qooxdoo-*-sdk/tool/bin/create-application.py -n myproject;
    bash ADBGUI/Qooxdoo/install.sh;
    perl install/setupQXConfig.pl;
