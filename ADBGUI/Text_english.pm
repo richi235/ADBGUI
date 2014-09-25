@@ -67,22 +67,22 @@ sub new
       ERR_NO_ID            => 'No id given!',
       ERR_LINES_EXPECTED   => 'Expected one line, but got more than that.',
 
-      # Bestaetigungen
-      FILTER_ACTIVE   => 'Inhalte der Tabellen wurden gefiltert.',
-      FILTER_RESET    => 'Filter zuruecksetzen',
+      # Confirmation Messages
+      FILTER_ACTIVE   => 'Displayed table rows are filtered.',
+      FILTER_RESET    => 'reset filter',
    
-      # Beschriftung der Buttons
+      # Button labels
       B_ENTRY           => 'home',
-      B_ADD             => 'Eintrag hinzuf&uuml;gen',
-      B_ANALYSE         => 'zu den Log-Dateien',
-      B_CONFIG          => 'Filter konfigurieren',
-      B_DEL             => "Löschen",
-      B_UNDEL           => "Wiederherstellen",
-      B_OVERVIEW        => "Overview",
+      B_ADD             => 'Add entry',
+      B_ANALYSE         => 'to the log files',
+      B_CONFIG          => 'configure Filter',
+      B_DEL             => 'delete',
+      B_UNDEL           => 'undelete',
+      B_OVERVIEW        => 'Overview',
       B_EDIT            => 'Edit',
-      B_FILTER          => 'Daten filtern',
-      B_RETURN          => 'Zur&uuml;ck zur &Uuml;bersicht',
-      B_RETURN_MAIN     => 'Zur&uuml;ck zum Hauptmen&uuml;',
+      B_FILTER          => 'filter data',
+      B_RETURN          => 'Back to overview',
+      B_RETURN_MAIN     => 'Back to main menu',
       B_USER_ADMINISTRATION => "Benutzerverwaltung",
       B_USE_FILTER      => 'Filter anwenden',
       B_LOGOUT          => 'log out',
