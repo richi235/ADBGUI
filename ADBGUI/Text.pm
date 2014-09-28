@@ -92,17 +92,17 @@ sub new
       B_OPEN            => 'Tunnel öffnen',
       B_SHOW_ALL        => 'Alles anzeigen',
       B_SHOW_OPENED     => 'Tunnel öffnen',
-      B_SCHEDULE        => "schedule",
-      B_CHANGEPASS      => "change password",
-      B_CRYPTOCARD      => 'Initialise Cryptocard',
-      B_ASSIGN          => 'Assign',
+      B_SCHEDULE        => 'Plan',
+      B_CHANGEPASS      => 'Passwort aendern',
+      B_CRYPTOCARD      => 'Cryptocard initialisieren',
+      B_ASSIGN          => 'zuweisen',
 
       T_UNDEL      => 'Ja, wirklich wiederherstllen.',
       T_DEL        => 'Ja, wirklich loeschen.',
       T_DELNO      => 'Nein, zurück zur &Uuml;bersicht',
       T_UNDELNO    => 'Nein, zurück zur &Uuml;bersicht',
 
-      WHITELIST    => "ALL",
+      WHITELIST    => 'ALLE',
       
       # Texte der einzelnen Kategorien
       T_ADD         => 'Eintrag hinzuf&uuml;gen',
