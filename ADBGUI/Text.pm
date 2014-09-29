@@ -8,6 +8,7 @@ sub new
    my $proto = shift;
    my $self  = 
    {
+   #### Strings from GUI.pm Start ####    
       ACTIVE_OPERATOR      => "X",
       INACTIVE_OPERATOR    => "_",
       PASSCHANGED          => "Passwort geaendert.\n",
@@ -119,6 +120,25 @@ sub new
       T_SECTION     => '&Uuml;bersicht &uuml;ber die Abteilungen',
       T_SECTION_DES => 'xxx',
       B_START       => 'Startseite'
+   #### Strings from GUI.pm END #####
+
+   #### Strings from Qooxdoo.pm START ####
+      qx  =>
+      {
+          unnamed   =>  "Unbenannt",
+          enable    =>  "Aktiviere ",
+          accessing =>   "Zugriff auf ",
+
+
+
+          paths     =>
+          {
+              qx_building_subdir => "/myproject/build/"
+          }
+          # potentielle übersetzungskandidaten:
+              # Line 541
+      }
+
    };
 
    bless ($self);

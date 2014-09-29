@@ -40,7 +40,7 @@ sub new {
    $self->{dbm} = shift;
    $self->{clients} = {};
 
-   $self->{dbm}->{config}->{qooxdooprepath} = $self->{dbm}->{cwd}."/myproject/build/"
+   $self->{dbm}->{config}->{qooxdooprepath} = $self->{dbm}->{cwd} . $self->{text}->{qx}->{paths}->{qx_building_subdir}
       unless $self->{dbm}->{config}->{qooxdooprepath};
 
    $self->{telnetserver} = POE::Component::Server::TCP->new(
@@ -398,11 +398,16 @@ sub showActivate {
       $curdef->{label}  = $curtabledef->{label} || $options->{table};
       $curdef->{icon}   = $curtabledef->{icon};
    }
-   $curdef->{label}  ||= $options->{label}  || $options->{activate} || "Unbenannt";
+   $curdef->{label}  ||= $options->{label}  || $options->{activate} || $self->{text}->{qx}->{unnamed};
    $curdef->{height} ||= $options->{height} || $qxheight;
    $curdef->{width}  ||= $options->{width}  || $qxwidth;
    $curdef->{icon}   ||= $options->{icon}   || '';
-   $poe_kernel->yield(sendToQX => "createwin ".CGI::escape($window)." ".CGI::escape($curdef->{width})." ".CGI::escape($curdef->{height})." ".CGI::escape("Aktiviere ".$curdef->{label})." ".CGI::escape($curdef->{icon}));
+
+   $poe_kernel->yield( sendToQX => "createwin " . CGI::escape($window) . " "
+         . CGI::escape( $curdef->{width} ) . " " . CGI::escape( $curdef->{height} ) . " "
+         . CGI::escape( $self->{text}->{qx}->{enable} . $curdef->{label} ) . " "
+         . CGI::escape( $curdef->{icon} ) );
+
    $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape($window."_iframe"));
    $poe_kernel->yield(sendToQX => "open ".CGI::escape($window)." 1");
    $poe_kernel->yield(sendToQX => "modal ".CGI::escape($window)." 1") 
@@ -571,17 +576,28 @@ sub doQxContext {
       Log("onClientData: Missing parameters: session:".$options->{curSession}." connection:".$options->{connection}."!", $ERROR);
       return undef;
    }
+   
    my $contextSession = undef;
    my $contextid = $options->{contextid};
-   if (ref($contextSession = $self->doContext($contextid, $options)) ne "HASH") {
+
+   if (ref($contextSession = $self->doContext($contextid, $options)) ne "HASH")
+   {
+
       if ($options->{dologin} && defined($contextSession) && ($contextSession == 0)) {
          my $window = "context";
          my $db = $self->{dbm}->getDBBackend($USERSTABLENAME);
          my $line = $db->getUsersSessionData("", 0, $contextid);
          my $username = $line->{$USERSTABLENAME.$TSEP.$USERNAMECOLUMNNAME};
+
          $poe_kernel->yield(sendToQX => "destroy ".$window);
-         $poe_kernel->yield(sendToQX => "createwin ".$window." 500 160 ".CGI::escape("Zugriff auf ".$username)." ".CGI::escape(''));
+         $poe_kernel->yield( sendToQX => "createwin "
+               . $window
+               . " 500 160 "
+               . CGI::escape( $self->{text}->{qx}->{accessing} . $username )
+               . " "
+               . CGI::escape('') );
          $poe_kernel->yield(sendToQX => "open ".$window." 1");
+
          $poe_kernel->yield(sendToQX => "createedit contextedit ".$options->{loginjob}." ".
             CGI::escape("Username").",".CGI::escape("Passwort").",".CGI::escape("Context")." ".
             CGI::escape("text")    .",".CGI::escape("password").",".CGI::escape("text")." ".
@@ -589,6 +605,7 @@ sub doQxContext {
             CGI::escape("hidden")  .",".CGI::escape("")        .",".CGI::escape("hidden")." ".
             CGI::escape($username) .",".CGI::escape("")        .",".CGI::escape($contextid)." ".
             CGI::escape("")        .",".CGI::escape("")        .",".CGI::escape(""));
+
          $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape("contextedit")); 
          #$poe_kernel->yield(sendToQX => "createbutton ".CGI::escape($window."_button")." ".
          #                                               CGI::escape("Schliessen")." ".
@@ -596,12 +613,15 @@ sub doQxContext {
          #                                               CGI::escape("job=closeobject,oid=".$window));
          $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape($window."_button")); 
          return undef;
-      } else {
+      }
+      else
+      {
          $poe_kernel->yield(sendToQX => "showmessage ".
             CGI::escape("Internal error")." 400 50 ".
             CGI::escape("INTERNAL ERROR (Qooxdoo::CreateContext: ".$contextid.")"));
       }
    }
+
    return $contextSession;
 }
 
