@@ -125,18 +125,21 @@ sub new
    #### Strings from Qooxdoo.pm START ####
       qx  =>
       {
-          unnamed   =>  "Unbenannt",
-          enable    =>  "Aktiviere ",
-          accessing =>   "Zugriff auf ",
-
-
-
+          unnamed          =>  "Unbenannt",
+          enable           =>  "Aktiviere ",
+          accessing        =>  "Zugriff auf ",
+          internal_error   =>  "Interner Fehler",
+          qx_context_error =>  "Interner Fehler beim Erstellen des Qooxdoo Context:",
+          context_error    =>  "(Fehler beim Erstellen des Kontexts: ",
+          popupip_missing  =>  "Die ID für das Popup-Window für folgende Aktion fehlt: ",
+ 
           paths     =>
           {
               qx_building_subdir => "/myproject/build/"
           }
           # potentielle übersetzungskandidaten:
               # Line 541
+              # Line 601
       }
 
    };

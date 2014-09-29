@@ -583,7 +583,8 @@ sub doQxContext {
    if (ref($contextSession = $self->doContext($contextid, $options)) ne "HASH")
    {
 
-      if ($options->{dologin} && defined($contextSession) && ($contextSession == 0)) {
+      if ($options->{dologin} && defined($contextSession) && ($contextSession == 0))
+      {
          my $window = "context";
          my $db = $self->{dbm}->getDBBackend($USERSTABLENAME);
          my $line = $db->getUsersSessionData("", 0, $contextid);
@@ -598,27 +599,28 @@ sub doQxContext {
                . CGI::escape('') );
          $poe_kernel->yield(sendToQX => "open ".$window." 1");
 
-         $poe_kernel->yield(sendToQX => "createedit contextedit ".$options->{loginjob}." ".
-            CGI::escape("Username").",".CGI::escape("Passwort").",".CGI::escape("Context")." ".
-            CGI::escape("text")    .",".CGI::escape("password").",".CGI::escape("text")." ".
-            CGI::escape("username").",".CGI::escape("password").",".CGI::escape("contextid")." ".
-            CGI::escape("hidden")  .",".CGI::escape("")        .",".CGI::escape("hidden")." ".
-            CGI::escape($username) .",".CGI::escape("")        .",".CGI::escape($contextid)." ".
-            CGI::escape("")        .",".CGI::escape("")        .",".CGI::escape(""));
+         $poe_kernel->yield(sendToQX => "createedit contextedit " . $options->{loginjob} . " " . 
+            CGI::escape("Username") . "," . CGI::escape("Passwort") . "," . CGI::escape("Context") . " " . 
+            CGI::escape("text")     . "," . CGI::escape("password") . "," . CGI::escape("text") . " " . 
+            CGI::escape("username") . "," . CGI::escape("password") . "," . CGI::escape("contextid") . " " . 
+            CGI::escape("hidden")   . "," . CGI::escape("")         . "," . CGI::escape("hidden") . " " . 
+            CGI::escape($username)  . "," . CGI::escape("")         . "," . CGI::escape($contextid) . " " . 
+            CGI::escape("")         . "," . CGI::escape("")         . "," . CGI::escape(""));
 
-         $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape("contextedit")); 
+         $poe_kernel->yield(sendToQX => "addobject " . CGI::escape($window) . " " . CGI::escape("contextedit")); 
          #$poe_kernel->yield(sendToQX => "createbutton ".CGI::escape($window."_button")." ".
          #                                               CGI::escape("Schliessen")." ".
          #                                               CGI::escape("resource/qx/icon/Tango/32/actions/dialog-close.png")." ".
          #                                               CGI::escape("job=closeobject,oid=".$window));
-         $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape($window."_button")); 
+         $poe_kernel->yield(sendToQX => "addobject " . CGI::escape($window) . " " . CGI::escape($window . "_button")); 
+
          return undef;
       }
       else
       {
          $poe_kernel->yield(sendToQX => "showmessage ".
-            CGI::escape("Internal error")." 400 50 ".
-            CGI::escape("INTERNAL ERROR (Qooxdoo::CreateContext: ".$contextid.")"));
+            CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 " . 
+            CGI::escape("$self->{text}->{qx}->{qx_context_error} (Qooxdoo::CreateContext: " . $contextid . ")"));
       }
    }
 
@@ -631,11 +633,21 @@ sub doContext {
    my $self = shift;
    my $contextid = shift;
    my $options = shift;
+
    my $return = $options->{curSession};
    my $db = $options->{db} || $self->{dbm}->getDBBackend($USERSTABLENAME);
-   if ($contextid && ($contextid ne $options->{curSession}->{$USERSTABLENAME.$TSEP.$self->{dbm}->getIdColumnName($USERSTABLENAME)})) {
+
+   if ( $contextid
+        && ( $contextid ne $options->{curSession}->{
+                   $USERSTABLENAME
+                 . $TSEP
+                 . $self->{dbm}->getIdColumnName($USERSTABLENAME)
+           }))
+   {
       my $err = $self->{dbm}->contextAllowed($contextid, $options);
-      if (defined($err)) {
+
+      if (defined($err))
+      {
          #$poe_kernel->yield(sendToQX => "showmessage ".
          #   CGI::escape("Internal error")." 300 50 ".
          #   CGI::escape($err." (CreateContext: ACCESS DENIED to ".$contextid.")"));
@@ -645,13 +657,17 @@ sub doContext {
          $self->{dbm}->setContext($options->{curSession}, $contextid, $options->{contextkey});
          $return = $db->getContext($options->{curSession}, $options->{contextkey});
       }
-   } else {
+   }
+   else
+   {
       $db->destroyContext($options->{curSession}, $options->{contextkey});
    }
-   if (ref($return) ne "HASH") {
-      $poe_kernel->yield(sendToQX => "showmessage ".
-         CGI::escape("Internal error")." 300 50 ".
-         CGI::escape("(CreateContext: ".($contextid||"UNDEF").")"));
+
+   if (ref($return) ne "HASH")
+   {
+      $poe_kernel->yield(sendToQX => "showmessage " . 
+         CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 300 50 " . 
+         CGI::escape( $self->{text}->{qx}->{context_error} . ($contextid||"UNDEF") . ")"));
       return undef;
    }
    return $return;
@@ -661,10 +677,12 @@ sub onClientData {
    my $self = shift;
    my $options = shift;
    my $moreparams = shift;
+
    unless ((!$moreparams) && $options->{heap} && $options->{curSession} && $options->{connection}) {
       Log("onClientData: Missing parameters: connection heap=".$options->{heap}.":session=".$options->{curSession}.": !", $ERROR);
       return undef;
    }
+
    if ($options->{job} eq "dblclick") {
       my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
       if ($curtabledef->{dblclick} && ($curtabledef->{dblclick} ne "dblclick")) {
@@ -770,19 +788,19 @@ sub onClientData {
             oid => $options->{oid},
             curSession => $options->{curSession},
             "q" => $options->{connection}->{"q"},
-            urlappend => ",popupid=".$popupid.",table=".$options->{table},
+            urlappend => ",popupid=" . $popupid . ",table=" . $options->{table},
          });
-         $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($popupid)." ".CGI::escape($options->{oid}."_tableselect_tree"));
+         $poe_kernel->yield(sendToQX => "addobject " . CGI::escape($popupid) . " " . CGI::escape($options->{oid} . "_tableselect_tree"));
       } else {
-         $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("Popupid for job ".$options->{job}." missing"));
+         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{popupip_missing} . $options->{job} ));
       }
    } elsif(($options->{job} eq "filteropen") ||
            ($options->{job} eq "filtersave")) {
       if (my $popupid = $options->{connection}->{"q"}->param("popupid")) {
          my $urlappend = ",popupid=".$popupid.",table=".$options->{table};
-         $poe_kernel->yield(sendToQX => "createtree ".CGI::escape($popupid."_".$options->{job})." ".CGI::escape("Gespeicherte Filter")." ".CGI::escape(",treeaction=select".$options->{job}.",table=".$options->{table}.",loid=".$options->{oid}.$urlappend));
-         $poe_kernel->yield(sendToQX => "addtreeentry ".CGI::escape($popupid."_".$options->{job})." ".CGI::escape("")." ".CGI::escape("1")." ".CGI::escape("Erster Eintrag")." ".CGI::escape("resource/qx/icon/Tango/16/actions/system-search.png"));
-         $poe_kernel->yield(sendToQX => "addtreeentry ".CGI::escape($popupid."_".$options->{job})." ".CGI::escape("")." ".CGI::escape("newentry")." ".CGI::escape("Neuer Eintrag")." ".CGI::escape("resource/qx/icon/Tango/16/actions/list-add.png"))
+         $poe_kernel->yield(sendToQX => "createtree " . CGI::escape($popupid . "_" . $options->{job}) . " " . CGI::escape("Gespeicherte Filter") . " " . CGI::escape(",treeaction=select" . $options->{job} . ",table=" . $options->{table} . ",loid=" . $options->{oid} . $urlappend));
+         $poe_kernel->yield(sendToQX => "addtreeentry " . CGI::escape($popupid . "_" . $options->{job}) . " " . CGI::escape("") . " " . CGI::escape("1") . " " . CGI::escape("Erster Eintrag") . " " . CGI::escape("resource/qx/icon/Tango/16/actions/system-search.png"));
+         $poe_kernel->yield(sendToQX => "addtreeentry " . CGI::escape($popupid . "_" . $options->{job}) . " " . CGI::escape("") . " " . CGI::escape("newentry") . " " . CGI::escape("Neuer Eintrag") . " " . CGI::escape("resource/qx/icon/Tango/16/actions/list-add.png"))
             unless ($options->{job} eq "filteropen");
          $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($popupid)." ".CGI::escape($popupid."_".$options->{job}));
       } else {
