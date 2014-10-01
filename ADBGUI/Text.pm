@@ -119,7 +119,7 @@ sub new
       T_SEARCH_DESC => 'Hier k&ouml;nnen Sie die zuvor angezeigten Tabellen nach den unten aufgef&uuml;hrten Kriterien filtern. Wenn Sie die Tabelle doch nicht filtern wolle gehen Sie &uuml;ber den Zur&uuml;ck-Schalter Ihres Browser wieder zur vorherigen Seite.',
       T_SECTION     => '&Uuml;bersicht &uuml;ber die Abteilungen',
       T_SECTION_DES => 'xxx',
-      B_START       => 'Startseite'
+      B_START       => 'Startseite',
    #### Strings from GUI.pm END #####
 
    #### Strings from Qooxdoo.pm START ####
@@ -140,7 +140,7 @@ sub new
           new_entry               =>  "Neuer Eintrag", 
           
           # Error Messages:
-          col_info_error          =>  "Fehlerhafte Informationen ueber Tabellen-Spalte: '"
+          col_info_error          =>  "Fehlerhafte Informationen ueber Tabellen-Spalte: '",
           context_error           =>  "(Fehler beim Erstellen des Kontexts: ",
           internal_error          =>  "Interner Fehler",
           popupid_missing         =>  "Die ID für das Popup-Window für folgende Aktion fehlt: ",
@@ -154,7 +154,7 @@ sub new
               list_add           => "resource/qx/icon/Tango/16/actions/list-add.png",
           }
           # potentielle übersetzungskandidaten:
-      }
+      },
 
    };
 

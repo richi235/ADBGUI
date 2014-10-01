@@ -35,9 +35,13 @@ sub new {
    my $proto = shift;
    my $class = ref($proto) || $proto;
    my $self = {};
+
    bless ($self, $class);
+
    $self->{gui} = shift;
    $self->{dbm} = shift;
+   $self->{text} = $self->{gui}->{text}; # get the ref. to the text Object from the gui module
+
    $self->{clients} = {};
 
    $self->{dbm}->{config}->{qooxdooprepath} = $self->{dbm}->{cwd} . $self->{text}->{qx}->{paths}->{qx_building_subdir}
@@ -564,7 +568,13 @@ sub resetQX {
    my $options = shift;
    my $moreparams = shift || 0;
    unless ((!$moreparams) && $options->{curSession} && $options->{connection}) {
-      Log("onClientData: Missing parameters: connection session=".$options->{curSession}." connection=".$options->{connection}.": !", $ERROR);
+      Log(
+          "onClientData: Missing parameters: connection session="
+            . $options->{curSession}
+            . " connection="
+            . $options->{connection} . ": !",
+          $ERROR
+      );
       return undef;
    }
    $options->{curSession}->{openObjects} = {};
