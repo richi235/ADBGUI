@@ -8,6 +8,7 @@ if [[ "$1" != "" ]]; then
       echo "[ADBGUI]";
       echo;
       git diff;
+      git status;
       exit 0;
    fi;
 else
@@ -15,7 +16,8 @@ else
    echo "[ADBGUI]";
    echo;
    git diff;
+   git status;
 fi;
 
-for i in $list; do [[ "$i" != "Documentation" ]] && [[ "$i" != "ADBGUI" ]] && [[ "$i" != "install" ]] && [ -d $i ] && [[ `ls $i/*.pm 2>/dev/null` != "" ]] && echo && echo \[$i\] && echo && cd $i 2>/dev/null && git diff -w && cd ..; done
+for i in $list; do [[ "$i" != "Documentation" ]] && [[ "$i" != "ADBGUI" ]] && [[ "$i" != "install" ]] && [ -d $i ] && [[ `ls $i/*.pm 2>/dev/null` != "" ]] && echo && echo \[$i\] && echo && cd $i 2>/dev/null && git diff -w && git status && cd ..; done
 

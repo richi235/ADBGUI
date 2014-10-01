@@ -285,7 +285,10 @@ sub new {
             $curSession->{ip}   = $heap->{connection}->{ip};
             $curSession->{port} = $heap->{connection}->{port};
             Log("New Client: ".$heap->{connection}->{sessionid}, $INFO);
-            $self->resetQX({curSession => $curSession});
+            $self->resetQX({
+               curSession => $curSession,
+               connection => $heap->{connection},
+            });
             $self->onAuthenticate({
                connection => $heap->{connection},
                heap => $heap,
@@ -560,8 +563,8 @@ sub resetQX {
    my $self = shift;
    my $options = shift;
    my $moreparams = shift || 0;
-   unless ((!$moreparams) && $options->{curSession}) {
-      Log("onClientData: Missing parameters: connection session=".$options->{curSession}.": !", $ERROR);
+   unless ((!$moreparams) && $options->{curSession} && $options->{connection}) {
+      Log("onClientData: Missing parameters: connection session=".$options->{curSession}." connection=".$options->{connection}.": !", $ERROR);
       return undef;
    }
    $options->{curSession}->{openObjects} = {};
