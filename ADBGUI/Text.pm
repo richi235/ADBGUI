@@ -125,21 +125,32 @@ sub new
    #### Strings from Qooxdoo.pm START ####
       qx  =>
       {
-          unnamed          =>  "Unbenannt",
-          enable           =>  "Aktiviere ",
-          accessing        =>  "Zugriff auf ",
-          internal_error   =>  "Interner Fehler",
-          qx_context_error =>  "Interner Fehler beim Erstellen des Qooxdoo Context:",
-          context_error    =>  "(Fehler beim Erstellen des Kontexts: ",
-          popupip_missing  =>  "Die ID für das Popup-Window für folgende Aktion fehlt: ",
- 
+          accessing               =>  "Zugriff auf ",
+          activate_not_configured =>  "Das folgende 'Activate' ist nicht konfiguriert: ",
+          context                 =>  "Kontext",
+          enable                  =>  "Aktiviere ",
+          password                =>  "Passwort",
+          unnamed                 =>  "Unbenannt",
+          username                =>  "Benutzername",
+
+          saved_filters           =>  "Gespeicherte Filter: ",
+          first_entry             =>  "Erster Eintrag",
+          new_entry               =>  "Neuer Eintrag", 
+          
+          # Error Messages:
+          context_error           =>  "(Fehler beim Erstellen des Kontexts: ",
+          internal_error          =>  "Interner Fehler",
+          popupid_missing         =>  "Die ID für das Popup-Window für folgende Aktion fehlt: ",
+          qx_context_error        =>  "Interner Fehler beim Erstellen des folgenden Qooxdoo Contexts:",
+          
+          
           paths     =>
           {
-              qx_building_subdir => "/myproject/build/"
+              qx_building_subdir => "/myproject/build/",
+              system_search_png  => "resource/qx/icon/Tango/16/actions/system-search.png",
+              list_add           => "resource/qx/icon/Tango/16/actions/list-add.png",
           }
           # potentielle übersetzungskandidaten:
-              # Line 541
-              # Line 601
       }
 
    };

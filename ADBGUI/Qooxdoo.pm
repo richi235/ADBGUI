@@ -541,7 +541,7 @@ sub handleAjax {
                }, args => [ $session, $heap->{client}, $activatecmd, $activateparams, $self->{dbm}->{config}->{"cmdtimeout"} || 3600, $activate, $self, $curSession ]
             );
          }  else {
-            $response->content("Activate '".$activate."' not configured!");
+            $response->content( $self->{text}->{qx}->{activate_not_configured} . $activate );
             $heap->{client}->put($response);
             $kernel->yield("shutdown");
             return 1;
@@ -603,7 +603,7 @@ sub doQxContext {
          $poe_kernel->yield(sendToQX => "open ".$window." 1");
 
          $poe_kernel->yield(sendToQX => "createedit contextedit " . $options->{loginjob} . " " . 
-            CGI::escape("Username") . "," . CGI::escape("Passwort") . "," . CGI::escape("Context") . " " . 
+            CGI::escape( $self->{text}->{qx}->{username} ) . "," . CGI::escape( $self->{text}->{qx}->{password} ) . "," . CGI::escape( $self->{text}->{qx}->{context} ) . " " . 
             CGI::escape("text")     . "," . CGI::escape("password") . "," . CGI::escape("text") . " " . 
             CGI::escape("username") . "," . CGI::escape("password") . "," . CGI::escape("contextid") . " " . 
             CGI::escape("hidden")   . "," . CGI::escape("")         . "," . CGI::escape("hidden") . " " . 
@@ -621,9 +621,9 @@ sub doQxContext {
       }
       else
       {
-         $poe_kernel->yield(sendToQX => "showmessage ".
-            CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 " . 
-            CGI::escape("$self->{text}->{qx}->{qx_context_error} (Qooxdoo::CreateContext: " . $contextid . ")"));
+         $poe_kernel->yield( sendToQX => "showmessage "
+            . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 "
+            . CGI::escape( $self->{text}->{qx}->{qx_context_error} . $contextid ) );
       }
    }
 
@@ -765,12 +765,16 @@ sub onClientData {
   #    } else {
   #       ${$options->{content}} .= "Unable to build table reference tree!";
   #    }
-   } elsif($options->{job} eq "auth") {
+   }
+   elsif($options->{job} eq "auth")
+   {
       $self->onAuthenticate({
          connection => $options->{connection},
          curSession => $options->{curSession}
       });
-   } elsif($options->{job} eq "neweditentry") {
+   }
+   elsif($options->{job} eq "neweditentry")
+   {
       $self->onNewEditEntry({
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
@@ -783,7 +787,9 @@ sub onClientData {
          curSession => $options->{curSession},
          "q" => $options->{connection}->{"q"},
       });
-   } elsif($options->{job} eq "filterselecttable") {
+   }
+   elsif($options->{job} eq "filterselecttable")
+   {
       if (my $popupid = $options->{connection}->{"q"}->param("popupid")) {
          #$poe_kernel->yield(sendToQX => "show ".$popupid." 1");
          $self->onTableSelect({
@@ -795,28 +801,65 @@ sub onClientData {
          });
          $poe_kernel->yield(sendToQX => "addobject " . CGI::escape($popupid) . " " . CGI::escape($options->{oid} . "_tableselect_tree"));
       } else {
-         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{popupip_missing} . $options->{job} ));
+         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{popupid_missing} . $options->{job} ));
       }
-   } elsif(($options->{job} eq "filteropen") ||
-           ($options->{job} eq "filtersave")) {
-      if (my $popupid = $options->{connection}->{"q"}->param("popupid")) {
-         my $urlappend = ",popupid=".$popupid.",table=".$options->{table};
-         $poe_kernel->yield(sendToQX => "createtree " . CGI::escape($popupid . "_" . $options->{job}) . " " . CGI::escape("Gespeicherte Filter") . " " . CGI::escape(",treeaction=select" . $options->{job} . ",table=" . $options->{table} . ",loid=" . $options->{oid} . $urlappend));
-         $poe_kernel->yield(sendToQX => "addtreeentry " . CGI::escape($popupid . "_" . $options->{job}) . " " . CGI::escape("") . " " . CGI::escape("1") . " " . CGI::escape("Erster Eintrag") . " " . CGI::escape("resource/qx/icon/Tango/16/actions/system-search.png"));
-         $poe_kernel->yield(sendToQX => "addtreeentry " . CGI::escape($popupid . "_" . $options->{job}) . " " . CGI::escape("") . " " . CGI::escape("newentry") . " " . CGI::escape("Neuer Eintrag") . " " . CGI::escape("resource/qx/icon/Tango/16/actions/list-add.png"))
-            unless ($options->{job} eq "filteropen");
-         $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($popupid)." ".CGI::escape($popupid."_".$options->{job}));
-      } else {
-         $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("Popupid for job ".$options->{job}." missing"));
-      }
-   } elsif($options->{job} eq "filter") {
+   }
+   elsif( ($options->{job} eq "filteropen")
+          || ($options->{job} eq "filtersave") )
+   {
+        if ( my $popupid = $options->{connection}->{"q"}->param("popupid") )
+        {
+            my $urlappend = ",popupid=" . $popupid . ",table=" . $options->{table};
+
+            $poe_kernel->yield(
+                  sendToQX => "createtree "
+                  . CGI::escape( $popupid . "_" . $options->{job} )     . " "
+                  . CGI::escape( $self->{text}->{qx}->{saved_filters} ) . " "
+                  . CGI::escape( ",treeaction=select" . $options->{job} . ",table=" . $options->{table}
+                                 . ",loid=" . $options->{oid} . $urlappend )
+            );
+
+            $poe_kernel->yield(
+                    sendToQX => "addtreeentry "
+                  . CGI::escape( $popupid . "_" . $options->{job} ) . " "
+                  . CGI::escape("") . " "
+                  . CGI::escape("1") . " "
+                  . CGI::escape( $self->{text}->{qx}->{first_entry} ) . " "
+                  . CGI::escape( $self->{text}->{qx}->{paths}->{system_search_png} )
+            );
+
+            $poe_kernel->yield( sendToQX => "addtreeentry "
+                  . CGI::escape( $popupid . "_" . $options->{job} ) . " "
+                  . CGI::escape("") . " "
+                  . CGI::escape("newentry") . " "
+                  . CGI::escape( $self->{text}->{qx}->{new_entry} ) . " "
+                  . CGI::escape( $self->{text}->{qx}->{paths}->{list_add} ) )
+              unless ( $options->{job} eq "filteropen" );
+
+            $poe_kernel->yield( sendToQX => "addobject "
+                  . CGI::escape($popupid) . " "
+                  . CGI::escape( $popupid . "_" . $options->{job} ) );
+        }
+        else   
+        {
+            $poe_kernel->yield( sendToQX => "showmessage "
+                  . CGI::escape( $self->{text}->{qx}->{internal_error} )
+                  . " 400 200 "
+                  . CGI::escape( $self->{text}->{qx}->{popupid_missing} . $options->{job} )
+            );
+        }
+   }
+   elsif($options->{job} eq "filter")
+   {
       $self->onFilter({
          table => $options->{table},
          oid => $options->{oid},
          curSession => $options->{curSession},
          "q" => $options->{connection}->{"q"},
       });
-   } elsif($options->{job} eq "filterhtml") {
+   }
+   elsif($options->{job} eq "filterhtml")
+   {
       $self->onFilterHTML({
          table => $options->{table},
          oid => $options->{oid},
@@ -825,17 +868,24 @@ sub onClientData {
          content => $options->{content},
          "q" => $options->{connection}->{"q"},
       });
-   } elsif($options->{job} eq "listcreateentry") {
+   }
+   elsif($options->{job} eq "listcreateentry")
+   {
       my $column = $options->{connection}->{"q"}->param("column") || '';
       my $id = $options->{connection}->{"q"}->param($UNIQIDCOLUMNNAME) || undef;
       my $table = undef,
       my $basetabledef = $self->{dbm}->getTableDefiniton($options->{table});      
-      if ($basetabledef->{columns}->{$column} && $basetabledef->{columns}->{$column}->{linkto}) {
+
+      if ($basetabledef->{columns}->{$column} && $basetabledef->{columns}->{$column}->{linkto})
+      {
          $table = $basetabledef->{columns}->{$column}->{linkto};
-      } elsif ($self->{dbm}->{config}->{oldlinklogic} && ($column =~ m,^(.+)_$UNIQIDCOLUMNNAME$,)) {
+      } elsif ($self->{dbm}->{config}->{oldlinklogic} && ($column =~ m,^(.+)_$UNIQIDCOLUMNNAME$,))
+      {
          $table = $1;
       }
-      if ($table) {
+
+      if ($table)
+      {
          if (my $curtabledef = $self->{dbm}->getTableDefiniton($table)) {
             $self->onNewEditEntry({
                table => $table,
@@ -850,8 +900,10 @@ sub onClientData {
                   AddAndSelectTable => $options->{table},
                }
             });
-         } else {
+        } else 
+        {
             my $msg = "Error loading column: '".$column."' -> '".$table."'";
+
             Log("Qooxdoo: listnewentry: ".$msg, $WARNING);
             $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape($msg));
          }
@@ -860,7 +912,8 @@ sub onClientData {
          Log("Qooxdoo: listnewentry: ".$msg, $WARNING);
          $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape($msg));
       }
-   } elsif($options->{job} eq "show") {
+   }
+   elsif($options->{job} eq "show") {
       $self->onShow({
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
