@@ -577,7 +577,7 @@ sub deleteUndeleteDataset {
    } else {
       $ok = $db->deleteDataSet($options);
    }
-   return $ok ? 0 : "(un)deleteDataSet reported error";
+   return $ok;
 }
 
 sub NewUpdateData {
