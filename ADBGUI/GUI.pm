@@ -109,7 +109,7 @@ sub new {
    $self->{tablelines} = $self->{"q"}->param("tablelines") || $self->{config}->{DEFAULTTABLELINES};
    $self->{buf} = '';
    $self->{target} = {};
-   $self->{job} = $self->{"q"}->param('job') || $self->{config}->{DEFAULTJOB};
+   $self->{job} = $self->{"q"}->param('job') || $self->{config}->{DEFAULTJOB} || "defaultjob";
    
    $self->InstallBaseHandler();
    
@@ -198,7 +198,7 @@ sub InstallBaseHandler {
       return $DONE;
    }, {noStyle => 1});
 
-   $self->AddHandler($self->{config}->{DEFAULTJOB}, sub {
+   $self->AddHandler($self->{config}->{DEFAULTJOB} || "defaultjob", sub {
       my $self = shift;
       my $targetself = shift;
       my $line = shift;
@@ -458,7 +458,7 @@ sub InstallBaseHandler {
       return $autret if (($autret = $self->authenticate($line, $targetself, $stadium)) != $ACTIONOK);
       $self->sendLine("LOGOUT");
       delete $targetself->{sessionid};
-      if (my $newjob = $self->getHandler($self->{config}->{DEFAULTJOB})) {
+      if (my $newjob = $self->getHandler($self->{config}->{DEFAULTJOB} || "defaultjob")) {
          $self->AddHandler($self->{job}, $newjob->{handler});
       } else {
          print "Relogin impossible. No defaultjob.\n";
@@ -501,7 +501,7 @@ sub InstallBaseHandler {
             print "<div id=\"fullframe_title\"><center><h1>".$self->{text}->{MAIN_TITLE}."</h1></center></div>\n";
             print "<div id=\"fullframe_content\">\n";
             print "<font color='red'><b>ERROR: </b>".$self->{"q"}->param("filename").": ".$self->{text}->{AUSW_UNAVAIL}."</font>\n";
-            if (my $newjob = $self->getHandler($self->{config}->{DEFAULTJOB})) {
+            if (my $newjob = $self->getHandler($self->{config}->{DEFAULTJOB} || "defaultjob")) {
                $self->AddHandler($self->{job}, $newjob->{handler});
             }
             return $DONE;
@@ -515,7 +515,7 @@ sub InstallBaseHandler {
                print "<center>";
                print $self->HashButton( {
                   sessionid => $targetself->{sessionid},
-                  job => $self->{config}->{DEFAULTJOB},
+                  job => $self->{config}->{DEFAULTJOB} || "defaultjob",
                   table => $targetself->{table}
                }, $self->{text}->{B_ACTION});
                print "</center>";
@@ -948,7 +948,7 @@ sub InstallBaseHandler {
             my $error = $4;
             if ($action eq "OK") {
                print $self->{text}->{PASSCHANGED}."<br><br>\n";
-               if (my $newjob = $self->getHandler($self->{config}->{DEFAULTJOB})) {
+               if (my $newjob = $self->getHandler($self->{config}->{DEFAULTJOB} || "defaultjob")) {
                   $self->AddHandler($self->{job}, $newjob->{handler});
                }
                return $DONE;
@@ -1082,6 +1082,11 @@ sub AddHandler {
    my $name = shift;
    my $handler = shift;
    my $options = shift || {};
+   
+   unless ($name) {
+      Log("No name!", $ERROR);
+      return undef;
+   }
 
    my $new = bless($options);
    $new->{handler} = $handler;
@@ -3050,7 +3055,7 @@ sub printTableButtons {
       print "<br><br>";
       print $self->HashButton( {
          sessionid => $targetself->{sessionid},
-         job => $self->{config}->{DEFAULTJOB}
+         job => $self->{config}->{DEFAULTJOB} || "defaultjob",
       }, $self->{text}->{B_START}, { link => 1 } )."<br>";
    }
 }
