@@ -902,15 +902,18 @@ sub onClientData {
             });
         } else 
         {
-            my $msg = "Error loading column: '".$column."' -> '".$table."'";
+            my $msg           = "Error loading column: '"             . $table . "' -> '" . $column . "'";
+            my $localised_msg = $self->{text}->{qx}->{col_load_error} . $table . "' -> '" . $column . "'"; 
 
             Log("Qooxdoo: listnewentry: ".$msg, $WARNING);
-            $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape($msg));
+            $poe_kernel->yield(  sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $localised_msg ) );
          }
       } else {
-         my $msg = "Bad column information: '".$column."'";
+         my $msg           = "Bad column information: '" . $column . "'";
+         my $localised_msg = $self->{text}->{qx}->{col_info_error}  . $column . "'";
+         
          Log("Qooxdoo: listnewentry: ".$msg, $WARNING);
-         $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape($msg));
+         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $localised_msg ) );
       }
    }
    elsif($options->{job} eq "show") {
@@ -994,8 +997,10 @@ sub onClientData {
          ionum => $options->{connection}->{"q"}->param("ionum"),
          connection => $options->{connection},
       });
-   } elsif(($options->{job} eq "saveedit") ||
-           ($options->{job} eq "newedit"))  {
+   }
+   elsif(($options->{job} eq "saveedit") ||
+           ($options->{job} eq "newedit"))
+   {
       my $id = $options->{$UNIQIDCOLUMNNAME} || $options->{connection}->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
       my $params = {
          crosslink => $options->{crosslink},
@@ -1012,7 +1017,9 @@ sub onClientData {
       $params->{columns} = $self->parseFormularData($params);
       $params->{columns}->{$options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table})} = $id;
       $self->onSaveEditEntry($params);
-   } elsif($options->{job} eq "htmlpreview") {
+   }
+   elsif($options->{job} eq "htmlpreview")
+   {
       $self->onHTMLPreview({
          table => $options->{table},
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
@@ -1021,41 +1028,91 @@ sub onClientData {
          value => $options->{connection}->{"q"}->param("value") || "",
          column => $options->{connection}->{"q"}->param("column")
       });
-   } elsif($options->{job} eq "statswin") {
+   }
+   elsif($options->{job} eq "statswin")
+   {
       my $winname = "statswin";
       my $url = "/ajax?nocache=".rand(999999999999)."&job=statsval&sessionid=".$options->{curSession}->{sessionid};
+
       $poe_kernel->yield(sendToQX => "destroy ".CGI::escape($winname));
-      $poe_kernel->yield(sendToQX => "createwin ".CGI::escape($winname)." ".($qxwidth)." ".($qxheight)." ".CGI::escape("Live-Stats")." ".CGI::escape("icon"));
+      $poe_kernel->yield(sendToQX => "createwin " . CGI::escape($winname) . " " . ($qxwidth) . " " . ($qxheight) . " " . CGI::escape( $self->{text}->{qx}->{live_stats} ) . " " . CGI::escape("icon"));
       $poe_kernel->yield(sendToQX => "createiframe ".CGI::escape($winname."_iframe")." ".CGI::escape($url));
       $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($winname)." ".CGI::escape($winname."_iframe"));
       $poe_kernel->yield(sendToQX => "open ".CGI::escape($winname));
-   } elsif($options->{job} eq "statsval") {
-      if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ADMIN))) {
-         $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 50 ".CGI::escape("Keine Berechtigung!"));
+   }
+   elsif($options->{job} eq "statsval")
+   {
+      if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ADMIN)))
+      {
+         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{permission_denied} )  );
          return Log("DBManager: onNewLineServer: ".$options->{job}.": ACCESS DENIED: ".$err->[0], $err->[1]);
       }
+
       my $value = "";
       my $url = "/ajax?nocache=".rand(999999999999)."&job=statsval&sessionid=".$options->{curSession}->{sessionid};
+      
       $value .= "Sessions: ".scalar(keys %{$self->{dbm}->{sessions}})."<br>\n"; #<hr>\n";
       $value .= "Time: ".scalar(time())."<br>\n";
       $value .= "<input type=button onClick='window.location = ".'"'.$url.'"'."' value='Aktualisieren'><br>";
+
       my $last = -1;
-      foreach my $session (sort {
-         lc($self->{dbm}->{sessions}->{$a}->{$USERSTABLENAME.$TSEP."username"} || "") cmp
-         lc($self->{dbm}->{sessions}->{$b}->{$USERSTABLENAME.$TSEP."username"} || "") ||
-          (($self->{dbm}->{sessions}->{$b}->{lastSessionAccessTime} || 0) <=>
-           ($self->{dbm}->{sessions}->{$a}->{lastSessionAccessTime} || 0))
-         } keys %{$self->{dbm}->{sessions}}) {
-         my $cursession = $self->{dbm}->{sessions}->{$session};
-         $value .= "<hr>" if ($last ne ($cursession->{$USERSTABLENAME.$TSEP.$self->{dbm}->getIdColumnName($USERSTABLENAME)} || 0));
-         $value .= $session." (Username: ".($cursession->{$USERSTABLENAME.$TSEP."username"} || "-")." / ID:".($cursession->{$USERSTABLENAME.$TSEP.$self->{dbm}->getIdColumnName($USERSTABLENAME)} || "-");
-         $value .= " IP: ".($cursession->{ip} || "-").")";
-         $value .= " Timeout: ".($cursession->{lastSessionAccessTime} ? (time()-$cursession->{lastSessionAccessTime}) : "-")." / QX: ".($cursession->{lastQXAccessTime} ? (time()-$cursession->{lastQXAccessTime}) : "-")." seconds ";
-         $value .= " Size: ".length(freeze($cursession))." Bytes";
-         $value .= "<br>\n";
-         $last = $cursession->{$USERSTABLENAME.$TSEP.$self->{dbm}->getIdColumnName($USERSTABLENAME)} || 0;
+
+      foreach my $session (
+          sort {
+              lc( $self->{dbm}->{sessions}->{$a}
+                    ->{ $USERSTABLENAME . $TSEP . "username" } || "" ) cmp
+                lc( $self->{dbm}->{sessions}->{$b}
+                    ->{ $USERSTABLENAME . $TSEP . "username" } || "" )
+                || (
+                  (
+                      $self->{dbm}->{sessions}->{$b}->{lastSessionAccessTime} || 0
+                  ) <=> (
+                      $self->{dbm}->{sessions}->{$a}->{lastSessionAccessTime} || 0
+                  )
+                )
+               } keys %{ $self->{dbm}->{sessions} }
+        )
+      {
+          my $cursession = $self->{dbm}->{sessions}->{$session};
+          $value .= "<hr>"
+            if ($last ne ($cursession->{$USERSTABLENAME . $TSEP
+                        . $self->{dbm}->getIdColumnName($USERSTABLENAME)}
+                    || 0)
+            );
+          $value .= $session
+            . " (Username: "
+            . ( $cursession->{ $USERSTABLENAME . $TSEP . "username" } || "-" )
+            . " / ID:"
+            . ($cursession->{
+                      $USERSTABLENAME
+                    . $TSEP
+                    . $self->{dbm}->getIdColumnName($USERSTABLENAME)
+                } || "-");
+  
+          $value .= " IP: " . ( $cursession->{ip} || "-" ) . ")";
+          
+          $value .=
+            " Timeout: "
+            . ( $cursession->{lastSessionAccessTime}
+              ? ( time() - $cursession->{lastSessionAccessTime} )
+              : "-" )
+            . " / QX: "
+            . ( $cursession->{lastQXAccessTime}
+              ? ( time() - $cursession->{lastQXAccessTime} )
+              : "-" )
+            . " seconds ";
+  
+          $value .= " Size: " . length( freeze($cursession) ) . " Bytes";
+  
+          $value .= "<br>\n";
+  
+          $last =
+            $cursession->{ $USERSTABLENAME
+                . $TSEP
+                . $self->{dbm}->getIdColumnName($USERSTABLENAME) }
+            || 0;
       }
-      $value .= "<hr><input type=button onClick='window.location = ".'"'.$url.'"'."' value='Aktualisieren'>";
+      $value  .= "<hr><input type=button onClick='window.location = " . '"' . $url . '"' . "' value='Aktualisieren'>";
       $options->{response}->code(RC_OK);
       $options->{response}->content_type("text/html; charset=UTF-8");
       ${$options->{content}} = $value;

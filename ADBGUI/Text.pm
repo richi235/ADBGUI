@@ -129,20 +129,23 @@ sub new
           activate_not_configured =>  "Das folgende 'Activate' ist nicht konfiguriert: ",
           context                 =>  "Kontext",
           enable                  =>  "Aktiviere ",
+          permission_denied       =>  "Fehlende Zugriffsberechtigung",
           password                =>  "Passwort",
           unnamed                 =>  "Unbenannt",
           username                =>  "Benutzername",
+          live_stats              =>  "Live Statistiken",
 
           saved_filters           =>  "Gespeicherte Filter: ",
           first_entry             =>  "Erster Eintrag",
           new_entry               =>  "Neuer Eintrag", 
           
           # Error Messages:
+          col_info_error          =>  "Fehlerhafte Informationen ueber Tabellen-Spalte: '"
           context_error           =>  "(Fehler beim Erstellen des Kontexts: ",
           internal_error          =>  "Interner Fehler",
           popupid_missing         =>  "Die ID für das Popup-Window für folgende Aktion fehlt: ",
           qx_context_error        =>  "Interner Fehler beim Erstellen des folgenden Qooxdoo Contexts:",
-          
+          col_load_error          =>  "Fehler beim Laden folgender Tabellen-Spalte: '",
           
           paths     =>
           {
