@@ -60,7 +60,7 @@ sub getContext {
    my $curSession = shift;
    my $contextkey = shift;
    my $forceNew = shift || 0;
-   my $contextID = $curSession->{context}->{$contextkey}->{id} || 0;
+   my $contextID = $contextkey ? $curSession->{context}->{$contextkey}->{id} || 0 : 0;
    if ($contextID) {
       return $curSession if ($curSession->{$USERSTABLENAME.$TSEP.$self->getIdColumnName($USERSTABLENAME)} && ($contextID eq $curSession->{$USERSTABLENAME.$TSEP.$self->getIdColumnName($USERSTABLENAME)}));
       return $curSession->{context}->{cache}->{$contextID}
