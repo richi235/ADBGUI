@@ -1277,12 +1277,12 @@ sub onDelRow {
             session => $options->{curSession},
             wherePre => $self->{dbm}->Where_Pre($options)
          });
-         if ($ret) {
-            Log("DBManager: onNewLineServer: ".$cmd." ".$options->{table}." FAILED: SQL Query failed: ".$ret, $ERROR);
-            $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("DELROW FAILED: ".$ret));
-         } else {
+         if ($ret =~ /^\d+$/) {
             # TODO:FIXME:XXX: Das sollte an alle anderen user auch gehen, die auf der tabelle sind!
             $poe_kernel->yield(sendToQX => "delrow ".CGI::escape($options->{table})." ".CGI::escape($options->{$UNIQIDCOLUMNNAME}));
+         } else {
+            Log("DBManager: onNewLineServer: ".$cmd." ".$options->{table}." FAILED: SQL Query failed: ".$ret, $ERROR);
+            $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("DELROW FAILED: ".$ret));
          }
          return $ret;
       } else {

@@ -148,6 +148,7 @@ sub getDB {
          dbtype => "timestamp",
          dbcompare => "="
       },
+      syntaxcheck => '^\d{4}\-\d{1,2}\-\d{1,2}(\ \d{1,2}\:\d{1,2}(:\d{1,2})?)?$',
       dbtype => "datetime",
       dbcompare => "=",
       nobr => 1
@@ -157,6 +158,7 @@ sub getDB {
          dbtype => "timestamp",
          dbcompare => "="
       },
+      syntaxcheck => '^\d{4}\-\d{1,2}\-\d{1,2}(\ \d{1,2}\:\d{1,2}(:\d{1,2})?)?$',
       dbtype => "datetime",
       dbcompare => "=",
       nobr => 1
