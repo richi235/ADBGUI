@@ -1058,15 +1058,18 @@ sub onClientData {
          return Log("DBManager: onNewLineServer: ".$options->{job}.": ACCESS DENIED: ".$err->[0], $err->[1]);
       }
 
+      my $translations = $self->{text}->{qx}->{stats_window};
+
       my $value = "";
       my $url = "/ajax?nocache=".rand(999999999999)."&job=statsval&sessionid=".$options->{curSession}->{sessionid};
       
-      $value .= "Sessions: ".scalar(keys %{$self->{dbm}->{sessions}})."<br>\n"; #<hr>\n";
-      $value .= "Time: ".scalar(time())."<br>\n";
-      $value .= "<input type=button onClick='window.location = ".'"'.$url.'"'."' value='Aktualisieren'><br>";
+      $value .= $translations->{sessions} . scalar( keys %{ $self->{dbm}->{sessions} } ) . "<br>\n";    #<hr>\n";
+      $value .= $translations->{cur_time} . scalar( time() ) . "<br>\n";
+      $value .= "<input type=button onClick='window.location = " . '"' . $url . '"' . "' value='$translations->{refresh}'><br>";
 
       my $last = -1;
 
+      #draw the stats for each session into the window (in sorted order):
       foreach my $session (
           sort {
               lc( $self->{dbm}->{sessions}->{$a}
@@ -1090,7 +1093,7 @@ sub onClientData {
                     || 0)
             );
           $value .= $session
-            . " (Username: "
+            . " ($self->{text}->{qx}->{username}: "
             . ( $cursession->{ $USERSTABLENAME . $TSEP . "username" } || "-" )
             . " / ID:"
             . ($cursession->{
@@ -1102,7 +1105,7 @@ sub onClientData {
           $value .= " IP: " . ( $cursession->{ip} || "-" ) . ")";
           
           $value .=
-            " Timeout: "
+            " <br>Timeout: "
             . ( $cursession->{lastSessionAccessTime}
               ? ( time() - $cursession->{lastSessionAccessTime} )
               : "-" )
@@ -1122,14 +1125,15 @@ sub onClientData {
                 . $self->{dbm}->getIdColumnName($USERSTABLENAME) }
             || 0;
       }
-      $value  .= "<hr><input type=button onClick='window.location = " . '"' . $url . '"' . "' value='Aktualisieren'>";
+      $value  .= "<hr><input type=button onClick='window.location = " . '"' . $url . '"' . "' value='$translations->{refresh}'>";
       $options->{response}->code(RC_OK);
       $options->{response}->content_type("text/html; charset=UTF-8");
       ${$options->{content}} = $value;
    } else {
-      $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("unknown command: ".$options->{job}));
+      $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape($self->{text}->{qx}->{internal_error}) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{unknown_command} . $options->{job}) );
    }
 }
+
 sub parseFormularData {
    my $self = shift;
    my $options = shift;

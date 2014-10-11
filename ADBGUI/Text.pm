@@ -126,10 +126,8 @@ sub new
       qx  =>
       {
           accessing               =>  "Zugriff auf ",
-          activate_not_configured =>  "Das folgende 'Activate' ist nicht konfiguriert: ",
           context                 =>  "Kontext",
           enable                  =>  "Aktiviere ",
-          permission_denied       =>  "Fehlende Zugriffsberechtigung",
           password                =>  "Passwort",
           unnamed                 =>  "Unbenannt",
           username                =>  "Benutzername",
@@ -140,20 +138,32 @@ sub new
           new_entry               =>  "Neuer Eintrag", 
           
           # Error Messages:
+          activate_not_configured =>  "Das folgende 'Activate' ist nicht konfiguriert: ",
           col_info_error          =>  "Fehlerhafte Informationen ueber Tabellen-Spalte: '",
           context_error           =>  "(Fehler beim Erstellen des Kontexts: ",
           internal_error          =>  "Interner Fehler",
+          permission_denied       =>  "Fehlende Zugriffsberechtigung",
           popupid_missing         =>  "Die ID für das Popup-Window für folgende Aktion fehlt: ",
           qx_context_error        =>  "Interner Fehler beim Erstellen des folgenden Qooxdoo Contexts:",
           col_load_error          =>  "Fehler beim Laden folgender Tabellen-Spalte: '",
+          unknown_command         =>  "Unbekannte Aktion: ",
           
           paths     =>
           {
               qx_building_subdir => "/myproject/build/",
               system_search_png  => "resource/qx/icon/Tango/16/actions/system-search.png",
               list_add           => "resource/qx/icon/Tango/16/actions/list-add.png",
-          }
+          },
           # potentielle übersetzungskandidaten:
+
+          stats_window =>
+          {
+              sessions   =>  "Offene Sitzungen: ",
+              cur_time   =>  "Aktuelle Uhrzeit in Sekunden nach Epoch:  ",
+              refresh    =>  "Aktualisieren"
+
+          },    
+              
       },
 
    };
