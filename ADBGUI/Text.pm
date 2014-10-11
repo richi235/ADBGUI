@@ -147,6 +147,8 @@ sub new
           qx_context_error        =>  "Interner Fehler beim Erstellen des folgenden Qooxdoo Contexts:",
           col_load_error          =>  "Fehler beim Laden folgender Tabellen-Spalte: '",
           unknown_command         =>  "Unbekannte Aktion: ",
+          table_non_modifiable    =>  "Tabelle nicht bearbeitbar",
+          delrow_failed           =>  "Das Löschen der Zeile ist fehlgeschlagen.",
           
           paths     =>
           {

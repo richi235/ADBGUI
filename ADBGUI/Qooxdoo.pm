@@ -1250,18 +1250,25 @@ sub onDelRow {
       Log("onDelRow: Missing parameters: connection:".$options->{table}.": !", $ERROR);
       return undef;
    }
-   if ($options->{$UNIQIDCOLUMNNAME} =~ /^\d+$/) {
-      if ($options->{oid}) {
+   if ($options->{$UNIQIDCOLUMNNAME} =~ /^\d+$/)
+   {
+      if ($options->{oid})
+      {
          my $cmd = $options->{cmd} || "DEL";
          my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
-         if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $MODIFY, $options->{table}, $options->{$UNIQIDCOLUMNNAME}))) {
-            $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 50 ".CGI::escape("Keine Berechtigung!"));
+
+         if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $MODIFY, $options->{table}, $options->{$UNIQIDCOLUMNNAME})))
+         {
+            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{permission_denied} ));
             return Log("DBManager: onNewLineServer: ".$cmd.": ACCESS DENIED: ".$err->[0], $err->[1]);
          }
-         if (($curtabledef->{readonly}) || ($curtabledef->{editonly})) {
-            $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 50 ".CGI::escape("Tabelle nicht bearbeitbar!"));
+
+         if (($curtabledef->{readonly}) || ($curtabledef->{editonly}))
+         {
+            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{table_non_modifiable} ));
             return Log("DBManager: onNewLineServer: ".$cmd.": ACCESS DENIED: ACCESS_LOG not allowed!");
          }
+         
          #if ($self->{config}->{changelog}) {
          #   unless (syswrite($self->{config}->{changelog}, localtime(time)." ".
          #      $curSession->{$USERSTABLENAME.$TSEP.$USERNAMECOLUMNNAME}." ".$_."\n")) {
@@ -1269,11 +1276,14 @@ sub onDelRow {
          #      die;
          #   }
          #}
-         if (defined(my $err = $self->{dbm}->BeforeNewUpdate($options->{table}, $cmd, { $options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table}) => $options->{$UNIQIDCOLUMNNAME} }, $options->{curSession}))) {
+
+         if (defined(my $err = $self->{dbm}->BeforeNewUpdate($options->{table}, $cmd, { $options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table}) => $options->{$UNIQIDCOLUMNNAME} }, $options->{curSession})))
+         {
             Log("ADBGUI::Qooxdoo::onDelRow: BeforeNewUpdate failed: ".$err, $INFO);
-            $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("DELROW FAILED!"));
+            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{delrow_failed} ));
             return;
          }
+
          my $ret = $self->{dbm}->deleteUndeleteDataset({
             table => $options->{table},
             cmd => $cmd,
@@ -1281,18 +1291,27 @@ sub onDelRow {
             session => $options->{curSession},
             wherePre => $self->{dbm}->Where_Pre($options)
          });
-         if ($ret =~ /^\d+$/) {
+
+         if ($ret =~ /^\d+$/)
+         {
             # TODO:FIXME:XXX: Das sollte an alle anderen user auch gehen, die auf der tabelle sind!
             $poe_kernel->yield(sendToQX => "delrow ".CGI::escape($options->{table})." ".CGI::escape($options->{$UNIQIDCOLUMNNAME}));
-         } else {
+         } else   
+         {
             Log("DBManager: onNewLineServer: ".$cmd." ".$options->{table}." FAILED: SQL Query failed: ".$ret, $ERROR);
             $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("DELROW FAILED: ".$ret));
          }
+
          return $ret;
-      } else {
+
+      }
+      else
+      {    
          return "DELROW: Bad Object-ID Format: ".$options->{oid}."\n";
       }
-   } else {
+   }
+   else
+   {    
       return "DELROW: Bad ID Format: ".$options->{$UNIQIDCOLUMNNAME}."\n";
    }
 }
