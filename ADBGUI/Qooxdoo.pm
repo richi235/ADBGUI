@@ -2748,11 +2748,13 @@ sub onAuthenticated {
       return undef;
    }
    # TODO:FIXME:XXX: noReset macht noch nicht wirklich Sinn....
+
    $self->resetQX({
       curSession => $options->{curSession},
       connection => $options->{connection},
    })
       unless $options->{noReset};
+
    $self->showTabellen({curSession => $options->{curSession}})
       unless (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ADMIN)) || $options->{noStartMenu});
 }

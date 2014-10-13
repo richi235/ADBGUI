@@ -22,6 +22,13 @@ sub new
       WRONG_SYNTAX         => ' hat nicht die richtige Syntax',
       IS_MISSING           => ' fehlt',
 
+      # search window
+      CRITERION            => 'Kriterium',
+      FROM                 => 'Von:',
+      TO                   => 'Bis:',
+      DAY                  => 'Tag ',
+      TIME                 => 'Zeit ',
+      ACTIVE               => 'aktiv: ',
 
       ADMINISTRATION  => 'Administration',
       ANALYSIS        => 'Auswertung',
@@ -96,6 +103,7 @@ sub new
       B_CHANGEPASS      => 'Passwort aendern',
       B_CRYPTOCARD      => 'Cryptocard initialisieren',
       B_ASSIGN          => 'zuweisen',
+      B_START           => 'Startseite'
 
       T_UNDEL      => 'Ja, wirklich wiederherstllen.',
       T_DEL        => 'Ja, wirklich loeschen.',
@@ -118,7 +126,6 @@ sub new
       T_SEARCH_DESC => 'Hier k&ouml;nnen Sie die zuvor angezeigten Tabellen nach den unten aufgef&uuml;hrten Kriterien filtern. Wenn Sie die Tabelle doch nicht filtern wolle gehen Sie &uuml;ber den Zur&uuml;ck-Schalter Ihres Browser wieder zur vorherigen Seite.',
       T_SECTION     => '&Uuml;bersicht &uuml;ber die Abteilungen',
       T_SECTION_DES => 'xxx',
-      B_START       => 'Startseite'
    };
 
    bless ($self);
