@@ -23,6 +23,13 @@ sub new
       WRONG_SYNTAX         => ' hat nicht die richtige Syntax',
       IS_MISSING           => ' fehlt',
 
+      # search window
+      CRITERION            => 'Kriterium',
+      FROM                 => 'Von:',
+      TO                   => 'Bis:',
+      DAY                  => 'Tag ',
+      TIME                 => 'Zeit ',
+      ACTIVE               => 'aktiv: ',
 
       ADMINISTRATION  => 'Administration',
       ANALYSIS        => 'Auswertung',
@@ -97,6 +104,7 @@ sub new
       B_CHANGEPASS      => 'Passwort aendern',
       B_CRYPTOCARD      => 'Cryptocard initialisieren',
       B_ASSIGN          => 'zuweisen',
+      B_START           => 'Startseite'
 
       T_UNDEL      => 'Ja, wirklich wiederherstllen.',
       T_DEL        => 'Ja, wirklich loeschen.',

@@ -22,6 +22,13 @@ sub new
       WRONG_SYNTAX         => ' does not have the right syntax',
       IS_MISSING           => ' is missing!',
 
+      # search window
+      CRITERION            => 'Criterion',
+      FROM                 => 'From:',
+      TO                   => 'To:',
+      DAY                  => 'Day ',
+      TIME                 => 'Time ',
+      ACTIVE               => 'active: ',
 
       ADMINISTRATION  => 'Administration',
       ANALYSIS        => 'Analysis',
@@ -96,7 +103,7 @@ sub new
       B_CHANGEPASS      => 'change password',
       B_CRYPTOCARD      => 'Initialise Cryptocard',
       B_ASSIGN          => 'Assign',
-      B_START           => 'Startpage'
+      B_START           => 'Startpage',
 
       T_UNDEL           => 'Yes, really undelete',
       T_DEL             => 'Yes, really delete',

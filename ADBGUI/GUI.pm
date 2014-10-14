@@ -96,10 +96,10 @@ sub new {
       "<div id=\"fullframe_content\">\n";
 
    $self->{datedef} = [
-      ["day", ".", "1", "31", "Tag ", " ", ((gmtime(time-86400))[3]) ],
+      ["day", ".", "1", "31", $self->{text}->{DAY}, " ", ((gmtime(time-86400))[3]) ],
       ["month", ".", "1", "12", "", "-", ((gmtime(time-86400))[4])+1],
       ["year", "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", "2000", "2040", "", "-", ((gmtime(time-86400))[5])+1900],
-      ["hour", ":", "0", "23", "Zeit ", ":"],
+      ["hour", ":", "0", "23", $self->{text}->{TIME}, ":"],
       ["minute", ":", "0", "59", "", ":"   ],
       ["second", " ", "0", "59", " ", ""   ]
    ];
@@ -2692,7 +2692,7 @@ sub printSearchFormFor {
             if (($tmp = $self->{"q"}->param($column)) || (defined($tmp) && $tmp ne ''));
          if (($curTable = [grep { (((!$curcolumn->{searchas}) && (($column eq $_."_".$UNIQIDCOLUMNNAME) || (defined($curcolumn->{useas}) && $curcolumn->{useas} && ($curcolumn->{useas} eq $_."_".$UNIQIDCOLUMNNAME)))) || (defined($curcolumn->{useas}) && $curcolumn->{useas} && ($curcolumn->{searchas} eq $_."_".$UNIQIDCOLUMNNAME))) } keys(%{$db->{tables}})]) && scalar(@$curTable) && !(defined($curcolumn->{nopop})) ) {
             next unless ($i == 1);
-            $ret .= writeSeperator($k) if ($j++ == 0); $k++;
+            $ret .= writeSeperator($k, $self) if ($j++ == 0); $k++;
             $ret .= $self->printLabelHeader($curcolumn, $label, $column, 1, $filterCache->{$table.$TSEP.$column."_selected"});
             if (scalar(@$curTable) != 1) {
                # Dass hier KANN nicht passieren. Niemals. Unm�glich.
@@ -2709,7 +2709,7 @@ sub printSearchFormFor {
             $ret .= "</td></tr>\n";
          } elsif (($curcolumn->{type} eq "boolean") || ($curcolumn->{type} eq $DELETEDCOLUMNNAME)) {
             next unless ($i == 2);
-            $ret .= writeSeperator($k) if ($j++ == 0); $k++;
+            $ret .= writeSeperator($k, $self) if ($j++ == 0); $k++;
             $ret .= $self->printLabelHeader($curcolumn, $label, $column, 1, $filterCache->{$table.$TSEP.$column."_selected"});
             $ret .= "<select name='search".$column."'>\n";
             my @arry = (["*" => ""], ["ja" => "1"], ["nein" => "0"]);
@@ -2725,28 +2725,28 @@ sub printSearchFormFor {
                   # TODO:XXX:FIXME: datetime ist im GUI.pm noch nicht ordentlich behandelt, faellt derzeit auf date zurueck!
                   ($curcolumn->{type} eq "datetime")) {
             next unless ($i == 0);
-            $ret .= writeSeperator($k) if ($j++ == 0); $k++;
+            $ret .= writeSeperator($k, $self) if ($j++ == 0); $k++;
             $ret .= $self->printLabelHeader($curcolumn, $label, $column, 1, $filterCache->{$table.$TSEP.$column."_selected"});
             #$ret .= "<input type='text' name='search".$column."'";
             #$ret .= " value='".$filterCache->{$column}."'" if $filterCache->{$column};
             #$ret .= ">\n";
-            $ret .= "<table border=0><tr><td>Aktiv: ";
+            $ret .= "<table border=0><tr><td>$self->{text}->{ACTIVE}";
             $ret .= "<input type='checkbox' name='search".$column."_active'";
             $ret .= " value='1'";
             $ret .= " checked" if ($filterCache->{$table.$TSEP.$column."_active"});
             $ret .= ">";
             $ret .= "</td><td>";
-            $ret .= "Von:</td><td>";
+            $ret .= "$self->{text}->{FROM}</td><td>";
             $ret .= $self->printDateQuestion("search".$column."_begin_", $self->getDatePredefFor($column, $filterCache->{$table.$TSEP.$column."_begin"}));
             $ret .= "</td></tr><tr><td></td><td>";
-            $ret .= "Bis:</td><td>"; 
+            $ret .= "$self->{text}->{TO}</td><td>"; 
             $ret .= $self->printDateQuestion("search".$column."_end_", $self->getDatePredefFor($column, $filterCache->{$table.$TSEP.$column."_end"}, 1));
             $ret .= "</td></tr></table></td></tr>\n";
          } elsif ($curcolumn->{type} eq "virtual") {
          } else { #if (!$curcolumn->{readonly} || defined($curcolumn->{nopop})) {
             next unless ($i == 0);
             #print "XXX:".$table.$TSEP.$column.":".join(",", map { $_."=".$filterCache->{$_} } keys %{$filterCache})."<br>\n";
-            $ret .= writeSeperator($k) if ($j++ == 0); $k++;
+            $ret .= writeSeperator($k, $self) if ($j++ == 0); $k++;
             $ret .= $self->printLabelHeader($curcolumn, $label, $column, 1, $filterCache->{$table.$TSEP.$column}); #."_selected"});
             $ret .= "<input type='text' size='".($curcolumn->{size}||50)."' name='search".$column."'";
             $ret .= " value='".$filterCache->{$table.$TSEP.$column}."'" if $filterCache->{$table.$TSEP.$column};
@@ -2766,9 +2766,10 @@ sub printSearchFormFor {
 
 sub writeSeperator {
    my $i = shift;
+   my $self = shift;
    my $ret = '';
    $ret .= "<hr>\n" if ($i != 0);
-   $ret .= "<table><tr><td><b>Kriterium</b></td>".
+   $ret .= "<table><tr><td><b>$self->{text}->{CRITERION}</b></td>".
    #<td><b>Darstellen</b></td>
    "<td><b>Filter</b></td></tr>";
 }
