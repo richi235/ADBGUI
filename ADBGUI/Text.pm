@@ -103,7 +103,7 @@ sub new
       B_CHANGEPASS      => 'Passwort aendern',
       B_CRYPTOCARD      => 'Cryptocard initialisieren',
       B_ASSIGN          => 'zuweisen',
-      B_START           => 'Startseite'
+      B_START           => 'Startseite',
 
       T_UNDEL      => 'Ja, wirklich wiederherstllen.',
       T_DEL        => 'Ja, wirklich loeschen.',
