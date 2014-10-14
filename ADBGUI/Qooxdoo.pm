@@ -2489,7 +2489,6 @@ sub onNewEditEntry {
       columns => $columns,
       ret => $ret,
    });
-   # TODO:XXX:FIXME: overridecolumns sollte wieder raus... Das sollte im Falle von context (Zeiterfassung) ueber getURL oder so gehen! Muss also ins Qooxdoo (js) rein.
    my $overridecolumns = [];
    if ($options->{override}) {
       $ret->[0]->[0] = {%{$ret->[0]->[0]}, %{$options->{override}}};
