@@ -249,6 +249,11 @@ sub time2sql {
    return ($time[5]+1900)."-".($time[4]+1)."-".$time[3]." ".$time[2].":".$time[1].":".$time[0];
 }
 
+sub localtime2sql {
+   my @time = localtime(shift);
+   return ($time[5]+1900)."-".($time[4]+1)."-".$time[3]." ".$time[2].":".$time[1].":".$time[0];
+}
+
 sub secsToHours {
    return (int(shift() / 36) / 100);
 }
