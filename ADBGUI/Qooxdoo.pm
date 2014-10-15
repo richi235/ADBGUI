@@ -2638,7 +2638,7 @@ sub doSpecialColumns {
         ($curtabledef->{columns}->{$column}->{type} eq "htmltext")) ? "html" : "")."textedit ".CGI::escape($options->{window}."_tabs_".$column."_data")." ".
          CGI::escape($options->{table})." ".
          CGI::escape($column)." ".
-         CGI::escape($options->{$UNIQIDCOLUMNNAME}||defined($options->{$UNIQIDCOLUMNNAME}) ? $options->{$UNIQIDCOLUMNNAME} : Log("ID is undefined!", $ERROR))." ".
+         CGI::escape(defined($options->{$UNIQIDCOLUMNNAME}) ? $options->{$UNIQIDCOLUMNNAME} : Log("ID is undefined!", $ERROR))." ".
          CGI::escape($options->{defaults}->{$options->{table}.$TSEP.$column} || '')." ".
          CGI::escape($curtabledef->{columns}->{$column}->{help} || '')." ".
          CGI::escape($options->{urlappend}));
