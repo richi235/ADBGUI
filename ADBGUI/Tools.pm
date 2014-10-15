@@ -10,7 +10,7 @@ BEGIN {
    our @EXPORT = qw/$LOG_SYSLOG $LOG_STDERR $LOG_STDOUT $loglevel $logdst/;
    our @EXPORT_OK = qw/daemonize mergeColumnInfos hashKeysRightOrder ensureLength
                        getAffectedColumns simplehashclone arraycompare getFileUploadJavascriptForIDs
-                       hashcompare padNumber time2human time2sql normaliseLine queryLDAP
+                       hashcompare padNumber time2human time2sql normaliseLine queryLDAP localtime2sql
                        Log MakeTime getIncludedTables makeInfoLine new_anon_scalar generatePassword
                        getTimeLineHTML printLine printLineNospan htmlUnEscape removeTime
                        beschriftung cutDateInfos preZero toDateObj hidebegin hideend
