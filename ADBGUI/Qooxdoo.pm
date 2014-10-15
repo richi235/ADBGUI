@@ -1733,7 +1733,7 @@ sub getTableButtonsDef {
       image => "resource/qx/icon/Tango/".($options->{smallbuttons} ? "16" : "32")."/actions/list-remove.png",
       action => "delrow",
       bindto => "row",
-   })) unless ($curtabledef->{readonly} || $options->{nobuttons} || $options->{readonly});
+   })) unless ($curtabledef->{readonly} || $options->{nobuttons});
    push(@$return, {
       name => "filter",
       label => "Filter",
