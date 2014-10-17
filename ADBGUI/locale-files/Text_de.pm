@@ -8,7 +8,7 @@ sub new
    my $proto = shift;
    my $self  = 
    {
-   #### Strings from GUI.pm Start ####    
+   #### Strings for GUI.pm Start ####    
       ACTIVE_OPERATOR      => "X",
       INACTIVE_OPERATOR    => "_",
       PASSCHANGED          => "Passwort geaendert.\n",
@@ -104,7 +104,7 @@ sub new
       B_CHANGEPASS      => 'Passwort aendern',
       B_CRYPTOCARD      => 'Cryptocard initialisieren',
       B_ASSIGN          => 'zuweisen',
-      B_START           => 'Startseite'
+      B_START           => 'Startseite',
 
       T_UNDEL      => 'Ja, wirklich wiederherstllen.',
       T_DEL        => 'Ja, wirklich loeschen.',
@@ -128,7 +128,7 @@ sub new
       T_SECTION     => '&Uuml;bersicht &uuml;ber die Abteilungen',
       T_SECTION_DES => 'xxx',
       B_START       => 'Startseite',
-   #### Strings from GUI.pm END #####
+   #### Strings for GUI.pm END #####
 
    #### Strings from Qooxdoo.pm START ####
       qx  =>
@@ -169,7 +169,7 @@ sub new
           stats_window =>
           {
               sessions   =>  "Offene Sitzungen: ",
-              cur_time   =>  "Aktuelle Uhrzeit in Sekunden nach Epoch:  ",
+              cur_time   =>  "Aktuelle Uhrzeit in Sekunden nach UNIX-time-epoch:  ",
               refresh    =>  "Aktualisieren"
 
           },    

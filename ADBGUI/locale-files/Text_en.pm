@@ -8,6 +8,7 @@ sub new
    my $proto = shift;
    my $self  = 
    {
+   ### Strings for GUI.pm START ###    
       ACTIVE_OPERATOR      => 'X',
       INACTIVE_OPERATOR    => '_',
       PASSCHANGED          => "Password changed.\n",
@@ -127,6 +128,54 @@ sub new
                            'If you want to get back to the previous Page, without filtering anything, use the "back" button of your browser.'  ,
       T_SECTION         => 'Section Overview',
       T_SECTION_DES     => 'xxx',
+   ### Strings for GUI.pm END ###
+
+   #### Strings from Qooxdoo.pm START ####
+      qx  =>
+      {
+          accessing               =>  "Access to ",
+          context                 =>  "context",
+          enable                  =>  "Enable ",
+          password                =>  "Password",
+          unnamed                 =>  "Unnamed",
+          username                =>  "Username",
+          live_stats              =>  "Live Statistics",
+
+          saved_filters           =>  "Saved filters: ",
+          first_entry             =>  "First Entry",
+          new_entry               =>  "New Entry", 
+          
+          # Error Messages:
+          activate_not_configured =>  "The following 'Activate' is not configured: ",
+          col_info_error          =>  "Got corrupted information about following column: '",
+          context_error           =>  "(Error while creating Context: ",
+          internal_error          =>  "Internal error",
+          permission_denied       =>  "No access permission",
+          popupid_missing         =>  "Id of popup-window for the following action is missing: ",
+          qx_context_error        =>  "Internal Error while creating the following Qooxdoo Contexd: ",
+          col_load_error          =>  "Error while loading the following column: '",
+          unknown_command         =>  "Unknown command/action: ",
+          table_non_modifiable    =>  "Table not modifiable.",
+          delrow_failed           =>  "Deleting this line failed.",
+          
+          paths     =>
+          {
+              qx_building_subdir => "/myproject/build/",
+              system_search_png  => "resource/qx/icon/Tango/16/actions/system-search.png",
+              list_add           => "resource/qx/icon/Tango/16/actions/list-add.png",
+          },
+          # potentielle übersetzungskandidaten:
+
+          stats_window =>
+          {
+              sessions   =>  "Open sessions: ",
+              cur_time   =>  "Current time in seconds after UNIX-epoch:  ",
+              refresh    =>  "Refresh"
+
+          },
+
+      },
+
    };
 
    bless ($self);

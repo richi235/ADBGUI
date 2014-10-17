@@ -8,7 +8,7 @@ sub new
    my $proto = shift;
    my $self  = 
    {
-   #### Strings from GUI.pm Start ####    
+   #### Strings for GUI.pm Start ####    
       ACTIVE_OPERATOR      => "X",
       INACTIVE_OPERATOR    => "_",
       PASSCHANGED          => "Passwort geaendert.\n",
@@ -84,7 +84,7 @@ sub new
       B_ADD             => 'Eintrag hinzuf&uuml;gen',
       B_ANALYSE         => 'zu den Log-Dateien',
       B_CONFIG          => 'Filter konfigurieren',
-      B_DEL             => 'Löschen',
+      B_DEL             => 'LÃ¶schen',
       B_UNDEL           => 'Wiederherstellen',
       B_OVERVIEW        => 'Uebersicht',
       B_EDIT            => 'Editieren',
@@ -95,21 +95,21 @@ sub new
       B_USE_FILTER      => 'Filter anwenden',
       B_LOGOUT          => 'Ausloggen',
       B_ACTION          => 'Aktionen',
-      B_BOSS            => 'BOSS Button - Aenderungen JETZT übernehmen',
-      B_TERM            => 'Tunnel schließen',
-      B_OPEN            => 'Tunnel öffnen',
+      B_BOSS            => 'BOSS Button - Aenderungen JETZT Ã¼bernehmen',
+      B_TERM            => 'Tunnel schlieÃŸen',
+      B_OPEN            => 'Tunnel Ã¶ffnen',
       B_SHOW_ALL        => 'Alles anzeigen',
-      B_SHOW_OPENED     => 'Tunnel öffnen',
+      B_SHOW_OPENED     => 'Tunnel Ã¶ffnen',
       B_SCHEDULE        => 'Plan',
       B_CHANGEPASS      => 'Passwort aendern',
       B_CRYPTOCARD      => 'Cryptocard initialisieren',
       B_ASSIGN          => 'zuweisen',
-      B_START           => 'Startseite'
+      B_START           => 'Startseite',
 
       T_UNDEL      => 'Ja, wirklich wiederherstllen.',
       T_DEL        => 'Ja, wirklich loeschen.',
-      T_DELNO      => 'Nein, zurück zur &Uuml;bersicht',
-      T_UNDELNO    => 'Nein, zurück zur &Uuml;bersicht',
+      T_DELNO      => 'Nein, zurÃ¼ck zur &Uuml;bersicht',
+      T_UNDELNO    => 'Nein, zurÃ¼ck zur &Uuml;bersicht',
 
       WHITELIST    => 'ALLE',
       
@@ -128,7 +128,7 @@ sub new
       T_SECTION     => '&Uuml;bersicht &uuml;ber die Abteilungen',
       T_SECTION_DES => 'xxx',
       B_START       => 'Startseite',
-   #### Strings from GUI.pm END #####
+   #### Strings for GUI.pm END #####
 
    #### Strings from Qooxdoo.pm START ####
       qx  =>
@@ -151,12 +151,12 @@ sub new
           context_error           =>  "(Fehler beim Erstellen des Kontexts: ",
           internal_error          =>  "Interner Fehler",
           permission_denied       =>  "Fehlende Zugriffsberechtigung",
-          popupid_missing         =>  "Die ID für das Popup-Window für folgende Aktion fehlt: ",
+          popupid_missing         =>  "Die ID fÃ¼r das Popup-Window fÃ¼r folgende Aktion fehlt: ",
           qx_context_error        =>  "Interner Fehler beim Erstellen des folgenden Qooxdoo Contexts:",
           col_load_error          =>  "Fehler beim Laden folgender Tabellen-Spalte: '",
           unknown_command         =>  "Unbekannte Aktion: ",
           table_non_modifiable    =>  "Tabelle nicht bearbeitbar",
-          delrow_failed           =>  "Das Löschen der Zeile ist fehlgeschlagen.",
+          delrow_failed           =>  "Das LÃ¶schen der Zeile ist fehlgeschlagen.",
           
           paths     =>
           {
@@ -164,12 +164,12 @@ sub new
               system_search_png  => "resource/qx/icon/Tango/16/actions/system-search.png",
               list_add           => "resource/qx/icon/Tango/16/actions/list-add.png",
           },
-          # potentielle übersetzungskandidaten:
+          # potentielle Ã¼bersetzungskandidaten:
 
           stats_window =>
           {
               sessions   =>  "Offene Sitzungen: ",
-              cur_time   =>  "Aktuelle Uhrzeit in Sekunden nach Epoch:  ",
+              cur_time   =>  "Aktuelle Uhrzeit in Sekunden nach UNIX-time-epoch:  ",
               refresh    =>  "Aktualisieren"
 
           },    
