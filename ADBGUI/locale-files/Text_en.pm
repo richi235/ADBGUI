@@ -147,8 +147,10 @@ sub new
           
           # Error Messages:
           activate_not_configured =>  "The following 'Activate' is not configured: ",
+          application_unavailable =>  "Currently this application is not available. Please try again later.",
           col_info_error          =>  "Got corrupted information about following column: '",
           context_error           =>  "(Error while creating Context: ",
+          failed                  =>  "FAILED",
           internal_error          =>  "Internal error",
           permission_denied       =>  "No access permission",
           popupid_missing         =>  "Id of popup-window for the following action is missing: ",
@@ -157,6 +159,10 @@ sub new
           unknown_command         =>  "Unknown command/action: ",
           table_non_modifiable    =>  "Table not modifiable.",
           delrow_failed           =>  "Deleting this line failed.",
+          delrow_linex_failed     =>  "Deleting the following line failed: ",
+          login_error             =>  "Login-error",
+          wrong_pw_user_combo     =>  "Invalid username or password.",
+          no_crosslink_id         =>  "No crosslink id\n"
           
           paths     =>
           {

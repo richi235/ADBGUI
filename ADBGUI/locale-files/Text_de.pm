@@ -147,16 +147,22 @@ sub new
           
           # Error Messages:
           activate_not_configured =>  "Das folgende 'Activate' ist nicht konfiguriert: ",
+          application_unavailable =>  "Derzeit ist diese Anwendung nicht verfügbar, bitte versuchen Sie es später wieder.",
           col_info_error          =>  "Fehlerhafte Informationen ueber Tabellen-Spalte: '",
+          col_load_error          =>  "Fehler beim Laden folgender Tabellen-Spalte: '",
           context_error           =>  "(Fehler beim Erstellen des Kontexts: ",
+          delrow_failed           =>  "Das Löschen dieser Zeile ist fehlgeschlagen.",
+          delrow_linex_failed     =>  "Das Löschen folgender Zeile ist fehlgeschlagen: ",
+          failed                  =>  "Operation fehlgeschlagen",
           internal_error          =>  "Interner Fehler",
+          login_error             =>  "Loginfehler",
+          no_crosslink_id         =>  "Fehlende ID für Tabellen-Quer-Verknüpfung\n"
           permission_denied       =>  "Fehlende Zugriffsberechtigung",
           popupid_missing         =>  "Die ID für das Popup-Window für folgende Aktion fehlt: ",
           qx_context_error        =>  "Interner Fehler beim Erstellen des folgenden Qooxdoo Contexts:",
-          col_load_error          =>  "Fehler beim Laden folgender Tabellen-Spalte: '",
           unknown_command         =>  "Unbekannte Aktion: ",
           table_non_modifiable    =>  "Tabelle nicht bearbeitbar",
-          delrow_failed           =>  "Das Löschen der Zeile ist fehlgeschlagen.",
+          wrong_pw_user_combo     =>  "Ungültige Benutzername-Passwort Kombination.",
           
           paths     =>
           {
