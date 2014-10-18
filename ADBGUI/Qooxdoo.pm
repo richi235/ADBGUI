@@ -1985,7 +1985,10 @@ sub doCSVonShow {
          })) {
             #$poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("LENGTH")." 400 100 ".CGI::escape("Length: ".$out.":".length($out)));
             #$out .= "LENGTH:".$out.":".length($out)."<br>\n";
-            $out = "<FORM method='POST' name='myform' action='".$options->{"q"}->url(-relative=>1)."'>\n".$out;
+            $out =
+                "<FORM method='POST' name='myform' action='"
+              . $options->{"q"}->url( -relative => 1 ) . "'>\n"
+              . $out;
             $out = "<nobr>&nbsp;<select name='filename' id='filename' onChange='var http = false;
                if(navigator.appName == ".chr(34)."Microsoft Internet Explorer".chr(34).") {
                   http = new ActiveXObject(".chr(34)."Microsoft.XMLHTTP".chr(34).");
@@ -2001,19 +2004,33 @@ sub doCSVonShow {
             $ret .= "addobject ".$options->{table}."_".$suffix." ".$options->{table}."_".$suffix."_data_text ".$options->{table}."_".$suffix."_data";
          } else {
             $ret = "destroy ".$options->{table}."_".$suffix."\n";
-            $ret .= "showmessage ".CGI::escape("No Log data!")." 400 100 ".CGI::escape("No log data!");
+            $ret .=
+                "showmessage "
+              . CGI::escape( $self->{text}->{qx}->{no_log_data} )
+              . " 400 100 "
+              . CGI::escape( $self->{text}->{qx}->{no_log_data} );
             return $ret;
          }
-         if (($foundactive == 0) && scalar(@files)) {
+
+         if (($foundactive == 0) && scalar(@files))
+         {
             $db->assignFileToDynTable($options->{table}, $files[0]);
          }
-      } else {
+
+      }
+      else
+      {    
          Log("Qooxdoo: onShow: getAvailableDynTableFiles: did not return ARRAY but: '".ref($files)."'", $WARNING);
-         $ret = "destroy ".$options->{table}."_".$suffix."\n";
-         $ret .= "showmessage ".CGI::escape("No Log data!")." 400 100 ".CGI::escape("No log data!");
+         $ret = "destroy " . $options->{table} . "_" . $suffix . "\n";
+         $ret .=
+             "showmessage "
+           . CGI::escape( $self->{text}->{qx}->{no_log_data} )
+           . " 400 100 "
+           . CGI::escape( $self->{text}->{qx}->{no_log_data} );
          return $ret;
       }
    }
+
    return $ret;
 }
 
@@ -2021,16 +2038,39 @@ sub onShow {
    my $self = shift;
    my $options = shift;
    my $moreparams = shift;
-   unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{connection}) {
+   
+   unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{connection})
+   {
       Log("onShow: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.":connection:".$options->{connection}.": !", $ERROR);
       return undef;
    }
+   
    my $suffix = "show";
    my $subtext = $self->doCSVonShow($options, $suffix);
    my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
-   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "destroy ".  $options->{table}."_".$suffix."_data");
-   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "destroy ".  $options->{table}."_".$suffix);
-   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createwin ".$options->{table}."_".$suffix." ".($curtabledef->{qxwidth} || $qxwidth)." ".($curtabledef->{qxheight} || $qxheight)." ".CGI::escape($options->{windowtitle} || $options->{title} || $curtabledef->{label} || $options->{table})." ".CGI::escape($curtabledef->{icon}||''));
+
+   $self->sendToQXForSession( $options->{connection}->{sessionid} || 0, "destroy " . $options->{table} . "_" . $suffix . "_data" );
+   $self->sendToQXForSession(
+       $options->{connection}->{sessionid} || 0,
+       "destroy " . $options->{table} . "_" . $suffix
+   );
+   $self->sendToQXForSession(
+       $options->{connection}->{sessionid} || 0,
+       "createwin "
+         . $options->{table} . "_"
+         . $suffix . " "
+         . ( $curtabledef->{qxwidth}  || $qxwidth ) . " "
+         . ( $curtabledef->{qxheight} || $qxheight ) . " "
+         . CGI::escape(
+                $options->{windowtitle}
+             || $options->{title}
+             || $curtabledef->{label}
+             || $options->{table}
+         )
+         . " "
+         . CGI::escape( $curtabledef->{icon} || '' )
+   );
+
    $self->createTable({
       %$options,
       name  => $options->{table}."_".$suffix."_data",
@@ -2086,64 +2126,126 @@ sub onUpdateList {
    });   
 }
 
-sub getTableButtonsDef {
-   my $self = shift;
-   my $options = shift;
-   my $moreparams = shift;
-   unless ((!$moreparams) && $options->{table} && $options->{curSession}) {
-      Log("onHTMLPreview: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
-      return undef;
-   }
-   my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
-   if ($self->{dbm}->{config}->{nojson}) {
-      if ($curtabledef->{readonly} || $options->{nobuttons}) {
-         return ["","","",""];
-      }
-      return [CGI::escape("Neu").",".CGI::escape("Bearbeiten").",".CGI::escape("Entfernen").",".CGI::escape("Filter"),
-              CGI::escape("resource/qx/icon/Tango/32/actions/list-add.png").",".CGI::escape("/bilder/edit.png").",".CGI::escape("resource/qx/icon/Tango/32/actions/list-remove.png").",".CGI::escape("resource/qx/icon/Tango/32/actions/system-search.png"),
-              CGI::escape("neweditentry").",".CGI::escape("neweditentry").",".CGI::escape("delrow").",".CGI::escape("filter"),
-              CGI::escape("table").",".CGI::escape("row").",".CGI::escape("row").",".CGI::escape("table")];
-   }
-   my $return = [];
-   push(@$return, ({
-      name => "new",
-      label => "Neu",
-      image => "resource/qx/icon/Tango/".($options->{smallbuttons} ? "16" : "32")."/actions/list-add.png",
-      action => "neweditentry",
-      bindto => "table",
-   }, {
-      name => "edit",
-      label => "Bearbeiten",
-      image => ($options->{smallbuttons} ? "" : "/bilder/edit.png"),
-      action => "neweditentry",
-      bindto => "row",
-   }, {
-      name => "del",
-      label => "Entfernen",
-      image => "resource/qx/icon/Tango/".($options->{smallbuttons} ? "16" : "32")."/actions/list-remove.png",
-      action => "delrow",
-      bindto => "row",
-   })) unless ($curtabledef->{readonly} || $options->{nobuttons} || $options->{readonly});
-   push(@$return, {
-      name => "filter",
-      label => "Filter",
-      image => "resource/qx/icon/Tango/".($options->{smallbuttons} ? "16" : "32")."/actions/system-search.png",
-      action => "filter",
-      bindto => "table",
-   }) unless $options->{nobuttons};
-   return ["JSON", $return];
+sub getTableButtonsDef
+{
+    my $self       = shift;
+    my $options    = shift;
+    my $moreparams = shift;
+    
+    unless ( ( !$moreparams ) && $options->{table} && $options->{curSession} ) {
+        Log(
+            "onHTMLPreview: Missing parameters: table:"
+              . $options->{table}
+              . ":curSession:"
+              . $options->{curSession} . ": !",
+            $ERROR
+        );
+        return undef;
+    }
+
+    my $curtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
+
+    if ( $self->{dbm}->{config}->{nojson} )
+    {
+        if ( $curtabledef->{readonly} || $options->{nobuttons} )
+        {
+            return [ "", "", "", "" ];
+        }
+
+        
+        return [
+            CGI::escape( $self->{text}->{qx}->{new} ) . ","
+              . CGI::escape( $self->{text}->{qx}->{edit} ) . ","
+              . CGI::escape( $self->{text}->{qx}->{delete} ) . ","
+              . CGI::escape( $self->{text}->{qx}->{filter} ),
+            CGI::escape("resource/qx/icon/Tango/32/actions/list-add.png") . ","
+              . CGI::escape("/bilder/edit.png") . ","
+              . CGI::escape("resource/qx/icon/Tango/32/actions/list-remove.png")
+              . ","
+              . CGI::escape(
+                "resource/qx/icon/Tango/32/actions/system-search.png"),
+            CGI::escape("neweditentry") . ","
+              . CGI::escape("neweditentry") . ","
+              . CGI::escape("delrow") . ","
+              . CGI::escape("filter"),
+            CGI::escape("table") . ","
+              . CGI::escape("row") . ","
+              . CGI::escape("row") . ","
+              . CGI::escape("table")
+        ];
+    }
+
+    my $return = [];
+
+    unless (( $curtabledef->{readonly}
+        || $options->{nobuttons}
+        || $options->{readonly} ))
+    { 
+        push(
+        @$return,
+        (
+            {
+                name  => "new",
+                label => $self->{text}->{qx}->{new} ,
+                image => "resource/qx/icon/Tango/"
+                  . ( $options->{smallbuttons} ? "16" : "32" )
+                  . "/actions/list-add.png",
+                action => "neweditentry",
+                bindto => "table",
+            },
+            {
+                name  => "edit",
+                label => $self->{text}->{qx}->{edit} ,
+                image => ( $options->{smallbuttons} ? "" : "/bilder/edit.png" ),
+                action => "neweditentry",
+                bindto => "row",
+            },
+            {
+                name  => "del",
+                label => $self->{text}->{qx}->{delete} ,
+                image => "resource/qx/icon/Tango/"
+                  . ( $options->{smallbuttons} ? "16" : "32" )
+                  . "/actions/list-remove.png",
+                action => "delrow",
+                bindto => "row",
+            }
+        )
+      );
+    }
+
+    unless ($options->{nobuttons})
+    {
+        push(
+            @$return,
+            {
+                name  => "filter",
+                label => $self->{text}->{qx}->{filter} ,
+                image => "resource/qx/icon/Tango/"
+                  . ( $options->{smallbuttons} ? "16" : "32" )
+                  . "/actions/system-search.png",
+                action => "filter",
+                bindto => "table",
+            }
+        );
+    }
+
+    return [ "JSON", $return ];
 }
 
-sub onHTMLPreview {
+sub onHTMLPreview
+{
    my $self = shift;
    my $options = shift;
    my $moreparams = shift;
+
    unless ((!$moreparams) && $options->{curSession} && $options->{table} && defined($options->{value}) && $options->{column}) {
       Log("onHTMLPreview: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
       return 0;
    }
+
    my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
    my $suffix = "htmlpreview";
+
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createwin"." ".
                                    $options->{table}."_".$options->{column}."_".$suffix." ".
                                    ($curtabledef->{qxeditwidth} || $qxwidth)." ".
@@ -2157,21 +2259,27 @@ sub onHTMLPreview {
                                              ($options->{$UNIQIDCOLUMNNAME} ? " von Eintrag ".$options->{$UNIQIDCOLUMNNAME} : "Neuer Eintrag").
                                       " in ".($curtabledef->{label} || $options->{table}))." ".
                                    CGI::escape($curtabledef->{icon}));
+
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "open ".$options->{table}."_".$options->{column}."_".$suffix." 1");
+
    Log("onHTMLPreview: overwriting existing htmlpreview!", $ERROR)
       if (exists($options->{curSession}->{cached}));
+
    $options->{curSession}->{cached} = htmlUnEscape(CGI::unescape($options->{value}));
    $options->{curSession}->{cached} = $self->{gui}->replacer($options->{curSession}->{cached}, $options->{curset})
       if $options->{curset};
+
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createiframe ".$options->{table}."_".$options->{column}."_".$suffix."_iframe"." ".CGI::escape("/ajax?nocache=".rand(999999999999)."&job=getcached&sessionid=".$options->{curSession}->{sessionid}));
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".$options->{table}."_".$options->{column}."_".$suffix." ".$options->{table}."_".$options->{column}."_".$suffix."_iframe");
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createbutton ".CGI::escape($options->{table}."_".$options->{column}."_".$suffix."_button")." ".
                                                   CGI::escape("Schliessen")." ".
                                                   CGI::escape("resource/qx/icon/Tango/32/actions/dialog-close.png")." ".
                                                   CGI::escape("job=closeobject,oid=".$options->{table}."_".$options->{column}."_".$suffix));
+
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($options->{table}."_".$options->{column}."_".$suffix)." ".CGI::escape($options->{table}."_".$options->{column}."_".$suffix."_button")."\n"); 
    #$self->sendToQXForSession($options->{connection}->{sessionid} || 0, "maximize ".$options->{table}."_".$options->{column}."_".$suffix." 1");
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "modal ".$options->{table}."_".$options->{column}."_".$suffix." 1");
+
    return 1;
 }
 

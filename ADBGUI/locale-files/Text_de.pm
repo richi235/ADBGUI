@@ -144,6 +144,12 @@ sub new
           saved_filters           =>  "Gespeicherte Filter: ",
           first_entry             =>  "Erster Eintrag",
           new_entry               =>  "Neuer Eintrag", 
+
+          # Buttons
+          new                     =>  "Neu",
+          edit                    =>  "Bearbeiten",
+          delete                  =>  "Entfernen",
+          filter                  =>  "Filter",
           
           # Error Messages:
           activate_not_configured =>  "Das folgende 'Activate' ist nicht konfiguriert: ",
@@ -157,6 +163,7 @@ sub new
           internal_error          =>  "Interner Fehler",
           login_error             =>  "Loginfehler",
           no_crosslink_id         =>  "Fehlende ID für Tabellen-Quer-Verknüpfung\n"
+          no_log_data             =>  "Keine Log Daten vorhanden!",
           permission_denied       =>  "Fehlende Zugriffsberechtigung",
           popupid_missing         =>  "Die ID für das Popup-Window für folgende Aktion fehlt: ",
           qx_context_error        =>  "Interner Fehler beim Erstellen des folgenden Qooxdoo Contexts:",

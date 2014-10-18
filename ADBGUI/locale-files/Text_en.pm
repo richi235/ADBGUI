@@ -144,6 +144,12 @@ sub new
           saved_filters           =>  "Saved filters: ",
           first_entry             =>  "First Entry",
           new_entry               =>  "New Entry", 
+
+          # Buttons
+          new                     =>  "New",
+          edit                    =>  "Change",
+          delete                  =>  "Delete",
+          filter                  =>  "Filter",
           
           # Error Messages:
           activate_not_configured =>  "The following 'Activate' is not configured: ",
@@ -152,6 +158,7 @@ sub new
           context_error           =>  "(Error while creating Context: ",
           failed                  =>  "FAILED",
           internal_error          =>  "Internal error",
+          no_log_data             =>  "No Log Data existing",
           permission_denied       =>  "No access permission",
           popupid_missing         =>  "Id of popup-window for the following action is missing: ",
           qx_context_error        =>  "Internal Error while creating the following Qooxdoo Contexd: ",
