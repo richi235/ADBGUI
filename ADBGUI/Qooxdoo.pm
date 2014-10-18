@@ -2178,8 +2178,7 @@ sub getTableButtonsDef
     my $return = [];
 
     unless (( $curtabledef->{readonly}
-        || $options->{nobuttons}
-        || $options->{readonly} ))
+        || $options->{nobuttons} ))
     { 
         push(
         @$return,
@@ -2987,7 +2986,6 @@ sub onNewEditEntry {
       columns => $columns,
       ret => $ret,
    });
-   # TODO:XXX:FIXME: overridecolumns sollte wieder raus... Das sollte im Falle von context (Zeiterfassung) ueber getURL oder so gehen! Muss also ins Qooxdoo (js) rein.
    my $overridecolumns = [];
    if ($options->{override}) {
       $ret->[0]->[0] = {%{$ret->[0]->[0]}, %{$options->{override}}};
@@ -3131,15 +3129,17 @@ sub doSpecialColumns {
                ($curtabledef->{columns}->{$column}->{type} ne "longtext"));
       next if ($curtabledef->{columns}->{$column}->{hidden} ||
                $curtabledef->{columns}->{$column}->{readonly});
-      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addtab ".CGI::escape($options->{window}."_tabs")." ".CGI::escape($options->{window}."_tabs_".$column)." ".CGI::escape($curtabledef->{columns}->{$column}->{label} || $column)); # , $options->{connection}->{sessionid} || 0);
-      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "create".(($curtabledef->{columns}->{$column}->{type} eq "htmltext") ? "html" : "")."textedit ".CGI::escape($options->{window}."_tabs_".$column."_data")." ".
+      $self->sendToQXForSession($options->{connection}->{sessionid}, "addtab ".CGI::escape($options->{window}."_tabs")." ".CGI::escape($options->{window}."_tabs_".$column)." ".CGI::escape($curtabledef->{columns}->{$column}->{label} || $column)); # , $options->{connection}->{sessionid} || 0);
+      $self->sendToQXForSession($options->{connection}->{sessionid}, "create".((
+         $curtabledef->{columns}->{$column}->{type} &&
+        ($curtabledef->{columns}->{$column}->{type} eq "htmltext")) ? "html" : "")."textedit ".CGI::escape($options->{window}."_tabs_".$column."_data")." ".
          CGI::escape($options->{table})." ".
          CGI::escape($column)." ".
-         CGI::escape($options->{$UNIQIDCOLUMNNAME}||defined($options->{$UNIQIDCOLUMNNAME}) ? $options->{$UNIQIDCOLUMNNAME} : Log("ID is undefined!", $ERROR))." ".
+         CGI::escape(defined($options->{$UNIQIDCOLUMNNAME}) ? $options->{$UNIQIDCOLUMNNAME} : Log("ID is undefined!", $ERROR))." ".
          CGI::escape($options->{defaults}->{$options->{table}.$TSEP.$column} || '')." ".
          CGI::escape($curtabledef->{columns}->{$column}->{help} || '')." ".
          CGI::escape($options->{urlappend}));
-      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($options->{window}."_tabs_".$column)." ".CGI::escape($options->{window}."_tabs_".$column."_data")."\n"); # , $options->{connection}->{sessionid} || 0);
+      $self->sendToQXForSession($options->{connection}->{sessionid}, "addobject ".CGI::escape($options->{window}."_tabs_".$column)." ".CGI::escape($options->{window}."_tabs_".$column."_data")."\n"); # , $options->{connection}->{sessionid} || 0);
    }
    my $tables = $self->{dbm}->getDBBackend($options->{table})->getTableList();
    foreach my $onlycross (1, 0) {

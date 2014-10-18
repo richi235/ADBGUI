@@ -164,7 +164,7 @@ sub new
               system_search_png  => "resource/qx/icon/Tango/16/actions/system-search.png",
               list_add           => "resource/qx/icon/Tango/16/actions/list-add.png",
           },
-          # potentielle Ã¼bersetzungskandidaten:
+          # potentielle übersetzungskandidaten:
 
           stats_window =>
           {

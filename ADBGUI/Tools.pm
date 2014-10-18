@@ -10,7 +10,7 @@ BEGIN {
    our @EXPORT = qw/$LOG_SYSLOG $LOG_STDERR $LOG_STDOUT $loglevel $logdst/;
    our @EXPORT_OK = qw/daemonize mergeColumnInfos hashKeysRightOrder ensureLength
                        getAffectedColumns simplehashclone arraycompare getFileUploadJavascriptForIDs
-                       hashcompare padNumber time2human time2sql normaliseLine queryLDAP
+                       hashcompare padNumber time2human time2sql normaliseLine queryLDAP localtime2sql
                        Log MakeTime getIncludedTables makeInfoLine new_anon_scalar generatePassword
                        getTimeLineHTML printLine printLineNospan htmlUnEscape removeTime
                        beschriftung cutDateInfos preZero toDateObj hidebegin hideend
@@ -246,6 +246,11 @@ sub time2human {
 
 sub time2sql {
    my @time = gmtime(shift);
+   return ($time[5]+1900)."-".($time[4]+1)."-".$time[3]." ".$time[2].":".$time[1].":".$time[0];
+}
+
+sub localtime2sql {
+   my @time = localtime(shift);
    return ($time[5]+1900)."-".($time[4]+1)."-".$time[3]." ".$time[2].":".$time[1].":".$time[0];
 }
 
