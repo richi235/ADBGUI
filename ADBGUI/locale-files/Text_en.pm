@@ -135,6 +135,7 @@ sub new
       {
           accessing               =>  "Access to ",
           context                 =>  "context",
+          close                   =>  "Close",
           enable                  =>  "Enable ",
           password                =>  "Password",
           unnamed                 =>  "Unnamed",
@@ -142,9 +143,20 @@ sub new
           live_stats              =>  "Live Statistics",
 
           saved_filters           =>  "Saved filters: ",
+          created_entry           =>  "Created Entry",
           first_entry             =>  "First Entry",
           new_entry               =>  "New Entry", 
 
+          # Filter Window
+          filter_in               =>  "Filter on",
+          filter_criterion        =>  "Filtering criterion",
+          
+          # HTML Preview window
+          preview_of              =>  "Preview of ",
+          of_entry                =>  " of entry ",
+          in                      =>  " in ",
+
+          
           # Buttons
           new                     =>  "New",
           edit                    =>  "Change",
@@ -159,6 +171,7 @@ sub new
           failed                  =>  "FAILED",
           internal_error          =>  "Internal error",
           no_log_data             =>  "No Log Data existing",
+          onSaveEditEntry_error   =>  "Fatal unknown internal error in onSaveEditEntry",
           permission_denied       =>  "No access permission",
           popupid_missing         =>  "Id of popup-window for the following action is missing: ",
           qx_context_error        =>  "Internal Error while creating the following Qooxdoo Contexd: ",

@@ -135,6 +135,7 @@ sub new
       {
           accessing               =>  "Zugriff auf ",
           context                 =>  "Kontext",
+          close                   =>  "Schliessen",
           enable                  =>  "Aktiviere ",
           password                =>  "Passwort",
           unnamed                 =>  "Unbenannt",
@@ -142,9 +143,19 @@ sub new
           live_stats              =>  "Live Statistiken",
 
           saved_filters           =>  "Gespeicherte Filter: ",
+          created_entry           =>  "Erstellter Eintrag",
           first_entry             =>  "Erster Eintrag",
           new_entry               =>  "Neuer Eintrag", 
 
+          # Filter Window
+          filter_in               =>  "Filter in ",
+          filter_criterion        =>  "Filterkriterium",
+          
+          # HTML Preview window
+          preview_of              =>  "Preview von ",
+          of_entry                =>  " von Eintrag ",
+          in                      =>  " in ",
+          
           # Buttons
           new                     =>  "Neu",
           edit                    =>  "Bearbeiten",
@@ -164,6 +175,7 @@ sub new
           login_error             =>  "Loginfehler",
           no_crosslink_id         =>  "Fehlende ID für Tabellen-Quer-Verknüpfung\n"
           no_log_data             =>  "Keine Log Daten vorhanden!",
+          onSaveEditEntry_error   =>  "Kritischer Fehler beim Ausführen der onSaveEditEntry Funktion aufgetreten.",
           permission_denied       =>  "Fehlende Zugriffsberechtigung",
           popupid_missing         =>  "Die ID für das Popup-Window für folgende Aktion fehlt: ",
           qx_context_error        =>  "Interner Fehler beim Erstellen des folgenden Qooxdoo Contexts:",
