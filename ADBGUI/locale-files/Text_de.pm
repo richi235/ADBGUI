@@ -138,9 +138,11 @@ sub new
           close                   =>  "Schliessen",
           enable                  =>  "Aktiviere ",
           password                =>  "Passwort",
+          table                   =>  'Tabelle',
           unnamed                 =>  "Unbenannt",
           username                =>  "Benutzername",
           live_stats              =>  "Live Statistiken",
+          refresh                 =>  "Aktualisieren",
 
           saved_filters           =>  "Gespeicherte Filter: ",
           created_entry           =>  "Erstellter Eintrag",
@@ -148,8 +150,25 @@ sub new
           new_entry               =>  "Neuer Eintrag", 
 
           # Filter Window
+          add                     =>  "Hinzufügen",
+          after                   =>  " Nach: ",
+          before                  =>  " Vor: ",
+          after_specific_date     =>  "Nach bestimmtem Zeitpunkt",
+          before_specific_date    =>  "Vor bestimmtem Zeitpunkt",
           filter_in               =>  "Filter in ",
           filter_criterion        =>  "Filterkriterium",
+          further_selection       =>  "Weitere Auswahl",
+          link_to_broken          =>  "Der Link zu folgender Tabelle ist fehlerhaft: ",
+          load                    =>  "Laden",
+          save                    =>  "Speichern",
+          datatype                =>  "Datentyp",
+          selected_entries_only   =>  "Nur bestimmte Einträge",
+          only_the_following      =>  "Nur folgende Einträge:<br>",
+          has_to_be_set           =>  " Muss gesetzt sein",
+          must_not_be_set         =>  " Darf nicht gesetzt sein",
+          only_archived_entries   =>  " Nur archivierte Einträge",
+          only_non_archived       =>  " Nur nicht archivierte Einträge",
+              
           
           # HTML Preview window
           preview_of              =>  "Preview von ",

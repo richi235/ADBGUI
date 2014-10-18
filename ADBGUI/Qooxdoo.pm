@@ -2501,7 +2501,7 @@ sub onFilter {
         {
             id      => $options->{oid} . "_filter_toolbar_open",
             job     => "createtoolbarbutton",
-            label   => "Laden",
+            label   => $self->{text}->{qx}->{load} ,
             image   => "resource/qx/icon/Tango/16/actions/document-open.png",
             popupid => $options->{oid} . "_filteropen",
             action  => "job=filteropen,table="
@@ -2517,7 +2517,7 @@ sub onFilter {
         {
             id      => $options->{oid} . "_filter_toolbar_save",
             job     => "createtoolbarbutton",
-            label   => "Speichern",
+            label   => $self->{text}->{qx}->{save} ,
             image   => "resource/qx/icon/Tango/16/actions/document-save.png",
             popupid => $options->{oid} . "_filtersave",
             action  => "job=filtersave,table="
@@ -2580,28 +2580,46 @@ sub getFilterActionForm {
 }
 
 sub getFilterActionLink {
-   my $self = shift;
-   my $options = shift;
-   my $job = shift;
-   my $curfilter = shift;
-   my $value = shift;
-   return "<a href='/ajax?nocache=".rand(999999999999)."&filterjob=".$job."&filtername=".$curfilter.($value ? "&filtervalue=".$value : "")."&job=filterhtml&table=".$options->{table}."&oid=".$options->{oid}."&sessionid=".$options->{curSession}->{sessionid}."'>";
+    my $self      = shift;
+    my $options   = shift;
+    my $job       = shift;
+    my $curfilter = shift;
+    my $value     = shift;
+
+    return
+        "<a href='/ajax?nocache="
+      . rand(999999999999)
+      . "&filterjob="
+      . $job
+      . "&filtername="
+      . $curfilter
+      . ( $value ? "&filtervalue=" . $value : "" )
+      . "&job=filterhtml&table="
+      . $options->{table} . "&oid="
+      . $options->{oid}
+      . "&sessionid="
+      . $options->{curSession}->{sessionid} . "'>";
 }
 
 sub onFilterHTML {
    my $self = shift;
    my $options = shift;
    my $moreparams = shift;
+
    unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{oid} && $options->{response}) {
       Log("Qooxdoo: onFilterHTML: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.":oid:".$options->{oid}." !", $ERROR);
       return undef;
    }
+
    my $suffix = "show";
-   if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}))) {
-      $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("ACCESS DENIED\n"));
+
+   if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table})))
+   {
+      $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape( $self->{text}->{qx}->{internal_error} )." 400 200 ".CGI::escape( $self->{text}->{qx}->{permission_denied} . "\n" ));
       Log("Qooxdoo: onFilterHTML: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
       return undef;
    }
+
    $options->{response}->code(RC_OK);
    $options->{response}->content_type("text/html; charset=UTF-8");
    #${$options->{content}} .= "Hello world ".time().".<br><br>";
@@ -2676,34 +2694,63 @@ sub onFilterHTML {
       $poe_kernel->yield(sendToQX => "updaterow ".CGI::escape($options->{table})." ");
    }
    ${$options->{content}} .= "<font face='Arial'><br>";
-   if (scalar(keys %$filter)) {
+   if (scalar(keys %$filter))
+   {
       my $showtype = 0;
-      ${$options->{content}} .= "<table width=100%><tr><td></td><td><b>Suchkriterium</b></td><td><b>Tabelle</b></td>".($showtype ? "<td><center><b>Datentyp</b></center></td>" : "")."</tr>";
-      foreach my $curfilter (sort { ((($b =~ m,^$options->{table},) ? 1 : 0) <=>
-                                     (($a =~ m,^$options->{table},) ? 1 : 0)) ||
-                                       $a cmp $b } keys %$filter) {
+
+      ${$options->{content}} .= "<table width=100%><tr><td></td><td><b>" . $self->{text}->{qx}->{filter_criterion}
+                      . "</b></td><td><b>" . $self->{text}->{qx}->{table} . "</b></td>"
+                      . ($showtype ? "<td><center><b>" . $self->{text}->{qx}->{filter_criterion} . "</b></center></td>" : "")."</tr>";
+
+      foreach my $curfilter ( sort {  (     (($b =~ m,^$options->{table},) ? 1 : 0)
+                                        <=> (($a =~ m,^$options->{table},) ? 1 : 0))
+                                      ||  $a cmp $b } keys %$filter
+                            )
+      {
          next if scalar(grep { ($curfilter eq $_."_end") || ($curfilter eq $_."_begin") } keys %$filter);
+
          ${$options->{content}} .= "<tr><td colspan=".(3 + ($showtype ? 1 : 0))."><font size=1>&nbsp;</font></td></tr>";
-         ${$options->{content}} .= "<tr><td width=1%><center><a href='/ajax?nocache=".rand(999999999999)."&filterjob=deletefilter&filtername=".$curfilter."&job=filterhtml&table=".$options->{table}."&oid=".$options->{oid}."_filter_iframe&sessionid=".$options->{curSession}->{sessionid}."'><img src='resource/qx/icon/Tango/16/actions/list-remove.png' alt='-' align=absmiddle></a></center></td>";
-         if ($curfilter =~ m,^([^\.]+)\.([^\.]+)$,) {
+
+         ${ $options->{content} } .=
+             "<tr><td width=1%><center><a href='/ajax?nocache="
+           . rand(999999999999)
+           . "&filterjob=deletefilter&filtername="
+           . $curfilter
+           . "&job=filterhtml&table="
+           . $options->{table} . "&oid="
+           . $options->{oid}
+           . "_filter_iframe&sessionid="
+           . $options->{curSession}->{sessionid}
+           . "'><img src='resource/qx/icon/Tango/16/actions/list-remove.png' alt='-' align=absmiddle></a></center></td>";
+
+         if ($curfilter =~ m,^([^\.]+)\.([^\.]+)$,)
+         {
             my $table = $1;
             my $column = $2;
             my $tablelabel = $table;
             my $columntype = "";
             my $columnlabel = $column;
-            if (my $curtabledef = $self->{dbm}->getTableDefiniton($table)) {
+
+            if (my $curtabledef = $self->{dbm}->getTableDefiniton($table))
+            {
                $tablelabel = $curtabledef->{label}
                   if $curtabledef->{label};
+               
                $columnlabel = $curtabledef->{columns}->{$column}->{label}
                            if $curtabledef->{columns}->{$column}->{label};
+
                $columntype  = $curtabledef->{columns}->{$column}->{type}
                            if $curtabledef->{columns}->{$column}->{type};
             }
-            if ($column eq $self->{dbm}->getIdColumnName($table)) {
+
+            if ($column eq $self->{dbm}->getIdColumnName($table))
+            {
                $columnlabel = $tablelabel;
                $tablelabel = "";
             }
+
             ${$options->{content}} .= "<td";
+
             my $doTableColumn = (($table ne $options->{table}) && $tablelabel) ? 1 : 0;
             ${$options->{content}} .= " colspan=2"
                if !$doTableColumn;
@@ -2737,99 +2784,177 @@ sub onFilterHTML {
                         wherePre => $wherePre,
                         session => $options->{curSession},
                      });
-                     my $addtext = "Nur bestimmte Einträge";
-                     if ($filter->{$curfilter} && (ref($filter->{$curfilter}) eq "ARRAY") && scalar(@{$filter->{$curfilter}})) {
-                        ${$options->{content}} .= "Nur folgende:<br>".join("", map {
-                           my $id = $_;
-                           my $label = $id;
-                           if (defined($ret) && (ref($ret) eq "ARRAY") && (ref($ret->[0]) eq "ARRAY")) {
-                              foreach my $dbline (@{$ret->[0]}) {
-                                 if ($dbline->{$table.$TSEP.$self->{dbm}->getIdColumnName($table)} eq $_) {
-                                    $label = $self->{gui}->getLineForTable($table, $dbline, 1);
-                                    last;
-                                 }
-                              }
-                           }
-                           $self->getFilterActionLink($options, "deletearrayentry", $curfilter, $id).$minusimg."</a> ".encode("utf8", $label)."<br>"
-                        } @{$filter->{$curfilter}});
+                     my $addtext = $self->{text}->{qx}->{selected_entries_only} ;
+                     if ($filter->{$curfilter} && (ref($filter->{$curfilter}) eq "ARRAY") && scalar(@{$filter->{$curfilter}}))
+                     {
+                        ${ $options->{content} } .=  $self->{text}->{qx}->{only_the_following} . join(
+                            "",
+                            map {
+                                my $id    = $_;
+                                my $label = $id;
+                                if (   defined($ret)
+                                    && ( ref($ret) eq "ARRAY" )
+                                    && ( ref( $ret->[0] ) eq "ARRAY" ) )
+                                {
+                                    foreach my $dbline ( @{ $ret->[0] } ) {
+                                        if (
+                                            $dbline->{
+                                                    $table
+                                                  . $TSEP
+                                                  . $self->{dbm}
+                                                  ->getIdColumnName($table)
+                                            } eq $_
+                                          )
+                                        {
+                                            $label =
+                                              $self->{gui}
+                                              ->getLineForTable( $table,
+                                                $dbline, 1 );
+                                            last;
+                                        }
+                                    }
+                                }
+                                $self->getFilterActionLink( $options,
+                                    "deletearrayentry", $curfilter, $id )
+                                  . $minusimg . "</a> "
+                                  . encode( "utf8", $label ) . "<br>"
+                            } @{ $filter->{$curfilter} }
+                        );
+
                         #${$options->{content}} .= "<br>";
-                        $addtext = "Weitere Auswahl";
+                        $addtext = $self->{text}->{qx}->{further_selection} ;
                      }
-                     if (defined($ret) && (ref($ret) eq "ARRAY") && (ref($ret->[0]) eq "ARRAY") && (!$filter->{$curfilter} || (ref($filter->{$curfilter}) ne "ARRAY") || (scalar(@{$ret->[0]}) > scalar(@{$filter->{$curfilter}})))) {
-                        ${$options->{content}} .= hidebegin("filter".$table.$curfilter, $plusimg." ".$addtext);
-                        #${$options->{content}} .= "<table border=1><tr><td><font size=1><nobr>";
-                        ${$options->{content}} .= $self->getFilterActionForm($options, "addtoarray", $curfilter);
-                        ${$options->{content}} .= "<select name='filtervalue'>\n";
-                        foreach my $dbline (@{$ret->[0]}) {
-                           next if ($filter->{$curfilter} &&
-                               (ref($filter->{$curfilter}) eq "ARRAY") &&
-                               scalar(grep { $dbline->{$table.$TSEP.$self->{dbm}->getIdColumnName($table)} eq $_ } @{$filter->{$curfilter}}));
-                           next unless my $label = $self->{gui}->getLineForTable($table, $dbline, 1);
-                           #${$options->{content}} .= $label."<br>";
-                           ${$options->{content}} .= "<option value='".$dbline->{$table.$TSEP.$self->{dbm}->getIdColumnName($table)}."'>".encode("utf8", $label)."</option>\n";
+
+                    if (defined($ret)
+                        && ( ref($ret) eq "ARRAY" )
+                        && ( ref( $ret->[0] ) eq "ARRAY" )
+                        && (
+                               !$filter->{$curfilter}
+                            || ( ref( $filter->{$curfilter} ) ne "ARRAY" )
+                            || (
+                                scalar( @{ $ret->[0] } ) >
+                                scalar( @{ $filter->{$curfilter} } ) )
+                        )
+                      )
+                    {
+                        ${ $options->{content} } .= hidebegin(
+                            "filter" . $table . $curfilter,
+                            $plusimg . " " . $addtext
+                        );
+
+       #${$options->{content}} .= "<table border=1><tr><td><font size=1><nobr>";
+                        ${ $options->{content} } .=
+                          $self->getFilterActionForm( $options, "addtoarray",
+                            $curfilter );
+
+                        ${ $options->{content} } .=
+                          "<select name='filtervalue'>\n";
+
+                        foreach my $dbline ( @{ $ret->[0] } )
+                        {
+                            next
+                              if (
+                                   $filter->{$curfilter}
+                                && ( ref( $filter->{$curfilter} ) eq "ARRAY" )
+                                && scalar(
+                                    grep {
+                                        $dbline->{ $table
+                                              . $TSEP
+                                              . $self->{dbm}
+                                              ->getIdColumnName($table) } eq $_
+                                    } @{ $filter->{$curfilter} }
+                                )
+                              );
+                            next
+                              unless my $label =
+                              $self->{gui}
+                              ->getLineForTable( $table, $dbline, 1 );
+
+                            #${$options->{content}} .= $label."<br>";
+                            ${ $options->{content} } .=
+                              "<option value='"
+                              . $dbline->{ $table
+                                  . $TSEP
+                                  . $self->{dbm}->getIdColumnName($table) }
+                              . "'>"
+                              . encode( "utf8", $label )
+                              . "</option>\n";
                         }
-                        ${$options->{content}} .= "</select><input type=submit value=Hinzufügen></form>";
-                        #${$options->{content}} .= "</nobr></font></td></tr></table>";
-                        ${$options->{content}} .= hideend();
-                     }
+                        ${ $options->{content} } .=
+                            "</select><input type=submit value=$self->{text}->{qx}->{add} ></form>";
+
+                  #${$options->{content}} .= "</nobr></font></td></tr></table>";
+                        ${ $options->{content} } .= hideend();
+                    }
                      ${$options->{content}} .= "</font>";
                   } else {
-                     ${$options->{content}} .= "<font color=red>BAD Link to ".$table."</font>";
+                     ${$options->{content}} .= "<font color=red>$self->{text}->{qx}->{link_to_broken}" . $table . "</font>";
                   }
-               } elsif (($columntype eq "date") ||
-                        ($columntype eq "datetime")) {
+               }
+               elsif (($columntype eq "date") ||
+                        ($columntype eq "datetime"))
+               {
                   my $datedef = clone($self->{gui}->{datedef});
-                  if ($columntype eq "date") {
+
+                  if ($columntype eq "date")
+                  {
                      $datedef = [@$datedef[0..2]];
                      $datedef->[2]->[1] = "";
                      $datedef->[0]->[4] = "";
                   }
+
                   ${$options->{content}} .= "<font size=2>";
-                  my $addtext = $plusimg." "."Vor bestimmten Zeitpunkt"; # ."<br>".$curfilter."_begin"."<br>".join(";", map { $_."=".$filter->{$_} } keys %$filter);
-                  if ($filter->{$curfilter."_begin"}) {
-                     ${$options->{content}} .= $self->getFilterActionLink($options, "deletefilterdatebegin", $curfilter).$minusimg."</a> Vor: ";
+
+                  my $addtext = $plusimg . " " . $self->{text}->{qx}->{before_specific_date} ; #  . "<br>" . $curfilter . "_begin" . "<br>" . join(";", map { $_ . "=" . $filter->{$_} } keys %$filter);
+
+                  if ($filter->{$curfilter."_begin"})
+                  {
+                     ${$options->{content}} .= $self->getFilterActionLink($options, "deletefilterdatebegin", $curfilter).$minusimg."</a>" . $self->{text}->{qx}->{before} ;
                      $addtext = $filter->{$curfilter."_begin"};
                   }
+
                   ${$options->{content}} .= hidebegin("filter".$table.$curfilter."begin", $addtext);
                   ${$options->{content}} .= $self->getFilterActionForm($options, "setfilterdatebegin", $curfilter, $column);
                   ${$options->{content}} .= $self->{gui}->printDateQuestion("search".$column."_begin_", $self->{gui}->getDatePredefFor($column, $filter->{$curfilter."_begin"}), $datedef);
-                  ${$options->{content}} .= "<input type=submit value=Aktualisieren>";
+                  ${$options->{content}} .= "<input type=submit value=" .  $self->{text}->{qx}->{refresh} . ">";
                   ${$options->{content}} .= "</form>";
                   ${$options->{content}} .= hideend();
-                  $addtext = $plusimg." "."Nach bestimmten Zeitpunkt";
-                  if ($filter->{$curfilter."_end"}) {
-                     ${$options->{content}} .= $self->getFilterActionLink($options, "deletefilterdateend", $curfilter).$minusimg."</a> Nach: ";
+                  $addtext = $plusimg . " " . $self->{text}->{qx}->{after_specific_date} ;
+
+                  if ($filter->{$curfilter."_end"})
+                  {
+                     ${$options->{content}}  .= $self->getFilterActionLink($options, "deletefilterdateend", $curfilter) . $minusimg . "</a>" . $self->{text}->{qx}->{after} ;
                      $addtext = $filter->{$curfilter."_end"};
                   }
                   ${$options->{content}} .= hidebegin("filter".$table.$curfilter."end", $addtext);
                   ${$options->{content}} .= $self->getFilterActionForm($options, "setfilterdateend", $curfilter, $column);
                   ${$options->{content}} .= $self->{gui}->printDateQuestion("search".$column."_end_", $self->{gui}->getDatePredefFor($column, $filter->{$curfilter."_end"}, 1), $datedef);
-                  ${$options->{content}} .= "<input type=submit value=Aktualisieren>";
+                  ${$options->{content}} .= "<input type=submit value=" .  $self->{text}->{qx}->{refresh} . ">";
                   ${$options->{content}} .= "</form>";
                   ${$options->{content}} .= hideend();
                   ${$options->{content}} .= "</font>";
                } elsif ($columntype eq "boolean") {
                   ${$options->{content}} .= "<font size=2>";
                   if ($filter->{$curfilter} eq "1") {
-                     ${$options->{content}} .= "Muss gesetzt sein";
+                     ${$options->{content}} .= $self->{text}->{qx}->{has_to_be_set} ;
                   } elsif ($filter->{$curfilter} eq "0") {
-                     ${$options->{content}} .= "Darf nicht gesetzt sein";
+                     ${$options->{content}} .= $self->{text}->{qx}->{must_not_be_set} ;
                   } else {
-                     ${$options->{content}} .= $plusimg." Muss gesetzt sein";
+                     ${$options->{content}} .= $plusimg . $self->{text}->{qx}->{has_to_be_set} ;
                      ${$options->{content}} .= "<br>";
-                     ${$options->{content}} .= $plusimg." Darf nicht gesetzt sein";
+                     ${$options->{content}} .= $plusimg . $self->{text}->{qx}->{must_not_be_set} ;
                   }
                   ${$options->{content}} .= "</font>";
                } elsif ($columntype eq $DELETEDCOLUMNNAME) {
                   ${$options->{content}} .= "<font size=2>";
                   if ($filter->{$curfilter} eq "1") {
-                     ${$options->{content}} .= $minusimg." Nur archivierte";
+                     ${$options->{content}}  .= $minusimg . $self->{text}->{qx}->{only_archived_entries} ;
                   } elsif ($filter->{$curfilter} eq "0") {
-                     ${$options->{content}} .= $minusimg." Nur nicht archivierte";
+                     ${$options->{content}} .= $minusimg . $self->{text}->{qx}->{only_non_archived} ;
                   } else {
-                     ${$options->{content}} .= $plusimg." Nur archivierte";
+                     ${$options->{content}} .= $plusimg . $self->{text}->{qx}->{only_archived_entries} ;
                      ${$options->{content}} .= "<br>";
-                     ${$options->{content}} .= $plusimg." Nur nicht archivierte";
+                     ${$options->{content}} .= $plusimg . $self->{text}->{qx}->{only_non_archived};
                   }
                   ${$options->{content}} .= "</font>";
                } elsif ($columntype eq "number") {

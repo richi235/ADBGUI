@@ -138,9 +138,11 @@ sub new
           close                   =>  "Close",
           enable                  =>  "Enable ",
           password                =>  "Password",
+          table                   =>  'Table',
           unnamed                 =>  "Unnamed",
           username                =>  "Username",
           live_stats              =>  "Live Statistics",
+          refresh                 =>  "Refresh",
 
           saved_filters           =>  "Saved filters: ",
           created_entry           =>  "Created Entry",
@@ -148,8 +150,25 @@ sub new
           new_entry               =>  "New Entry", 
 
           # Filter Window
+          add                     =>  "Add",
+          after                   =>  " After: ",
+          before                  =>  " Before: ",
+          after_specific_date     =>  "After specific date",
+          before_specific_date    =>  "Before specific date",
           filter_in               =>  "Filter on",
           filter_criterion        =>  "Filtering criterion",
+          further_selection       =>  "Further selections",
+          link_to_broken          =>  "Link to following table broken: ",
+          load                    =>  "Load",
+          save                    =>  "Save",
+          datatype                =>  "Datatype",
+          selected_entries_only   =>  "Selected entries only",
+          only_the_following      =>  "Only the following entries:<br>",
+          has_to_be_set           =>  " Has to be set",
+          must_not_be_set         =>  " Must not be set",
+          only_archived_entries   =>  " Only archived entries",
+          only_non_archived       =>  " Only non-archived entries",
+              
           
           # HTML Preview window
           preview_of              =>  "Preview of ",
