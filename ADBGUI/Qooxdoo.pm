@@ -2591,7 +2591,7 @@ sub onNewEditEntry {
       foreach my $dbline (@{$curret->[0]}) {
          $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addtoeditlist ".$window."_data ".$column." ".
             (CGI::escape(
-               #$self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $column
+               #$self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $column)
                $self->{gui}->getValueForTable($curTable, $dbline)
             )||$dbline->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)})." ".
           ((exists($options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) &&
