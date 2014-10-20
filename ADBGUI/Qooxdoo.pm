@@ -2564,7 +2564,7 @@ sub onNewEditEntry {
       }
       my $db = $self->{dbm}->getDBBackend($curTable);
       my $nodeleted = 0;
-      my $curwhere = $self->{dbm}->Where_Pre({ %$options, table => $curTable });
+      my $curwhere = $self->{dbm}->Where_Pre({ %$options, basetable => $options->{table}, baseid => $options->{$UNIQIDCOLUMNNAME}, table => $curTable });
       push(@$curwhere, $options->{orselection}->{$column})
          if ($options->{orselection}->{$column});
       if ($ret->[0]->[0]->{$options->{table}.$TSEP.$column}) {
