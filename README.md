@@ -31,6 +31,9 @@ cd $PROJECTNAME
 # If you want to use the qooxdoo feature   : paramter "qx"
 # If you do not want apache to be installed: paramter "noap"
 install/installscript qx noap
+
+# if you want skeleton files for your module (recommended), use:
+perl install/skeleton.pl $PROJECTNAME
 ```
 ## Usage
 Your Project now already works with basic configuration.

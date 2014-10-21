@@ -3304,7 +3304,7 @@ sub onNewEditEntry {
       }
       my $db = $self->{dbm}->getDBBackend($curTable);
       my $nodeleted = 0;
-      my $curwhere = $self->{dbm}->Where_Pre({ %$options, table => $curTable });
+      my $curwhere = $self->{dbm}->Where_Pre({ %$options, basetable => $options->{table}, baseid => $options->{$UNIQIDCOLUMNNAME}, table => $curTable });
       push(@$curwhere, $options->{orselection}->{$column})
          if ($options->{orselection}->{$column});
       if ($ret->[0]->[0]->{$options->{table}.$TSEP.$column}) {
@@ -3331,7 +3331,7 @@ sub onNewEditEntry {
       foreach my $dbline (@{$curret->[0]}) {
          $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addtoeditlist ".$window."_data ".$column." ".
             (CGI::escape(
-               #$self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $column
+               #$self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $column)
                $self->{gui}->getValueForTable($curTable, $dbline)
             )||$dbline->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)})." ".
           ((exists($options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) &&
