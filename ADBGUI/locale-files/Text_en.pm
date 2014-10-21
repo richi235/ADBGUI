@@ -143,11 +143,17 @@ sub new
           username                =>  "Username",
           live_stats              =>  "Live Statistics",
           refresh                 =>  "Refresh",
+          search_criteria         =>  "Search criteria",
 
           saved_filters           =>  "Saved filters: ",
           created_entry           =>  "Created Entry",
+          details_of_entry        =>  "Details of entry ",
           first_entry             =>  "First Entry",
           new_entry               =>  "New Entry", 
+
+          #onNeweditEnty Window
+          basis_data              =>  "Root_Data",
+
 
           # Filter Window
           add                     =>  "Add",
@@ -168,6 +174,11 @@ sub new
           must_not_be_set         =>  " Must not be set",
           only_archived_entries   =>  " Only archived entries",
           only_non_archived       =>  " Only non-archived entries",
+          number                  =>  "Number",    
+          filter_for_text         =>  "Filter for some contained text.",
+          contains                =>  "Contains",
+          unknown_filter_crit     =>  "Unknown filtercriterion",
+          no_filter_crit_selected =>  "No filter-criterion selected",
               
           
           # HTML Preview window
@@ -201,8 +212,10 @@ sub new
           delrow_linex_failed     =>  "Deleting the following line failed: ",
           login_error             =>  "Login-error",
           wrong_pw_user_combo     =>  "Invalid username or password.",
-          no_crosslink_id         =>  "No crosslink id\n"
-          
+          no_crosslink_id         =>  "No crosslink id\n",
+          table_ref_tree_error    =>  "Unable to build table reference tree!",
+
+
           paths     =>
           {
               qx_building_subdir => "/myproject/build/",

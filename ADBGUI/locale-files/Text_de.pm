@@ -143,11 +143,17 @@ sub new
           username                =>  "Benutzername",
           live_stats              =>  "Live Statistiken",
           refresh                 =>  "Aktualisieren",
+          search_criteria         =>  "Suchkriterien",
 
           saved_filters           =>  "Gespeicherte Filter: ",
           created_entry           =>  "Erstellter Eintrag",
+          details_of_entry        =>  "Details von Eintrag ",
           first_entry             =>  "Erster Eintrag",
           new_entry               =>  "Neuer Eintrag", 
+
+          #onNeweditEnty Window
+          basis_data              =>  "Basisdaten",
+
 
           # Filter Window
           add                     =>  "Hinzufügen",
@@ -168,7 +174,12 @@ sub new
           must_not_be_set         =>  " Darf nicht gesetzt sein",
           only_archived_entries   =>  " Nur archivierte Einträge",
           only_non_archived       =>  " Nur nicht archivierte Einträge",
-              
+          number                  =>  "Nummer",
+          filter_for_text         =>  "Nach enthaltenem Text filtern",
+          contains                =>  "Beinhaltet",
+          unknown_filter_crit     =>  "Unbekanntes Filterkriterium",
+          no_filter_crit_selected =>  "Kein Filterkriterium ausgewählt",
+          table_ref_tree_error    =>  "Aufbauen des Tabellen Referenz Baumes nicht moeglich.",
           
           # HTML Preview window
           preview_of              =>  "Preview von ",
