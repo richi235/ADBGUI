@@ -3657,7 +3657,9 @@ sub onNewEditEntry
         );
         push( @$curwhere, $options->{orselection}->{$column} )
           if ( $options->{orselection}->{$column} );
-        if ( $ret->[0]->[0]->{ $options->{table} . $TSEP . $column } ) {
+
+        if ( $ret->[0]->[0]->{ $options->{table} . $TSEP . $column } )
+        {
             $curwhere = [
                 map {
                         "(("
@@ -3679,7 +3681,9 @@ sub onNewEditEntry
             ];
             $nodeleted++;
         }
+
         my $curret = undef;
+
         unless (
             defined(
                 $curret = $db->getDataSet(
@@ -3698,15 +3702,15 @@ sub onNewEditEntry
             Log(
                 "Qooxdoo: onNewEditEntry: GET "
                   . $curTable
-                  . " FAILED SQL Query failed.",
+                  . " FAIL: SQL Query failed.",
                 $WARNING
             );
             $self->sendToQXForSession(
                 $options->{connection}->{sessionid} || 0,
                 "showmessage "
-                  . CGI::escape("Internal error")
+                  . CGI::escape( $selt->{text}->{qx}->{internal_error} )
                   . " 400 200 "
-                  . CGI::escape("FAILED")
+                  . CGI::escape( $selt->{text}->{qx}->{failed} )
             );    # , $options->{connection}->{sessionid} || 0);
             return undef;
         }
@@ -3775,148 +3779,358 @@ sub onNewEditEntry
     return $return;
 }
 
-sub noCrossShowTable {
+sub noCrossShowTable
+{
    my $self = shift;
    my $table = shift;
    my $crosslinktablename = shift;
    my $curSession = shift;
    my $id = shift;
+
    my $crosstabledef = $self->{dbm}->getTableDefiniton($crosslinktablename);
+
    return ($crosstabledef->{crossshowonlyfrom} &&
       (ref($crosstabledef->{crossshowonlyfrom}) eq "ARRAY") &&
      (!scalar(grep { $_ eq $table }
          @{$crosstabledef->{crossshowonlyfrom}}))) ? 1 : 0;
 }
 
-sub doSpecialColumns {
-   my $self = shift;
-   my $options = shift;
-   my $moreparams = shift;
-   unless ((!$moreparams) && $options->{table} && $options->{defaults} && $options->{window} && $options->{curSession} && $options->{connection}) {
-      Log("doSpecialColumns: Missing parameters: table:".$options->{table}.":window=".$options->{window}.":defaults=".$options->{defaults}.":session=".$options->{curSession}.": !", $ERROR);
-      return undef;
-   }
-   return unless $options->{$UNIQIDCOLUMNNAME};
-   my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
-   foreach my $column (hashKeysRightOrder($curtabledef->{columns})) {
-      next unless $self->{dbm}->isMarked($options->{onlyWithMark}, $curtabledef->{columns}->{$column}->{marks});
-      next if (($curtabledef->{columns}->{$column}->{type} ne "htmltext") &&
-               ($curtabledef->{columns}->{$column}->{type} ne "longtext"));
-      next if ($curtabledef->{columns}->{$column}->{hidden} ||
-               $curtabledef->{columns}->{$column}->{readonly});
-      $self->sendToQXForSession($options->{connection}->{sessionid}, "addtab ".CGI::escape($options->{window}."_tabs")." ".CGI::escape($options->{window}."_tabs_".$column)." ".CGI::escape($curtabledef->{columns}->{$column}->{label} || $column)); # , $options->{connection}->{sessionid} || 0);
-      $self->sendToQXForSession($options->{connection}->{sessionid}, "create".((
-         $curtabledef->{columns}->{$column}->{type} &&
-        ($curtabledef->{columns}->{$column}->{type} eq "htmltext")) ? "html" : "")."textedit ".CGI::escape($options->{window}."_tabs_".$column."_data")." ".
-         CGI::escape($options->{table})." ".
-         CGI::escape($column)." ".
-         CGI::escape(defined($options->{$UNIQIDCOLUMNNAME}) ? $options->{$UNIQIDCOLUMNNAME} : Log("ID is undefined!", $ERROR))." ".
-         CGI::escape($options->{defaults}->{$options->{table}.$TSEP.$column} || '')." ".
-         CGI::escape($curtabledef->{columns}->{$column}->{help} || '')." ".
-         CGI::escape($options->{urlappend}));
-      $self->sendToQXForSession($options->{connection}->{sessionid}, "addobject ".CGI::escape($options->{window}."_tabs_".$column)." ".CGI::escape($options->{window}."_tabs_".$column."_data")."\n"); # , $options->{connection}->{sessionid} || 0);
-   }
-   my $tables = $self->{dbm}->getDBBackend($options->{table})->getTableList();
-   foreach my $onlycross (1, 0) {
-      foreach my $crosstable (sort { ($tables->{$a}->{order} || 999999) <=> ($tables->{$b}->{order} || 999999) } keys %$tables) {
-         my $crosslinktabledef = undef;
-         my $crosslinktablename = undef;
-         my $linktabledef = $self->{dbm}->getTableDefiniton($crosstable);
-         if ($onlycross) {
-            $crosslinktablename =
-               $self->{dbm}->getTableDefiniton($options->{table}."_".$crosstable) ? 
-                                               $options->{table}."_".$crosstable : 
-               $self->{dbm}->getTableDefiniton($crosstable."_".$options->{table}) ? 
-                                               $crosstable."_".$options->{table} :
-                                               undef;
-            delete $tables->{crosslinktablename}
-               if defined($crosslinktablename);
-         } else {
-            $crosslinktablename = ((grep { $linktabledef->{columns}->{$_}->{linkto} &&
-                                          ($linktabledef->{columns}->{$_}->{linkto} eq $options->{table}) } (keys %{$linktabledef->{columns}})) ||
-                                   (exists($linktabledef->{columns}->{$options->{table}."_".$self->{dbm}->getIdColumnName($options->{table})}) &&
-                                   defined($linktabledef->{columns}->{$options->{table}."_".$self->{dbm}->getIdColumnName($options->{table})}))) ? $crosstable : undef;
-            # TODO:FIXME:XXX: Das zeigt Tabellen an, die per 1:n auf mich zeigen koennen. Das ist derzeit unschoen,
-            #                 da man in diesem Fall die Eintraege an sich sieht und diese aendert/loescht und nicht
-            #                 die Verknuepfung. Das sollte man ueberarbeiten und dann ggf. hier wieder einschalten.
-         }
-         if ($crosslinktablename && ($crosslinktabledef = $self->{dbm}->getTableDefiniton($crosslinktablename))) {
-            next if $self->noCrossShowTable($options->{table}, $crosslinktablename, $options->{curSession}, $options->{$UNIQIDCOLUMNNAME});
-            $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addtab ".CGI::escape($options->{window}."_tabs")." ".CGI::escape($options->{window}."_tabs_cross_".$crosslinktablename)." ".CGI::escape(($linktabledef->{crosslinklabel} || $linktabledef->{label} || $crosslinktabledef->{crosslinklabel} || "Zugeordnete ".$crosstable))); # , $options->{connection}->{sessionid} || 0);
-            if ($crosslinktabledef->{crossshowastable}) {
-               $self->createTable({
-                  %$options,
-                  table      => $crosslinktablename,
-                  crosslink  => $crosstable,
-                  crosstable => $options->{table},
-                  crossid    => $options->{$UNIQIDCOLUMNNAME},
-                  oid        => $options->{oid},
-                  #crossdst   => "hidden",
-                  name       => $options->{window}."_tabs_cross_".$crosslinktablename."_data",
-                  hilfe      => $curtabledef->{infotext},
-                  #nobuttons  => 1,
-               });
-            } else {
-               $self->createList({
-                  %$options,
-                  table      => $crosslinktablename,
-                  crosslink  => $crosstable,
-                  crosstable => $options->{table},
-                  oid        => $options->{oid},
-                  crossid    => $options->{$UNIQIDCOLUMNNAME},
-                  name       => $options->{window}."_tabs_cross_".$crosslinktablename."_data",
-                  hilfe      => $curtabledef->{infotext},
-                  #nobuttons  => 1,
-                  #urlappend  => ",crosslink=".CGI::escape($crosstable).",crossid=".CGI::escape($options->{$UNIQIDCOLUMNNAME}).",crosstable=".CGI::escape($options->{table})
-               });
-               $self->onUpdateList({
-                  table      => $crosslinktablename,
-                  crosslink  => $crosstable,
-                  crosstable => $options->{table},
-                  connection => $options->{connection},
-                  crossid    => $options->{$UNIQIDCOLUMNNAME},
-                  curSession => $options->{curSession},
-                  oid        => $options->{oid},
-                  name       => $options->{window}."_tabs_cross_".$crosslinktablename."_data",
-               });
+sub doSpecialColumns
+{
+    my $self       = shift;
+    my $options    = shift;
+    my $moreparams = shift;
+
+    unless ( ( !$moreparams )
+        && $options->{table}
+        && $options->{defaults}
+        && $options->{window}
+        && $options->{curSession}
+        && $options->{connection} )
+    {
+        Log( "doSpecialColumns: Missing parameters: table:"
+              . $options->{table}
+              . ":window="
+              . $options->{window}
+              . ":defaults="
+              . $options->{defaults}
+              . ":session="
+              . $options->{curSession} . ": !",
+            $ERROR
+        );
+        return undef;
+    }
+
+    return unless $options->{$UNIQIDCOLUMNNAME};
+    my $curtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
+
+    foreach my $column ( hashKeysRightOrder( $curtabledef->{columns} ) )
+    {
+        next
+          unless $self->{dbm}->isMarked( $options->{onlyWithMark},
+            $curtabledef->{columns}->{$column}->{marks} );
+        next
+          if ( ( $curtabledef->{columns}->{$column}->{type} ne "htmltext" )
+            && ( $curtabledef->{columns}->{$column}->{type} ne "longtext" ) );
+        next
+          if ( $curtabledef->{columns}->{$column}->{hidden}
+            || $curtabledef->{columns}->{$column}->{readonly} );
+        $self->sendToQXForSession(
+            $options->{connection}->{sessionid},
+            "addtab "
+              . CGI::escape( $options->{window} . "_tabs" ) . " "
+              . CGI::escape( $options->{window} . "_tabs_" . $column ) . " "
+              . CGI::escape(
+                $curtabledef->{columns}->{$column}->{label} || $column
+              )
+        );    # , $options->{connection}->{sessionid} || 0);
+        $self->sendToQXForSession(
+            $options->{connection}->{sessionid},
+            "create"
+              . (
+                (
+                    $curtabledef->{columns}->{$column}->{type}
+                      && ( $curtabledef->{columns}->{$column}->{type} eq
+                        "htmltext" )
+                ) ? "html" : ""
+              )
+              . "textedit "
+              . CGI::escape( $options->{window} . "_tabs_" . $column . "_data" )
+              . " "
+              . CGI::escape( $options->{table} ) . " "
+              . CGI::escape($column) . " "
+              . CGI::escape(
+                defined( $options->{$UNIQIDCOLUMNNAME} )
+                ? $options->{$UNIQIDCOLUMNNAME}
+                : Log( "ID is undefined!", $ERROR )
+              )
+              . " "
+              . CGI::escape(
+                $options->{defaults}->{ $options->{table} . $TSEP . $column }
+                  || ''
+              )
+              . " "
+              . CGI::escape( $curtabledef->{columns}->{$column}->{help} || '' )
+              . " "
+              . CGI::escape( $options->{urlappend} )
+        );
+        $self->sendToQXForSession( $options->{connection}->{sessionid},
+                "addobject "
+              . CGI::escape( $options->{window} . "_tabs_" . $column ) . " "
+              . CGI::escape( $options->{window} . "_tabs_" . $column . "_data" )
+              . "\n" );    # , $options->{connection}->{sessionid} || 0);
+    }
+
+    my $tables = $self->{dbm}->getDBBackend( $options->{table} )->getTableList();
+
+    foreach my $onlycross ( 1, 0 )
+    {
+        foreach my $crosstable (
+            sort {
+                ( $tables->{$a}->{order} || 999999 )
+                  <=> ( $tables->{$b}->{order} || 999999 )
+            } keys %$tables
+          )
+        {
+            my $crosslinktabledef  = undef;
+            my $crosslinktablename = undef;
+            my $linktabledef = $self->{dbm}->getTableDefiniton($crosstable);
+            if ($onlycross) {
+                $crosslinktablename =
+                  $self->{dbm}
+                  ->getTableDefiniton( $options->{table} . "_" . $crosstable )
+                  ? $options->{table} . "_" . $crosstable
+                  : $self->{dbm}
+                  ->getTableDefiniton( $crosstable . "_" . $options->{table} )
+                  ? $crosstable . "_" . $options->{table}
+                  : undef;
+                delete $tables->{crosslinktablename}
+                  if defined($crosslinktablename);
             }
-            $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($options->{window}."_tabs_cross_".$crosslinktablename)." ".CGI::escape($options->{window}."_tabs_cross_".$crosslinktablename."_data")."\n"); # , $options->{connection}->{sessionid} || 0);
-         }
-      }
-   }
+            else {
+                $crosslinktablename = (
+                    (
+                        grep {
+                            $linktabledef->{columns}->{$_}->{linkto}
+                              && ( $linktabledef->{columns}->{$_}->{linkto} eq
+                                $options->{table} )
+                        } ( keys %{ $linktabledef->{columns} } )
+                    )
+                      || (
+                        exists(
+                            $linktabledef->{columns}->{
+                                    $options->{table} . "_"
+                                  . $self->{dbm}
+                                  ->getIdColumnName( $options->{table} )
+                            }
+                        )
+                        && defined(
+                            $linktabledef->{columns}->{
+                                    $options->{table} . "_"
+                                  . $self->{dbm}
+                                  ->getIdColumnName( $options->{table} )
+                            }
+                        )
+                      )
+                ) ? $crosstable : undef;
+
+# TODO:FIXME:XXX: Das zeigt Tabellen an, die per 1:n auf mich zeigen koennen. Das ist derzeit unschoen,
+#                 da man in diesem Fall die Eintraege an sich sieht und diese aendert/loescht und nicht
+#                 die Verknuepfung. Das sollte man ueberarbeiten und dann ggf. hier wieder einschalten.
+            }
+            if (
+                $crosslinktablename
+                && ( $crosslinktabledef =
+                    $self->{dbm}->getTableDefiniton($crosslinktablename) )
+              )
+            {
+                next
+                  if $self->noCrossShowTable(
+                    $options->{table},      $crosslinktablename,
+                    $options->{curSession}, $options->{$UNIQIDCOLUMNNAME}
+                  );
+                $self->sendToQXForSession(
+                    $options->{connection}->{sessionid} || 0,
+                    "addtab "
+                      . CGI::escape( $options->{window} . "_tabs" ) . " "
+                      . CGI::escape(
+                            $options->{window}
+                          . "_tabs_cross_"
+                          . $crosslinktablename
+                      )
+                      . " "
+                      . CGI::escape(
+                        (
+                                 $linktabledef->{crosslinklabel}
+                              || $linktabledef->{label}
+                              || $crosslinktabledef->{crosslinklabel}
+                              ||  $selt->{text}->{qx}->{assigned} . " " . $crosstable
+                        )
+                      )
+                );    # , $options->{connection}->{sessionid} || 0);
+                if ( $crosslinktabledef->{crossshowastable} ) {
+                    $self->createTable(
+                        {
+                            %$options,
+                            table      => $crosslinktablename,
+                            crosslink  => $crosstable,
+                            crosstable => $options->{table},
+                            crossid    => $options->{$UNIQIDCOLUMNNAME},
+                            oid        => $options->{oid},
+
+                            #crossdst   => "hidden",
+                            name => $options->{window}
+                              . "_tabs_cross_"
+                              . $crosslinktablename . "_data",
+                            hilfe => $curtabledef->{infotext},
+
+                            #nobuttons  => 1,
+                        }
+                    );
+                }
+                else {
+                    $self->createList(
+                        {
+                            %$options,
+                            table      => $crosslinktablename,
+                            crosslink  => $crosstable,
+                            crosstable => $options->{table},
+                            oid        => $options->{oid},
+                            crossid    => $options->{$UNIQIDCOLUMNNAME},
+                            name       => $options->{window}
+                              . "_tabs_cross_"
+                              . $crosslinktablename . "_data",
+                            hilfe => $curtabledef->{infotext},
+
+#nobuttons  => 1,
+#urlappend  => ",crosslink=".CGI::escape($crosstable).",crossid=".CGI::escape($options->{$UNIQIDCOLUMNNAME}).",crosstable=".CGI::escape($options->{table})
+                        }
+                    );
+                    $self->onUpdateList(
+                        {
+                            table      => $crosslinktablename,
+                            crosslink  => $crosstable,
+                            crosstable => $options->{table},
+                            connection => $options->{connection},
+                            crossid    => $options->{$UNIQIDCOLUMNNAME},
+                            curSession => $options->{curSession},
+                            oid        => $options->{oid},
+                            name       => $options->{window}
+                              . "_tabs_cross_"
+                              . $crosslinktablename . "_data",
+                        }
+                    );
+                }
+                $self->sendToQXForSession(
+                    $options->{connection}->{sessionid} || 0,
+                    "addobject "
+                      . CGI::escape(
+                            $options->{window}
+                          . "_tabs_cross_"
+                          . $crosslinktablename
+                      )
+                      . " "
+                      . CGI::escape(
+                            $options->{window}
+                          . "_tabs_cross_"
+                          . $crosslinktablename . "_data"
+                      )
+                      . "\n"
+                );    # , $options->{connection}->{sessionid} || 0);
+            }
+        }
+    }
 }
 
-sub showTabellen {
-   my $self = shift;
-   my $options = shift;
-   my $moreparams = shift;
-   unless ((!$moreparams) && $options->{curSession}) {
-      Log("showTabellen: Missing parameters: curSession:".$options->{curSession}.": !", $ERROR);
-      return undef;
-   }
-   unless ($options->{curSession}->{openObjects}->{showTabellen}) {
-      foreach my $DB (@{$self->{dbm}->{dbbackend}}) {
-         foreach my $curtable (hashKeysRightOrder($DB->{config}->{DB}->{tables})) {
-            my $db = $self->{dbm}->getDBBackend($curtable);
-            #print "showTabellen: ".$db.":".join(",", keys(%$db))."\n";
-            my $menuname = $db->{config}->{DB}->{tables}->{$curtable}->{menuname} || "tabellen";
-            $poe_kernel->yield(sendToQX => "addmenu ".CGI::escape(($menuname eq "tabellen") ? "" : "tabellen")." ".CGI::escape($menuname)." ".CGI::escape($db->{config}->{DB}->{menu}->{$menuname}->{text} || (($menuname eq "tabellen") ?  "Start" : "Unbenannt"))." ".CGI::escape($db->{config}->{DB}->{menu}->{$menuname}->{icon} || "resource/qx/icon/Tango/32/places/folder.png"))
-               unless ($options->{curSession}->{openObjects}->{showTabellen}->{$menuname});
-            $options->{curSession}->{openObjects}->{showTabellen}->{$menuname}++;
-            next if (($db->{config}->{DB}->{tables}->{$curtable}->{qxhidden}) || 
-                     ($db->{config}->{DB}->{tables}->{$curtable}->{hidden}));
-            $poe_kernel->yield(sendToQX => "addbutton ".CGI::escape($menuname)." ".CGI::escape($curtable)." ".CGI::escape($db->{config}->{DB}->{tables}->{$curtable}->{label} || $curtable)." ".CGI::escape($db->{config}->{DB}->{tables}->{$curtable}->{icon} || '')." ".CGI::escape("job=show,table=".$curtable));
-         }
-      }
-   }
-   $poe_kernel->yield(sendToQX => "addbutton ".CGI::escape("tabellen")." ".CGI::escape("statistic")." "."Live-Statistik"." ".CGI::escape("icon")." ".CGI::escape("job=statswin"));
+sub showTabellen
+{
+    my $self       = shift;
+    my $options    = shift;
+    my $moreparams = shift;
+
+    unless ( ( !$moreparams ) && $options->{curSession} ) {
+        Log(
+            "showTabellen: Missing parameters: curSession:"
+              . $options->{curSession} . ": !",
+            $ERROR
+        );
+        return undef;
+    }
+
+    unless ( $options->{curSession}->{openObjects}->{showTabellen} )
+    {
+        foreach my $DB ( @{ $self->{dbm}->{dbbackend} } )
+        {
+            foreach my $curtable (hashKeysRightOrder( $DB->{config}->{DB}->{tables} ) )
+            {
+                my $db = $self->{dbm}->getDBBackend($curtable);
+
+                #print "showTabellen: ".$db.":".join(",", keys(%$db))."\n";
+                my $menuname =
+                  $db->{config}->{DB}->{tables}->{$curtable}->{menuname}
+                  || $self->{text}->{qx}->{tables} ;
+                $poe_kernel->yield(
+                    sendToQX => "addmenu "
+                      . CGI::escape(
+                        ( $menuname eq  $self->{text}->{qx}->{tables} ) ? "" : $self->{text}->{qx}->{tables} )
+                      . " "
+                      . CGI::escape($menuname) . " "
+                      . CGI::escape(
+                        $db->{config}->{DB}->{menu}->{$menuname}->{text}
+                          || ( ( $menuname eq  $self->{text}->{qx}->{tables} )
+                            ? $self->{text}->{qx}->{start} 
+                            :  $self->{text}->{qx}->{unnamed} )
+                      )
+                      . " "
+                      . CGI::escape(
+                        $db->{config}->{DB}->{menu}->{$menuname}->{icon}
+                          || "resource/qx/icon/Tango/32/places/folder.png"
+                      )
+                  )
+                  unless ( $options->{curSession}->{openObjects}->{showTabellen}
+                    ->{$menuname} );
+                $options->{curSession}->{openObjects}->{showTabellen}
+                  ->{$menuname}++;
+                next
+                  if (
+                    ( $db->{config}->{DB}->{tables}->{$curtable}->{qxhidden} )
+                    || ( $db->{config}->{DB}->{tables}->{$curtable}->{hidden} )
+                  );
+                $poe_kernel->yield(
+                        sendToQX => "addbutton "
+                      . CGI::escape($menuname) . " "
+                      . CGI::escape($curtable) . " "
+                      . CGI::escape(
+                             $db->{config}->{DB}->{tables}->{$curtable}->{label}
+                          || $curtable
+                      )
+                      . " "
+                      . CGI::escape(
+                        $db->{config}->{DB}->{tables}->{$curtable}->{icon} || ''
+                      )
+                      . " "
+                      . CGI::escape( "job=show,table=" . $curtable )
+                );
+            }
+        }
+    }
+    $poe_kernel->yield( sendToQX => "addbutton "
+          . CGI::escape( $self->{text}->{qx}->{tables} ) . " "
+          . CGI::escape("statistic") . " "
+          .  $self->{text}->{qx}->{live_stats} . " "
+          . CGI::escape("icon") . " "
+          . CGI::escape("job=statswin") );
 }
 
-sub onAuthenticated {
+
+sub onAuthenticated
+{
    my $self = shift;
    my $options = shift;
    my $moreparams = shift || 0;
-   unless ((!$moreparams) && $options->{curSession} && $options->{connection}) {
+
+   unless ((!$moreparams) && $options->{curSession} && $options->{connection})
+   {
       Log("onAuthenticated: Missing parameters: curSession:".$options->{curSession}." connection:".$options->{connection}.": !", $ERROR);
       return undef;
    }

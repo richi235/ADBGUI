@@ -134,16 +134,19 @@ sub new
       qx  =>
       {
           accessing               =>  "Zugriff auf ",
+          assigned                =>  "Zugeordnete",
           context                 =>  "Kontext",
           close                   =>  "Schliessen",
           enable                  =>  "Aktiviere ",
           password                =>  "Passwort",
           table                   =>  'Tabelle',
+          tables                  =>  'Tabellen',
           unnamed                 =>  "Unbenannt",
           username                =>  "Benutzername",
           live_stats              =>  "Live Statistiken",
           refresh                 =>  "Aktualisieren",
           search_criteria         =>  "Suchkriterien",
+          start                   =>  "Start",
 
           saved_filters           =>  "Gespeicherte Filter: ",
           created_entry           =>  "Erstellter Eintrag",
