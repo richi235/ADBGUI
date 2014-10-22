@@ -3036,7 +3036,7 @@ sub onTableSelect
         $poe_kernel->yield( sendToQX => "showmessage "
               . CGI::escape( $self->{text}->{qx}->{internal_error} )
               . " 400 200 "
-              . CGI::escape( $selt->{text}->{qx}->{permission_denied} . "\n") );
+              . CGI::escape( $self->{text}->{qx}->{permission_denied} . "\n") );
         Log( "Qooxdoo: onTableSelect: GET: ACCESS DENIED: " . $err->[0],
             $err->[1] );
         return undef;
@@ -3091,7 +3091,7 @@ sub onTableSelect
         $poe_kernel->yield(
                 sendToQX => "createtree "
               . CGI::escape( $options->{oid} . "_tableselect_tree" ) . " "
-              . CGI::escape( $selt->{text}->{qx}->{search_criteria} ) . " "
+              . CGI::escape( $self->{text}->{qx}->{search_criteria} ) . " "
               . CGI::escape(
                     ",treeaction=filter,table="
                   . $options->{table}
@@ -3115,9 +3115,9 @@ sub onTableSelect
     }
     else {
         $poe_kernel->yield( sendToQX => "showmessage "
-              . CGI::escape( $selt->{text}->{qx}->{internal_error} )
+              . CGI::escape( $self->{text}->{qx}->{internal_error} )
               . " 400 200 "
-              . CGI::escape( $selt->{text}->{qx}->{table_ref_tree_error} ) );
+              . CGI::escape( $self->{text}->{qx}->{table_ref_tree_error} ) );
     }
 }
 
@@ -3341,9 +3341,9 @@ sub onNewEditEntry
         $self->sendToQXForSession(
             $options->{connection}->{sessionid} || 0,
             "showmessage "
-              . CGI::escape( $selt->{text}->{qx}->{internal_error} )
+              . CGI::escape( $self->{text}->{qx}->{internal_error} )
               . " 400 200 "
-              . CGI::escape( $selt->{text}->{qx}->{permission_denied} . "\n"),
+              . CGI::escape( $self->{text}->{qx}->{permission_denied} . "\n"),
             $options->{connection}->{sessionid} || 0
         );
         Log( "Qooxdoo: onNewEditEntry: GET: ACCESS DENIED: " . $err->[0],
@@ -3399,9 +3399,9 @@ sub onNewEditEntry
             $self->sendToQXForSession(
                 $options->{connection}->{sessionid} || 0,
                 "showmessage "
-                  . CGI::escape( $selt->{text}->{qx}->{permission_denied} )
+                  . CGI::escape( $self->{text}->{qx}->{permission_denied} )
                   . " 300 50 "
-                  . CGI::escape( $selt->{text}->{qx}->{permission_denied} ),
+                  . CGI::escape( $self->{text}->{qx}->{permission_denied} ),
                 $options->{connection}->{sessionid} || 0
             );
             return undef;
@@ -3440,9 +3440,9 @@ sub onNewEditEntry
                          $options->{newedittitle}
                       || $options->{title}
                       || ( $options->{$UNIQIDCOLUMNNAME}
-                        ?  $selt->{text}->{qx}->{details_of_entry} . $options->{$UNIQIDCOLUMNNAME}
-                        :  $selt->{text}->{qx}->{new_entry} )
-                      . $selt->{text}->{qx}->{in} 
+                        ?  $self->{text}->{qx}->{details_of_entry} . $options->{$UNIQIDCOLUMNNAME}
+                        :  $self->{text}->{qx}->{new_entry} )
+                      . $self->{text}->{qx}->{in} 
                       . ( $curtabledef->{label} || $options->{table} )
                 )
               )
@@ -3570,7 +3570,7 @@ sub onNewEditEntry
         "addtab "
           . CGI::escape( $window . "_tabs" ) . " "
           . CGI::escape( $window . "_tabs_tab1" )
-          . " " . $selt->{text}->{qx}->{basis_data} 
+          . " " . $self->{text}->{qx}->{basis_data} 
     );                # , $options->{connection}->{sessionid} || 0);
     $self->sendToQXForSession(
         $options->{connection}->{sessionid} || 0,
@@ -3708,9 +3708,9 @@ sub onNewEditEntry
             $self->sendToQXForSession(
                 $options->{connection}->{sessionid} || 0,
                 "showmessage "
-                  . CGI::escape( $selt->{text}->{qx}->{internal_error} )
+                  . CGI::escape( $self->{text}->{qx}->{internal_error} )
                   . " 400 200 "
-                  . CGI::escape( $selt->{text}->{qx}->{failed} )
+                  . CGI::escape( $self->{text}->{qx}->{failed} )
             );    # , $options->{connection}->{sessionid} || 0);
             return undef;
         }
@@ -3964,7 +3964,7 @@ sub doSpecialColumns
                                  $linktabledef->{crosslinklabel}
                               || $linktabledef->{label}
                               || $crosslinktabledef->{crosslinklabel}
-                              ||  $selt->{text}->{qx}->{assigned} . " " . $crosstable
+                              || $self->{text}->{qx}->{assigned} . " " . $crosstable
                         )
                       )
                 );    # , $options->{connection}->{sessionid} || 0);
