@@ -4117,7 +4117,7 @@ sub showTabellen
     $poe_kernel->yield( sendToQX => "addbutton "
           . CGI::escape( $self->{text}->{qx}->{tables} ) . " "
           . CGI::escape("statistic") . " "
-          .  $self->{text}->{qx}->{live_stats} . " "
+          . CGI::escape( $self->{text}->{qx}->{live_stats} ) . " "
           . CGI::escape("icon") . " "
           . CGI::escape("job=statswin") );
 }

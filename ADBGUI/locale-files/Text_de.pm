@@ -206,7 +206,7 @@ sub new
           failed                  =>  "Operation fehlgeschlagen",
           internal_error          =>  "Interner Fehler",
           login_error             =>  "Loginfehler",
-          no_crosslink_id         =>  "Fehlende ID für Tabellen-Quer-Verknüpfung\n"
+          no_crosslink_id         =>  "Fehlende ID für Tabellen-Quer-Verknüpfung\n",
           no_log_data             =>  "Keine Log Daten vorhanden!",
           onSaveEditEntry_error   =>  "Kritischer Fehler beim Ausführen der onSaveEditEntry Funktion aufgetreten.",
           permission_denied       =>  "Fehlende Zugriffsberechtigung",
