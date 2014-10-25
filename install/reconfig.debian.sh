@@ -14,13 +14,19 @@ fi
 rm -R bilder 2>/dev/null
 mkdir bilder
 
+unset IFS
+
 for i in `echo */bilder`; do
+   export IFS=$(echo -en "\n\b")
    for j in `ls $i`; do
       ln -s ../$i/$j bilder/$j;
    done;
 done
 
+unset IFS
+
 for i in `ls|grep -v install|grep -vi qooxdoo|grep -v myproject|grep -v bilder`; do
+   export IFS=$(echo -en "\n\b")
    if [ -f $i/install.debian.sh ]; then
       cd $i;
       bash install.debian.sh;
@@ -39,7 +45,7 @@ done
 if [ -f ADBGUI/Text.pm ]; then
    /bin/true;
 else
-   echo "No language selected, installing english.\n";
+   echo "No language selected, installing english.";
    cd ADBGUI;
    cp Text_english.pm Text.pm;
    cd ..;
