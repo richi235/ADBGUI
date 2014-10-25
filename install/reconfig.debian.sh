@@ -19,19 +19,28 @@ for i in `echo */bilder`; do
    done;
 done
 
-for i in `find . -name install.debian.sh -type f|grep -v ./install/install.debian.sh`; do
-   if [[ $i != "install/install.debian.sh" ]]; then bash $i; fi;
-done;
-
-if [[ $1 == "noap" || $2 == "noap" ]]; then
+for i in `ls|grep -v install|grep -vi qooxdoo|grep -v myproject|grep -v bilder`; do
+   if [ -f $i/install.debian.sh ]; then
+      cd $i;
+      bash install.debian.sh;
+      cd ..;
+   fi;
+   if [[ $1 == "noap" || $2 == "noap" ]]; then
+      /bin/true;
+   else
+      if [ -d /usr/lib/cgi-bin/$i ]; then
+         echo -e "\nNeeding sudo to clean up stuff from Apache:"
+         sudo rm /usr/lib/cgi-bin/$i;
+         sudo ln -s `pwd`/$i /usr/lib/cgi-bin/$i;
+      fi;
+   fi;
+done
+if [ -f ADBGUI/Text.pm ]; then
    /bin/true;
 else
-   for i in `ls|grep -v install|grep -vi qooxdoo|grep -v myproject|grep -v bilder`; do
-      if [ -d /usr/lib/cgi-bin/$i ]; then 
-			  echo -e "\nNeeding sudo to clean up stuff from Apache:"
-			  sudo rm /usr/lib/cgi-bin/$i; 
-			  sudo ln -s `pwd`/$i /usr/lib/cgi-bin/$i; 
-	  fi;
-   done;
-fi
+   echo "No language selected, installing english.\n";
+   cd ADBGUI;
+   cp Text_english.pm Text.pm;
+   cd ..;
+fi;
 
