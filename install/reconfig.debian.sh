@@ -1,5 +1,7 @@
 ### ADBGUI reconfigure script ###
 
+export IFS=$(echo -en "\n\b")
+
 if [[ $1 == "dropdb" || $2 == "dropdb" ]]; then
    echo WARNING: You are deleting and reinitialising all your database content if you enter your db password now!!!;
    # MySQL
@@ -13,7 +15,6 @@ rm -R bilder 2>/dev/null
 mkdir bilder
 
 for i in `echo */bilder`; do
-   export IFS=$(echo -en "\n\b")
    for j in `ls $i`; do
       ln -s ../$i/$j bilder/$j;
    done;
