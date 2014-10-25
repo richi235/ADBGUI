@@ -14,6 +14,8 @@ BEGIN {
 }
 
 use ADBGUI::BasicVariables;
+use ADBGUI::DBDesign_Labels;
+
 our @ISA;
 
 our $NAMECOLUMNNAME = "name";
@@ -21,18 +23,26 @@ our $AJAXDISCONNECTED = 1;
 our $AJAXFLUSHED      = 2;
 our $AJAXSTART        = 3;
 
-sub new {
+my $labels = $ADBGUI::DBDesign_Labels::labels;
+
+
+sub new
+{
    my $proto = shift;
-   my $class = ref($proto) || $proto;
    my $self = shift;
+
+   my $class = ref($proto) || $proto;
    my $parent = $self ? ref($self) : "";
+
    @ISA = ($parent) if $parent;
+
    $self = $self ? $self : {};
    bless ($self, $class);
+
    return $self;
 }
 
-# DBUser      User   Passwort
+#   DBUser     User  Passwort
 our $DBUSER = ["web", '', 'localhost']; # Letzer Parameter ist IP des Clients. Postgress hat das nicht,
                                        # aber MySQL.
 # Standardrights
