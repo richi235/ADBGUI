@@ -312,50 +312,59 @@ sub getDB {
       readonly => 1,
       dbuser => $DBUSER,
       #hidden => 1,
-      label => "Aenderungslog",
+      label => $labels->{action_log} ,
       order => 10000
    };
-   $DB->{tables}->{$LOG}->{columns}->{$UNIQIDCOLUMNNAME} = {
+
+   $DB->{tables}->{$LOG}->{columns}->{$UNIQIDCOLUMNNAME} =
+   {
       type => $UNIQIDCOLUMNNAME,
       order => 1
    };
+
    $DB->{tables}->{$LOG}->{columns}->{$TIMESTAMP} = {
       type => "datetime",
       showInSelect => 1,
-      label => "Zeitpunkt",
+      label => $labels->{time} ,
       order => 2
    };
    $DB->{tables}->{$LOG}->{columns}->{$USER} = {
       type => "text",
       showInSelect => 1,
-      label => "Benutzer",
+      label => $labels->{user} ,
       order => 3
    };
-   $DB->{tables}->{$LOG}->{columns}->{$TABLE} = {
+   $DB->{tables}->{$LOG}->{columns}->{$TABLE} =
+   {
       type => "text",
       showInSelect => 1,
-      label => "Tabelle",
+      label => $labels->{table} ,
       order => 4 
    };
-   $DB->{tables}->{$LOG}->{columns}->{$ENTRY} = {
+   $DB->{tables}->{$LOG}->{columns}->{$ENTRY} =
+   {
       type => "text",
       showInSelect => 1,
       hidden => 1,
-      label => "Eindeutige ID",
+      label => $labels->{unique_id} ,
       order => 5 
    };
-   $DB->{tables}->{$LOG}->{columns}->{$TYP} = {
+   $DB->{tables}->{$LOG}->{columns}->{$TYP} =
+   {
       type => "text",
       showInSelect => 1,
-      label => "Typ",
+      label => $labels->{type} ,
       order => 6 
    };
-   $DB->{tables}->{$LOG}->{columns}->{$DIFF} = {
+   $DB->{tables}->{$LOG}->{columns}->{$DIFF} =
+   {
       type => "longtext",
       showInSelect => 1,
-      label => "Aenderung",
+      label => $labels->{action} ,
       order => 7 
    };
+
+   
    return $DB;
 }
 1;

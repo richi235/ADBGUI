@@ -6,7 +6,13 @@ use warnings;
 our $labels =
 {
     # log-table
-    changelog => "Operation-Log",
+    action_log   => "Action-Log",
+    time         => "Time",
+    user         => "User",
+    table        => "Table",
+    unique_id    => "Unique ID",
+    type         => "Type",
+    action       => "Action",
 
     
 };
