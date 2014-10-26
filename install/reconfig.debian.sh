@@ -49,7 +49,13 @@ else
    echo "No language selected, installing english.";
    cd ADBGUI;
    cp locale-files/Text_en.pm Text.pm ;
-   cp locale-files/DBDesign_Labels_en.pm DBDesign_Labels.pm ;
    cd ..;
 fi;
 
+if [ -f ADBGUI/DBDesign_Labels.pm ]; then
+   /bin/true;
+else
+   cd ADBGUI;
+   cp locale-files/DBDesign_Labels_en.pm DBDesign_Labels.pm ;
+   cd ..;
+fi;
