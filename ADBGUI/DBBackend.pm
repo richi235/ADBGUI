@@ -618,7 +618,7 @@ sub insertDataSet {
          tablebackrefs => $params->{tablebackrefs},
       })) && (ref($retx) eq "ARRAY")) {
          Log("DBBackend: insertDataSet: SQL GET Query failed after INSERT.", $ERROR);
-         die;
+         return undef;
       }
       if ( (ref($retx->[0]) ne "ARRAY") || (scalar(@{$retx->[0]}) != 1) ) {
          Log("DBBackend: insertDataSet: Wanted one line, but got :".scalar(@{$retx->[0]}).":", $ERROR);
