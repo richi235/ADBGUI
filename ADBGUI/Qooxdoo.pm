@@ -1305,23 +1305,18 @@ sub onGetLines {
    ($where, $tablebackrefs) = $self->handleCrossLink($options, $where);
    $tablebackrefs = 1 if ($curtabledef->{defaulttablebackrefs});
    $db->getDataSet({
-      table => $options->{table}, 
+      %$options,
       $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
-      skip => $options->{start},
       rows => $count,
       searchdef => $self->{dbm}->getFilter($options),
-      sortby => $options->{sortby}, 
       wherePre => $where,
       tablebackrefs => $tablebackrefs,
       session => $options->{curSession},
-      options => $options,
-      connection => $options->{connection},
       onlymax => $tablebackrefs,
       onDone => sub {
-         my $params = shift;
+         my $options = shift;
          my $ret = shift;
          my $msg = shift;
-         my $options = $params->{options};
          unless (ref($ret) eq "ARRAY") {
             Log("DBManager: onGetLines: GET ".$options->{table}." FAILED SQL Query failed.", $WARNING);
             $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("FAILED\n"));

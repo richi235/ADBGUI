@@ -809,6 +809,7 @@ sub updateDataSet {
    my $retx;
    unless ($self->{config}->{DB}->{tables}->{$params->{table}}->{nolog}) {
       unless (defined($retx = $self->getDataSet({
+         %$params,
          table => $params->{table},
          wherePre => $params->{wherePre},
          id => $params->{id},
@@ -850,6 +851,7 @@ sub updateDataSet {
    unless ($self->{config}->{DB}->{tables}->{$params->{table}}->{nolog}) {
       my $rety;
       unless (defined($rety = $self->getDataSet({
+         %$params,
          table => $params->{table},
          id => $params->{id},
          session => $params->{session},
