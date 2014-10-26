@@ -10,11 +10,20 @@ our $labels =
     time         => "Time",
     user         => "User",
     table        => "Table",
-    unique_id    => "Unique ID",
-    type         => "Type",
+    type         => "Action-Type",
     action       => "Action",
 
+    # Users-table
+    username           => "Username",
+    change_permission  => "Change-Permission",
+    description        => "Description",
+    superuser          => "read-only Superuser",
+    password           => "Password",
+    pw_comment         => "The User's secret password",
     
+    # ADBGUI Data-types:
+    unique_id          => "Unique ID",
+    deleted            => 'Deleted?',
 };
 
 

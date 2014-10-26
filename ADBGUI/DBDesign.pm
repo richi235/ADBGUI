@@ -90,14 +90,16 @@ sub getDB {
       hidden => 1,
       selectAlsoIfHidden => 1,
       dbtype => "INT(64)",
-      label => "Eindeutige ID"
+      label => $labels->{unique_id} 
    };
+   
    $DB->{types}->{double} = {
       dbtype => "DOUBLE",
       replacecommas => 1,
       syntaxcheck => '^\d+(\.\d*)?$',
       dbcompare => "=",
    };
+
    $DB->{types}->{number} = {
       postgres => {
          dbtype => "int"
@@ -142,7 +144,7 @@ sub getDB {
       selectAlsoIfHidden => 1,
       "default" => "0",
       dbcompare => "=",
-      label => 'Gel&ouml;scht'
+      label => $labels->{deleted}
    };
    $DB->{types}->{inet} = {
       postgres => {
@@ -249,62 +251,72 @@ sub getDB {
       readonly => 1
    };
 
-   ### Tables
-
+   ############################################################
+   #########   Next: The ADBGUI Base-Tables:  #################
+   ############################################################
+   
    # Users
 
-   $DB->{tables}->{$USERSTABLENAME} = {
+   $DB->{tables}->{$USERSTABLENAME} =
+   {
       primarykey => [$UNIQIDCOLUMNNAME, $USERNAMECOLUMNNAME],
       rights => $RIGHTS,
       dbuser => $DBUSER,
       order => 1,
       crossShowInSelect => $USERNAMECOLUMNNAME,
-      label => "Benutzer"
+      label => $labels->{user} 
    };
+
    # ToDo: Die Standardspalten (also $UNIQIDCOLUMNNAME und $DELETEDCOLUMNNAME?)
    #       sollten standardmaessig da sein, ohne definert werden zu muessen.
    $DB->{tables}->{$USERSTABLENAME}->{columns}->{$UNIQIDCOLUMNNAME} = {
       type => $UNIQIDCOLUMNNAME,
       order => 2
    };
+
    $DB->{tables}->{$USERSTABLENAME}->{columns}->{$USERNAMECOLUMNNAME} = {
-      type => "text",
-      nochange => 1,
-      notnull => 1,
+      type         => "text",
+      nochange     => 1,
+      notnull      => 1,
       showInSelect => 1,
-      label => "Benutzername",
-      order => 3
+      label        => $labels->{username},
+      order        => 3
    };
+
    $DB->{tables}->{$USERSTABLENAME}->{columns}->{$MODIFYFLAGCOLUMNNAME} = {
-      type => "boolean",
-      label => "Aenderungsberechtigung",
-      order => 4
+       type  => "boolean",
+       label => $labels->{change_permission} ,
+       order => 4
    };
+   
    $DB->{tables}->{$USERSTABLENAME}->{columns}->{$ADMINFLAGCOLUMNNAME} = {
-      type => "boolean",
-      hidden => 0,
-      label => "Lesender Superuser",
-      order => 5
+       type   => "boolean",
+       hidden => 0,
+       label  => $labels->{superuser} ,
+       order  => 5
    };
+
    $DB->{tables}->{$USERSTABLENAME}->{columns}->{$PASSWORDCOLUMNNAME} = {
       type => "text",
       writeonly => 1,
       secret => 1,
-      comment => "Das ist das geheime Passwort des Users",
-      label => "Passwort",
+      comment => $labels->{pw_comment} ,
+      label => $labels->{password} ,
       order => 6
    };
+
    $DB->{tables}->{$USERSTABLENAME}->{columns}->{"beschreibung"} = {
-      type => "text",
-      label => "Beschreibung",
+      type  => "text",
+      label => $labels->{description} ,
       order => 50
    };
+
    $DB->{tables}->{$USERSTABLENAME}->{columns}->{$DELETEDCOLUMNNAME} = {
-      type => $DELETEDCOLUMNNAME,
+      type  => $DELETEDCOLUMNNAME,
       order => 51,
    };
 
-   # Log
+   # Log-table
 
    $DB->{tables}->{$LOG} = {
       primarykey => [$UNIQIDCOLUMNNAME],
