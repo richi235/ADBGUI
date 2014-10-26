@@ -8,6 +8,7 @@ sub new
    my $proto = shift;
    my $self  = 
    {
+   ### Strings for GUI.pm START ###    
       ACTIVE_OPERATOR      => 'X',
       INACTIVE_OPERATOR    => '_',
       PASSCHANGED          => "Password changed.\n",
@@ -127,6 +128,115 @@ sub new
                            'If you want to get back to the previous Page, without filtering anything, use the "back" button of your browser.'  ,
       T_SECTION         => 'Section Overview',
       T_SECTION_DES     => 'xxx',
+   ### Strings for GUI.pm END ###
+
+   #### Strings from Qooxdoo.pm START ####
+      qx  =>
+      {
+          accessing               =>  "Access to ",
+          assigned                =>  "Assigned items",
+          context                 =>  "context",
+          close                   =>  "Close",
+          enable                  =>  "Enable ",
+          password                =>  "Password",
+          table                   =>  'Table',
+          tables                  =>  'Tables',
+          unnamed                 =>  "Unnamed",
+          username                =>  "Username",
+          live_stats              =>  "Live Statistics",
+          refresh                 =>  "Refresh",
+          search_criteria         =>  "Search criteria",
+          start                   =>  "Start",
+
+          saved_filters           =>  "Saved filters: ",
+          created_entry           =>  "Created Entry",
+          details_of_entry        =>  "Details of entry ",
+          first_entry             =>  "First Entry",
+          new_entry               =>  "New Entry", 
+
+          #onNeweditEnty Window
+          basis_data              =>  "Root_Data",
+
+
+          # Filter Window
+          add                     =>  "Add",
+          after                   =>  " After: ",
+          before                  =>  " Before: ",
+          after_specific_date     =>  "After specific date",
+          before_specific_date    =>  "Before specific date",
+          filter_in               =>  "Filter on",
+          filter_criterion        =>  "Filtering criterion",
+          further_selection       =>  "Further selections",
+          link_to_broken          =>  "Link to following table broken: ",
+          load                    =>  "Load",
+          save                    =>  "Save",
+          datatype                =>  "Datatype",
+          selected_entries_only   =>  "Selected entries only",
+          only_the_following      =>  "Only the following entries:<br>",
+          has_to_be_set           =>  " Has to be set",
+          must_not_be_set         =>  " Must not be set",
+          only_archived_entries   =>  " Only archived entries",
+          only_non_archived       =>  " Only non-archived entries",
+          number                  =>  "Number",    
+          filter_for_text         =>  "Filter for some contained text.",
+          contains                =>  "Contains",
+          unknown_filter_crit     =>  "Unknown filtercriterion",
+          no_filter_crit_selected =>  "No filter-criterion selected",
+              
+          
+          # HTML Preview window
+          preview_of              =>  "Preview of ",
+          of_entry                =>  " of entry ",
+          in                      =>  " in ",
+
+          
+          # Buttons
+          new                     =>  "New",
+          edit                    =>  "Change",
+          delete                  =>  "Delete",
+          filter                  =>  "Filter",
+          
+          # Error Messages:
+          activate_not_configured =>  "The following 'Activate' is not configured: ",
+          application_unavailable =>  "Currently this application is not available. Please try again later.",
+          col_info_error          =>  "Got corrupted information about following column: '",
+          context_error           =>  "(Error while creating Context: ",
+          failed                  =>  "FAILED",
+          internal_error          =>  "Internal error",
+          no_log_data             =>  "No Log Data existing",
+          onSaveEditEntry_error   =>  "Fatal unknown internal error in onSaveEditEntry",
+          permission_denied       =>  "No access permission",
+          popupid_missing         =>  "Id of popup-window for the following action is missing: ",
+          qx_context_error        =>  "Internal Error while creating the following Qooxdoo Contexd: ",
+          col_load_error          =>  "Error while loading the following column: '",
+          unknown_command         =>  "Unknown command/action: ",
+          table_non_modifiable    =>  "Table not modifiable.",
+          delrow_failed           =>  "Deleting this line failed.",
+          delrow_linex_failed     =>  "Deleting the following line failed: ",
+          login_error             =>  "Login-error",
+          wrong_pw_user_combo     =>  "Invalid username or password.",
+          no_crosslink_id         =>  "No crosslink id\n",
+          table_ref_tree_error    =>  "Unable to build table reference tree!",
+
+
+          paths     =>
+          {
+              qx_building_subdir => "/myproject/build/",
+              system_search_png  => "resource/qx/icon/Tango/16/actions/system-search.png",
+              list_add           => "resource/qx/icon/Tango/16/actions/list-add.png",
+          },
+          # potentielle übersetzungskandidaten:
+
+          stats_window =>
+          {
+              sessions   =>  "Open sessions: ",
+              cur_time   =>  "Current time in seconds after UNIX-epoch:  ",
+              refresh    =>  "Refresh"
+
+          },
+
+      },
+
    };
 
    bless ($self);
