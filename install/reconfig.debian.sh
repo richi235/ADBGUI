@@ -42,12 +42,13 @@ for i in `ls|grep -v install|grep -vi qooxdoo|grep -v myproject|grep -v bilder`;
       fi;
    fi;
 done
+
 if [ -f ADBGUI/Text.pm ]; then
    /bin/true;
 else
    echo "No language selected, installing english.";
    cd ADBGUI;
-   cp Text_english.pm Text.pm;
+   cp locale-files/Text_en.pm Text.pm;
    cd ..;
 fi;
 
