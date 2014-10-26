@@ -814,6 +814,7 @@ sub updateDataSet {
          id => $params->{id},
          session => $params->{session},
          nodeleted => $params->{nodeleted},
+         # TODO:XXX:FIXME: "simple" double defined?
          simple => 1,
          tablebackrefs => $params->{tablebackrefs},
          simple => $params->{tablebackrefs} ? 0 : 1,
