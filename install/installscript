@@ -106,6 +106,8 @@ else
    for i in $apachelinks; do
       $sudocommand rm /usr/lib/cgi-bin/$i 2>/dev/null;
       $sudocommand ln -s `pwd`/$i /usr/lib/cgi-bin/$i;
+      # owner of the cgi-bin files has to be www-data not root:
+      $sudocommand chown -h www-data:www-data /usr/lib/cgi-bin/$i;
    done;
 fi;
 
