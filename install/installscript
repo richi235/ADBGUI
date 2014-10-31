@@ -113,6 +113,7 @@ else
    $sudocommand chown www-data:www-data gui.pl;
    # done so that programmers still easily can edit gui.pl
    $sudocommand chmod o+w gui.pl;
+   $sudocommand chmod +x gui.pl;
 fi;
 
 # Pictures Directory
