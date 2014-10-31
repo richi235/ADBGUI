@@ -109,6 +109,10 @@ else
       # owner of the cgi-bin files has to be www-data not root:
       $sudocommand chown -h www-data:www-data /usr/lib/cgi-bin/$i;
    done;
+   # for apache www-data has to be owner of executed cgi-bin files read and execute permission is not sufficient
+   $sudocommand chown www-data:www-data gui.pl;
+   # done so that programmers still easily can edit gui.pl
+   $sudocommand chmod o+w gui.pl;
 fi;
 
 # Pictures Directory
