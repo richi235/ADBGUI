@@ -57,6 +57,11 @@ fi
 
 cd ..
 
+# enabling english localisation
+# since succesfull import of ADBGUI::DBDesign_Labels
+# in DBDesign.pm is needed vor createMysql.pl to work
+cp ADBGUI/locale-files/DBDesign_Labels_en.pm ADBGUI/DBDesign_Labels.pm ;
+
 # MySQL
 echo -e "\n"
 echo -e "\e[1m#### Creating Database #####\e[0m"
