@@ -38,7 +38,7 @@ if [[ $1 == "noap" || $2 == "noap" ]]; then
    /bin/true;
 else
    cp $apachefiles ..;
-   chmod +x ../gui.pl;
+   $sudocommand chmod +x ../gui.pl;
 fi
 
 echo "\$DB->{name} = '$PROJECTNAME';" >>../DBDesign.pm
