@@ -1372,4 +1372,39 @@ sub LineHandler {
    $self->{parent}->LineHandler($_, $client, $onConnect);
 }
 
+
+sub get_single_value_from_db
+{
+    my $table   = shift;
+    my $id      = shift;
+    my $session = shift;
+    my $column  = shift; 
+
+    
+    my $db = $self->getDBBackend($table);
+
+    # fetch the data set from the db
+    my $result_set = $db->getDataSet(
+        {
+            table   => $table,
+            session => $session,
+            id      => $id
+        }
+    );
+
+    my $single_value;
+
+    # only extract from result set if we got correct data
+    if ( ref($result_set) eq "ARRAY" ) {
+        $single_value =
+          $result_set->[0]->[0]->{ $table . $TSEP . $column };
+    }
+    else {
+        log(
+            "Got no or corrupted data from DB"
+        );
+    }
+}    
+
+
 1;
