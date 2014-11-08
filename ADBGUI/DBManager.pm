@@ -1236,25 +1236,40 @@ sub protokolError {
    $client->close;
 }
 
-sub Where_Pre {
-   my $self = shift;
-   my $a = shift;
-   my $b = shift;
-   Log("INVALID OLD FORMAT!", $ERROR)
+sub Where_Pre
+{
+    my $self = shift;
+    my $a    = shift;
+    my $b    = shift;
+    Log( "INVALID OLD FORMAT!", $ERROR )
       if $b;
-   my $moreparams = shift;
-   my $options = undef;
-   if ($b) {
-      $options->{curSession} = $a;
-      $options->{table} = $b;
-   } else {
-      $options = $a;
-   }
-   unless ((!$moreparams) && $options->{curSession} && $options->{table}) {
-      Log("DBManager: Where_Pre: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
-      return "ACCESS DENIED";
-   }
-   return (defined(my $err = $self->checkRights($options->{curSession}, $ADMIN))) ? [] : undef;
+    my $moreparams = shift;
+
+    
+    my $options    = undef;
+    if ($b)
+    {
+        $options->{curSession} = $a;
+        $options->{table}      = $b;
+    }
+    else {
+        $options = $a;
+    }
+
+    unless ( ( !$moreparams ) && $options->{curSession} && $options->{table} )
+    {
+        Log(
+            "DBManager: Where_Pre: Missing parameters: table:"
+              . $options->{table}
+              . ":curSession:"
+              . $options->{curSession} . ": !",
+            $ERROR
+        );
+        return "ACCESS DENIED";
+    }
+
+    return (defined(my $err = $self->checkRights( $options->{curSession}, $ADMIN )))
+              ? [] : undef;
 }
 
 sub checkRights {
