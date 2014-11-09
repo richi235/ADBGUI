@@ -1391,7 +1391,7 @@ sub sendTheMail {
 =pod
 
 B<get_single_value_from_db( $session, $table, $column, $id )>
-  A wrapper around getDataSet() from DBBackend to make it more comfortable.
+  A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handlung for you.
   I<Returns:> the requested single value as scalar.
 
 =cut
@@ -1447,8 +1447,15 @@ sub get_single_value_from_db
 =pod
 
 B<get_single_row_from_db( $session, $table, $id )>
-  A wrapper around getDataSet() from DBBackend to make it more comfortable.
-  I<Returns:> the requested row as reference to a hash.
+  A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handling.
+  I<Returns:> the requested row(and referenced ones) as reference to a hash.
+
+  Expample:
+    my $result_row = $self->get_single_row_from_db( $session, $table, $id );
+
+    # to access single columns use:
+    $result_row->{$table . $TSEP . $column_name }
+    # the table name is needed
 
 =cut
 
