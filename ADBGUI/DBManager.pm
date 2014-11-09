@@ -1409,7 +1409,7 @@ sub get_single_value_from_db
     my $db = $self->getDBBackend($table);
 
     if ( !defined($db) ) {
-        Log("Requested table not existing in Database \n(Hint: ADBGUI works case-sensitive on Table names, even if the Database doesn't)", $ERROR);
+        Log("Requested table not existing in Database \n(###   Hint: ADBGUI works case-sensitive on Table names, even if the Database doesn't)\n", $ERROR);
         return undef;
     }
 
@@ -1437,7 +1437,7 @@ sub get_single_value_from_db
           $result_set->[0]->[0]->{ $table . $TSEP . $column };
     } else
     {
-        Log("Requested column not existing in Database \n(Hint: ADBGUI works case-sensitive on column names, even if the Database doesn't)", $ERROR);
+        Log("Requested column not existing in Database \n(###   Hint: ADBGUI works case-sensitive on column names, even if the Database doesn't)\n", $ERROR);
         return undef;
     }
 
@@ -1463,7 +1463,7 @@ sub get_single_row_from_db
     
     my $db = $self->getDBBackend($table);
     if ( !defined($db) ) {
-        Log("Requested table not existing in Database \n(Hint: ADBGUI works case-sensitive on Table names, even if the Database doesn't)", $ERROR);
+        Log("Requested table not existing in Database \n(###   Hint: ADBGUI works case-sensitive on Table names, even if the Database doesn't)\n", $ERROR);
         return undef;
     }
     
