@@ -1408,6 +1408,11 @@ sub get_single_value_from_db
     
     my $db = $self->getDBBackend($table);
 
+    if ( !defined($db) ) {
+        Log("Requested table not existing in Database \n(Hint: ADBGUI works case-sensitive on Table names, even if the Database doesn't)", $ERROR);
+        return undef;
+    }
+
     # fetch the data set from the db
     my $result_set = $db->getDataSet(
         {
@@ -1417,29 +1422,27 @@ sub get_single_value_from_db
         }
     );
 
+        # $result_set->[0]->[0] contains the results as reference to a hash
+        # if they don't exist abort
+    if ( !$result_set->[0]->[0] ) {
+        Log("Empty result set. Requested row not existing in Database", $ERROR);
+        return undef;
+    }
+
     my $single_value;
 
-    # only extract from result set if we got correct data
-    if ( ref($result_set) eq "ARRAY" )
+    if ( exists($result_set->[0]->[0]->{ $table . $TSEP . $column }) )
     {
-        if ( exists($result_set->[0]->[0]->{ $table . $TSEP . $column }) )
-        {
-            $single_value =
-              $result_set->[0]->[0]->{ $table . $TSEP . $column };
-        } else
-        {
-            Log("Requested table,column or row not existing in Database", $ERROR);
-            return undef;
-        }
-    }
-    else
-    {    
-        Log("Got no or corrupted data from DB", $ERROR);
+        $single_value =
+          $result_set->[0]->[0]->{ $table . $TSEP . $column };
+    } else
+    {
+        Log("Requested column not existing in Database \n(Hint: ADBGUI works case-sensitive on column names, even if the Database doesn't)", $ERROR);
         return undef;
     }
 
     return $single_value;
-}    
+}
 
 =pod
 
@@ -1460,7 +1463,7 @@ sub get_single_row_from_db
     
     my $db = $self->getDBBackend($table);
     if ( !defined($db) ) {
-        Log("Requested table not existing in Database", $ERROR);
+        Log("Requested table not existing in Database \n(Hint: ADBGUI works case-sensitive on Table names, even if the Database doesn't)", $ERROR);
         return undef;
     }
     
@@ -1476,7 +1479,7 @@ sub get_single_row_from_db
         # $result_set->[0]->[0] contains the results as reference to a hash
         # if they don't exist abort
     if ( !$result_set->[0]->[0] ) {
-        Log("Empty result set. Requested table or row not existing in Database", $ERROR);
+        Log("Empty result set. Requested row not existing in Database", $ERROR);
         return undef;
     }
 
