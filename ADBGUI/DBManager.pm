@@ -1,5 +1,46 @@
 package ADBGUI::DBManager;
 
+=pod
+
+=head1 NAME
+
+  ADBGUI::DBManager  -- The DBManager Component of the ADBGUI Framework
+
+=head1 SYNOPSIS
+
+  Not needed, since it gets only called by other Framework Components
+
+=head1 DESCRIPTION
+
+  Subroutines in here get called from Qooxdoo.pm and call Subroutines in DBBackend.pm.
+  It provides a database-un-specific interface to the database.
+  Which for example includes:
+
+=over
+
+=over
+
+=item * I<checkRights>
+
+    ADBGUI has an own user and permission managment which goes way beyond that of your Database.
+
+=item * I<Fetch Data from DB>
+
+=item * I<Save Data to DB>
+
+=item * I<And much more...>
+
+
+=back
+
+=back
+
+  
+=head1 METHODS
+
+=cut
+
+
 use warnings;
 use strict;
 use Carp;
@@ -1345,6 +1386,52 @@ sub sendTheMail {
    return $sender->send($email);
 }
 
+
+=pod
+
+B<get_single_value_from_db( $session, $table, $column, $id )>
+
+
+=cut
+
+
+sub get_single_value_from_db
+{
+    my $self    = shift;
+    my $session = shift;
+    my $table   = shift;
+    my $column  = shift; 
+    my $id      = shift;
+
+    
+    my $db = $self->getDBBackend($table);
+
+    # fetch the data set from the db
+    my $result_set = $db->getDataSet(
+        {
+            table   => $table,
+            session => $session,
+            id      => $id
+        }
+    );
+
+    my $single_value;
+
+    # only extract from result set if we got correct data
+    if ( ref($result_set) eq "ARRAY" )
+    {
+        $single_value =
+          $result_set->[0]->[0]->{ $table . $TSEP . $column };
+    }
+    else
+    {    
+        log("Got no or corrupted data from DB");
+        return undef;
+    }
+
+    return $single_value;
+}    
+
 package ADBGUI::DBManagerServer;
 
 use ADBGUI::BasicVariables;
@@ -1371,40 +1458,6 @@ sub LineHandler {
    #Log("DBManager: DBManagerServer: ".($onConnect ? "Connected." : "Read ".$_), $DEBUG);
    $self->{parent}->LineHandler($_, $client, $onConnect);
 }
-
-
-sub get_single_value_from_db
-{
-    my $table   = shift;
-    my $id      = shift;
-    my $session = shift;
-    my $column  = shift; 
-
-    
-    my $db = $self->getDBBackend($table);
-
-    # fetch the data set from the db
-    my $result_set = $db->getDataSet(
-        {
-            table   => $table,
-            session => $session,
-            id      => $id
-        }
-    );
-
-    my $single_value;
-
-    # only extract from result set if we got correct data
-    if ( ref($result_set) eq "ARRAY" ) {
-        $single_value =
-          $result_set->[0]->[0]->{ $table . $TSEP . $column };
-    }
-    else {
-        log(
-            "Got no or corrupted data from DB"
-        );
-    }
-}    
 
 
 1;
