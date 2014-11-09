@@ -60,6 +60,7 @@ use Email::Send;
 # RefCycle Detection
 #use Devel::Cycle qw/find_cycle/;
 #use PadWalker;
+use Data::Dumper;
 
 my $qxsessiontimeout = 240;
 my $qxmaxquesize = 4000;
@@ -1390,7 +1391,8 @@ sub sendTheMail {
 =pod
 
 B<get_single_value_from_db( $session, $table, $column, $id )>
-
+  A wrapper around getDataSet() from DBBackend to make it more comfortable.
+  I<Returns:> the requested single value as scalar.
 
 =cut
 
@@ -1420,17 +1422,69 @@ sub get_single_value_from_db
     # only extract from result set if we got correct data
     if ( ref($result_set) eq "ARRAY" )
     {
-        $single_value =
-          $result_set->[0]->[0]->{ $table . $TSEP . $column };
+        if ( exists($result_set->[0]->[0]->{ $table . $TSEP . $column }) )
+        {
+            $single_value =
+              $result_set->[0]->[0]->{ $table . $TSEP . $column };
+        } else
+        {
+            Log("Requested table,column or row not existing in Database", $ERROR);
+            return undef;
+        }
     }
     else
     {    
-        log("Got no or corrupted data from DB");
+        Log("Got no or corrupted data from DB", $ERROR);
         return undef;
     }
 
     return $single_value;
 }    
+
+=pod
+
+B<get_single_row_from_db( $session, $table, $id )>
+  A wrapper around getDataSet() from DBBackend to make it more comfortable.
+  I<Returns:> the requested row as reference to a hash.
+
+=cut
+
+
+sub get_single_row_from_db
+{
+    my $self    = shift;
+    my $session = shift;
+    my $table   = shift;
+    my $id      = shift;
+
+    
+    my $db = $self->getDBBackend($table);
+    if ( !defined($db) ) {
+        Log("Requested table not existing in Database", $ERROR);
+        return undef;
+    }
+    
+    # fetch the data set from the db
+    my $result_set = $db->getDataSet(
+        {
+            table   => $table,
+            session => $session,
+            id      => $id
+        }
+    );
+
+        # $result_set->[0]->[0] contains the results as reference to a hash
+        # if they don't exist abort
+    if ( !$result_set->[0]->[0] ) {
+        Log("Empty result set. Requested table or row not existing in Database", $ERROR);
+        return undef;
+    }
+
+    my $single_row = $result_set->[0]->[0];
+
+    return $single_row;
+}
+
 
 package ADBGUI::DBManagerServer;
 
