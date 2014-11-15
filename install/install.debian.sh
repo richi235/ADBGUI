@@ -41,7 +41,7 @@ if [ -f ADBGUI/DBDesign_Labels.pm ]; then
 else
    echo "ADBGUI: No labels language selected, activating english.";
    cd ADBGUI;
-   cp locale-files/DBDesign_Labels_en.pm DBDesign_Labels.pm;
+   ln -s locale-files/DBDesign_Labels_en.pm DBDesign_Labels.pm;
    cd ..;
 fi;
 if [ -f Text.pm ]; then
@@ -49,7 +49,7 @@ if [ -f Text.pm ]; then
 else
    echo "ADBGUI: No text language selected, activating english.";
    cd ADBGUI;
-   ln locale-files/Text_en.pm Text.pm;
+   ln -s locale-files/Text_en.pm Text.pm;
    cd ..;
 fi;
 

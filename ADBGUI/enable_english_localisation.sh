@@ -4,7 +4,7 @@
 
     # overwrite the current lang file with the english ones
     rm Text.pm
-    ln locale-files/Text_en.pm Text.pm
+    ln -s locale-files/Text_en.pm Text.pm
     # overwrite the current DBDesign_Labels file with the english one
     rm DBDesign_Labels.pm
-    ln locale-files/DBDesign_Labels_en.pm DBDesign_Labels.pm
+    ln -s locale-files/DBDesign_Labels_en.pm DBDesign_Labels.pm
