@@ -1,9 +1,23 @@
 ### ADBGUI reconfigure script ###
 
+# check if sudo is installed
+if hash sudo 2>/dev/null; then
+    # sudo is installed proceed as normal
+    sudocommand="sudo"
+else     # check if we are root
+    if (( $EUID == 0 )); then
+        sudocommand= ''  # we are, so we will simply install everything as root
+    else
+        echo "sudo is not installed and you are not root"
+        echo "please install sudo or execute as root"
+        exit
+     fi   
+fi
+
 export IFS=$(echo -en "\n\b")
 
 if [[ $1 == "dropdb" || $2 == "dropdb" ]]; then
-   echo WARNING: You are deleting and reinitialising all your database content if you enter your db password now!!!;
+   echo "WARNING: You are deleting and reinitialising all your database content if you enter your db password now!!!";
    # MySQL
    perl ADBGUI/createMysql.pl dropdb $1 | mysql  --user=root --password;
 else
@@ -11,11 +25,10 @@ else
 fi
 
 # Bilder aller Projekte joinen
-rm -R bilder 2>/dev/null
+rm -r bilder 2>/dev/null
 mkdir bilder
 
 unset IFS
-
 for i in `echo */bilder`; do
    export IFS=$(echo -en "\n\b")
    for j in `ls $i`; do
@@ -23,12 +36,14 @@ for i in `echo */bilder`; do
    done;
 done
 
-unset IFS
 
-for i in `ls|grep -v install|grep -vi qooxdoo|grep -v myproject|grep -v bilder`; do
+
+unset IFS    #  iterate over all the folders of submodules
+for i in `ls | grep -v install | grep -vi qooxdoo | grep -v myproject | grep -v bilder`; do
    export IFS=$(echo -en "\n\b")
    if [ -f $i/install.debian.sh ]; then
       cd $i;
+      # execute the installscripts of all submodules/slice-packs
       bash install.debian.sh;
       cd ..;
    fi;
@@ -37,8 +52,8 @@ for i in `ls|grep -v install|grep -vi qooxdoo|grep -v myproject|grep -v bilder`;
    else
       if [ -d /usr/lib/cgi-bin/$i ]; then
          echo -e "\nNeeding sudo to clean up stuff from Apache:"
-         sudo rm /usr/lib/cgi-bin/$i;
-         sudo ln -s `pwd`/$i /usr/lib/cgi-bin/$i;
+         $sudocommand rm /usr/lib/cgi-bin/$i;
+         $sudocommand ln -s `pwd`/$i /usr/lib/cgi-bin/$i;
       fi;
    fi;
 done
