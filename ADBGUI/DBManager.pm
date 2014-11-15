@@ -1278,6 +1278,15 @@ sub protokolError {
    $client->close;
 }
 
+
+=pod
+
+B<Where_Pre( { table =E<gt> ... , curSession =E<gt> ... } )>
+  I<Returns:> the currently set default filters for this table and session.
+  Must be included before every use of I<getDataSet>.
+
+=cut
+
 sub Where_Pre
 {
     my $self = shift;
