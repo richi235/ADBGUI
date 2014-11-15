@@ -25,8 +25,6 @@ fi
 
 echo "\$DB->{name} = '$PROJECTNAME';" >>../DBDesign.pm
 
-
-
 # Qooxoo
 if [[ $1 == "qx" || $2 == "qx" ]]; then
    apt-get --force-yes -y install unzip python;
@@ -36,6 +34,20 @@ if [[ $1 == "qx" || $2 == "qx" ]]; then
 fi
 
 cd ..
+
+# Language
+if [ -f ADBGUI/DBDesign_Labels.pm ]; then
+   /bin/true;
+else
+   echo "ADBGUI: No labels language selected, activating english.";
+   cp ./ADBGUI/locale-files/DBDesign_Labels_en.pm ADBGUI/DBDesign_Labels.pm
+fi;
+if [ -f Text.pm ]; then
+   /bin/true;
+else
+   echo "ADBGUI: No text language selected, activating english.";
+   cp ./ADBGUI/locale-files/Text_en.pm ADBGUI/Text.pm;
+fi;
 
 # MySQL
 perl ADBGUI/createMysql.pl createdb|mysql -p
