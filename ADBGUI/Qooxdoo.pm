@@ -1528,174 +1528,81 @@ sub handleCrossLink {
 }
 
 sub onGetLines {
-    my $self       = shift;
-    my $options    = shift;
-    my $moreparams = shift;
-
-    unless ( ( !$moreparams )
-        && $options->{q}
-        && $options->{curSession}
-        && $options->{table}
-        && $options->{connection}
-        && ( $options->{start} =~ /^\d+$/ )
-        && ( $options->{end}   =~ /^\d+$/ )
-        && ( $options->{end} >= $options->{start} ) )
-    {
-        Log(
-            "onGetLines: Missing parameters: table:"
-              . $options->{table}
-              . ":curSession:"
-              . $options->{curSession} . " q="
-              . $options->{"q"} . ": !",
-            $ERROR
-        );
-        return undef;
-    }
-
-    my $oid = $options->{oid};
-    $options->{sortby} ||= '';
-    my $curtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
-    my $columns     = [
-        grep { $_ ne $self->{dbm}->getIdColumnName( $options->{table} ) } grep {
-            my $status = $self->{gui}->getViewStatus(
-                {
-                    %$options,
-                    column     => $_,
-                    table      => $options->{table},
-                    targetself => $options->{curSession},
-                    action     => $LISTACTION,
-                }
-            );
-            ( $status ne "hidden" )    #&& ($status ne "writeonly")
-          } grep {
-            $self->{dbm}->isMarked( $options->{onlyWithMark},
-                $curtabledef->{columns}->{$_}->{marks} )
-          } hashKeysRightOrder( $curtabledef->{columns} )
-    ];
-
-    unshift( @$columns, $self->{dbm}->getIdColumnName( $options->{table} ) )
-      if exists( $curtabledef->{columns}
-          ->{ $self->{dbm}->getIdColumnName( $options->{table} ) } );
-
-    if (defined(
-            my $err = $self->{dbm}->checkRights(
-                $options->{curSession}, $ACTIVESESSION,
-                $options->{table},      $options->{$UNIQIDCOLUMNNAME}
-            )))
-    {
-        $self->sendToQXForSession(
-            $options->{connection}->{sessionid} || 0,
-            "showmessage "
-              . CGI::escape( $self->{text}->{qx}->{internal_error} )
-              . " 400 200 "
-              . CGI::escape( $self->{text}->{qx}->{permission_denied} . "\n" )
-        );    # , $options->{connection}->{sessionid} || 0);
-
-        return Log( "DBManager: onGetLines: GET: ACCESS DENIED: " . $err->[0], $err->[1] );
-    }
-
-    my $ret   = undef;
-    my $count = ( $options->{end} - $options->{start} + 1 )
-        if ( ( $options->{start} =~ m,^\d+$, )
-            && ( $options->{end} =~ m,^\d+$, )
-            && ( $options->{end} > $options->{start} ) );
-    
-
-    my $db            = $self->{dbm}->getDBBackend( $options->{table} );
-    my $where         = $self->{dbm}->Where_Pre($options);
-    my $tablebackrefs = 0;
-    ( $where, $tablebackrefs ) = $self->handleCrossLink( $options, $where );
-    $tablebackrefs = 1 if ( $curtabledef->{defaulttablebackrefs} );
-
-    $db->getDataSet(
-        {
-            table             => $options->{table},
-            $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
-            skip              => $options->{start},
-            rows              => $count,
-            searchdef         => $self->{dbm}->getFilter($options),
-            sortby            => $options->{sortby},
-            wherePre          => $where,
-            tablebackrefs     => $tablebackrefs,
-            session           => $options->{curSession},
-            options           => $options,
-            connection        => $options->{connection},
-            onlymax           => $tablebackrefs,
-            onDone            => sub {
-                my $params  = shift;
-                my $ret     = shift;
-                my $msg     = shift;
-                my $options = $params->{options};
-                unless ( ref($ret) eq "ARRAY" )
-                {
-                    Log(
-                        "DBManager: onGetLines: GET "
-                          . $options->{table}
-                          . " FAILED SQL Query failed.",
-                        $WARNING
-                    );
-                    $self->sendToQXForSession(
-                        $options->{connection}->{sessionid} || 0,
-                        "showmessage "
-                          . CGI::escape( $self->{text}->{qx}->{internal_error} )
-                          . " 400 200 "
-                          . CGI::escape( $self->{text}->{qx}->{failed} . "\n" )
-                    );
-                    return;
-                }
-
-# TODO/XXX/FIXME: Derzeit wird onGetLines einmal für getRowsCount und ein zweites mal für getRows abgefragt, das könnten wir cachen!
-                $self->sendToQXForSession( $options->{connection}->{sessionid}
-                      || 0, $msg )
-                  if ($msg);
-                my $dbtype = $db->getDBType();
-                if ( $options->{end} > 0 ) {
-                    foreach my $dbline ( @{ $ret->[0] } ) {
-                        my $line =
-                            "addrow "
-                          . $oid . " "
-                          . (
-                            $options->{ionum} ? $options->{ionum} . " " : " " )
-                          . join(
-                            ",",
-                            map {
-                                my $curcolumn = $_;
-
-# TODO/FIXME/XXX: Qooxdoo mag hier kein HTMl.... irgendwie besser loesen als über hidebuttons!
-                                $options->{curSession}->{hidebuttons}++;
-
-# TODO/FIXME/XXX: Ausgabeformat beliebig ändern?
-# TODO/FIXME/XXX: Hotfix fuer sayTRUST Logviewer: csv funktioniert mit Column_Handler nicht; es werden Spalten verschluckt.
-                                CGI::escape(
-                                    ( lc($dbtype) eq "csv" )
-                                    ? $dbline->{
-                                        $options->{table} . $TSEP . $curcolumn
-                                      }
-                                    : $self->{gui}->Column_Handler(
-                                        $options->{curSession},
-                                        $options->{table},
-                                        $dbline,
-                                        $curcolumn
-                                    )
-                                  )
-                            } @$columns
-                          );
-                        $self->sendToQXForSession(
-                            $options->{connection}->{sessionid} || 0, $line );
-                    }
-                }
-
-#print "TABLE:".$options->{table}.":NUM:".$ret->[1].":".($options->{rowsadded}||0).":\n";
-                $self->sendToQXForSession(
-                    $options->{connection}->{sessionid} || 0,
-                    "addrowsdone "
-                      . $oid . " "
-                      . ( $ret->[1] + ( $options->{rowsadded} || 0 ) )
-                      . ( $options->{ionum} ? " " . $options->{ionum} : "" )
-                );
-            },
-        }
-    );
+   my $self = shift;
+   my $options = shift;
+   my $moreparams = shift;
+   unless ((!$moreparams) && $options->{q} && $options->{curSession} && $options->{table} && $options->{connection} && ($options->{start} =~ /^\d+$/) && ($options->{end} =~ /^\d+$/) && ($options->{end} >= $options->{start})) {
+      Log("onGetLines: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}." q=".$options->{"q"}.": !", $ERROR);
+      return undef;
+   }
+   my $oid = $options->{oid};
+   $options->{sortby} ||= '';
+   my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
+   my $columns = [grep { $_ ne $self->{dbm}->getIdColumnName($options->{table}) } grep {
+      my $status = $self->{gui}->getViewStatus({
+         %$options,
+         column => $_,
+         table => $options->{table},
+         targetself => $options->{curSession},
+         action => $LISTACTION,
+      }); ($status ne "hidden") #&& ($status ne "writeonly")
+   } grep {
+      $self->{dbm}->isMarked($options->{onlyWithMark}, $curtabledef->{columns}->{$_}->{marks})
+   } hashKeysRightOrder($curtabledef->{columns})];
+   unshift(@$columns, $self->{dbm}->getIdColumnName($options->{table})) if exists($curtabledef->{columns}->{$self->{dbm}->getIdColumnName($options->{table})});
+   if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}, $options->{$UNIQIDCOLUMNNAME}))) {
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{qx}->{permission_denied}."\n");
+      return Log("DBManager: onGetLines: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
+   }
+   my $ret = undef;
+   my $count = ($options->{end}-$options->{start}+1)
+      if (($options->{start} =~ m,^\d+$,) &&
+          ($options->{end}   =~ m,^\d+$,) &&
+          ($options->{end} > $options->{start}));
+   my $db    = $self->{dbm}->getDBBackend($options->{table});
+   my $where = $self->{dbm}->Where_Pre($options);
+   my $tablebackrefs = 0;
+   ($where, $tablebackrefs) = $self->handleCrossLink($options, $where);
+   $tablebackrefs = 1 if ($curtabledef->{defaulttablebackrefs});
+   $db->getDataSet({
+      %$options,
+      $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
+      rows => $count,
+      searchdef => $self->{dbm}->getFilter($options),
+      wherePre => $where,
+      tablebackrefs => $tablebackrefs,
+      session => $options->{curSession},
+      onlymax => $tablebackrefs,
+      onDone => sub {
+         my $options = shift;
+         my $ret = shift;
+         my $msg = shift;
+         unless (ref($ret) eq "ARRAY") {
+            Log("DBManager: onGetLines: GET ".$options->{table}." FAILED SQL Query failed.", $WARNING);
+            $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{qx}->{failed}."\n"));
+            return;         
+         };
+         # TODO/XXX/FIXME: Derzeit wird onGetLines einmal für getRowsCount und ein zweites mal für getRows abgefragt, das könnten wir cachen!
+         $self->sendToQXForSession($options->{connection}->{sessionid} || 0, $msg)
+            if ($msg);
+         my $dbtype = $db->getDBType();
+         if ($options->{end} > 0) {
+            foreach my $dbline (@{$ret->[0]}) {
+               my $line = "addrow ".$oid." ".($options->{ionum} ? $options->{ionum}." " : " ").join(",", map {
+                  my $curcolumn = $_;
+                  # TODO/FIXME/XXX: Qooxdoo mag hier kein HTMl.... irgendwie besser loesen als über hidebuttons!
+                  $options->{curSession}->{hidebuttons}++;
+                  # TODO/FIXME/XXX: Ausgabeformat beliebig ändern?
+                  # TODO/FIXME/XXX: Hotfix fuer sayTRUST Logviewer: csv funktioniert mit Column_Handler nicht; es werden Spalten verschluckt.
+                  CGI::escape((lc($dbtype) eq "csv") ? $dbline->{$options->{table}.$TSEP.$curcolumn} : $self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $curcolumn))
+               } @$columns);
+               $self->sendToQXForSession($options->{connection}->{sessionid} || 0, $line);
+            }
+         }
+         #print "TABLE:".$options->{table}.":NUM:".$ret->[1].":".($options->{rowsadded}||0).":\n";
+         $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addrowsdone ".$oid." ".($ret->[1]+($options->{rowsadded}||0)).($options->{ionum} ? " ".$options->{ionum} : ""));
+      },
+   });
 }
 
 sub createList {
