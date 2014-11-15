@@ -40,13 +40,17 @@ if [ -f ADBGUI/DBDesign_Labels.pm ]; then
    /bin/true;
 else
    echo "ADBGUI: No labels language selected, activating english.";
-   cp ./ADBGUI/locale-files/DBDesign_Labels_en.pm ADBGUI/DBDesign_Labels.pm
+   cd ADBGUI;
+   cp locale-files/DBDesign_Labels_en.pm DBDesign_Labels.pm;
+   cd ..;
 fi;
 if [ -f Text.pm ]; then
    /bin/true;
 else
    echo "ADBGUI: No text language selected, activating english.";
-   cp ./ADBGUI/locale-files/Text_en.pm ADBGUI/Text.pm;
+   cd ADBGUI;
+   ln locale-files/Text_en.pm Text.pm;
+   cd ..;
 fi;
 
 # MySQL
