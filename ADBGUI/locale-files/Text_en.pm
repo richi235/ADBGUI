@@ -155,7 +155,7 @@ sub new
           new_entry               =>  "New Entry", 
 
           #onNeweditEnty Window
-          basis_data              =>  "Root_Data",
+          basis_data              =>  "Basisdata",
 
 
           # Filter Window
