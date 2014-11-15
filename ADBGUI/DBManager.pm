@@ -1413,12 +1413,21 @@ sub get_single_value_from_db
         return undef;
     }
 
+    # Where_Pre returns all currently set filters on this table and session
+    my $where = $self->Where_Pre(
+        {
+            table      => $table,
+            curSession => $session
+        });
+    
+
     # fetch the data set from the db
     my $result_set = $db->getDataSet(
         {
-            table   => $table,
-            session => $session,
-            id      => $id
+            table    => $table,
+            session  => $session,
+            wherePre => $where,
+            id       => $id
         }
     );
 
@@ -1473,15 +1482,22 @@ sub get_single_row_from_db
         Log("Requested table not existing in Database \n(###   Hint: ADBGUI works case-sensitive on Table names, even if the Database doesn't)\n", $ERROR);
         return undef;
     }
+
+    # Where_Pre returns all currently set filters on this table in session
+    my $where = $self->Where_Pre(
+        {
+            table      => $table,
+            curSession => $session
+        });
     
     # fetch the data set from the db
     my $result_set = $db->getDataSet(
         {
-            table   => $table,
-            session => $session,
-            id      => $id
-        }
-    );
+            table    => $table,
+            session  => $session,
+            wherePre => $where,
+            id       => $id
+        });
 
         # $result_set->[0]->[0] contains the results as reference to a hash
         # if they don't exist abort
