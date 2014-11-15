@@ -1551,7 +1551,7 @@ sub onGetLines {
    } hashKeysRightOrder($curtabledef->{columns})];
    unshift(@$columns, $self->{dbm}->getIdColumnName($options->{table})) if exists($curtabledef->{columns}->{$self->{dbm}->getIdColumnName($options->{table})});
    if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}, $options->{$UNIQIDCOLUMNNAME}))) {
-      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{qx}->{permission_denied}."\n");
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{qx}->{permission_denied})."\n");
       return Log("DBManager: onGetLines: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
    }
    my $ret = undef;
