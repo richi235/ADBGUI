@@ -419,11 +419,13 @@ sub sendToQXForSession {
    }
 }
 
-sub showActivate {
+sub showActivate
+{
     my $self       = shift;
     my $options    = shift;
     my $suffix     = shift;
     my $moreparams = shift;
+
     unless ( ( !$moreparams ) && $options->{curSession} ) {
         Log(
             "onClientData: Missing parameters: connection session="
@@ -432,6 +434,7 @@ sub showActivate {
         );
         return undef;
     }
+
     my $window = (
         $options->{window}
           || (
@@ -443,13 +446,15 @@ sub showActivate {
             )
           )
     );
-    $poe_kernel->yield(
-        sendToQX => "destroy " . CGI::escape( $window . "_iframe" ) );
+
+    $poe_kernel->yield(sendToQX => "destroy " . CGI::escape( $window . "_iframe" ) );
+
     $options->{curSession}->{activateparams}->{ $options->{activate} } =
       ( $options->{params} && ( ref( $options->{params} ) eq "ARRAY" ) )
       ? $options->{params}
       : $options->{params} ? [ $options->{params} ]
       :                      [];
+
     $poe_kernel->yield(
             sendToQX => "createiframe "
           . CGI::escape( $window . "_iframe" ) . " "
@@ -467,7 +472,9 @@ sub showActivate {
 
 #$poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape($window."_".$suffix."_acticate_iframe));
     my $curdef = {};
-    if ( $options->{table} ) {
+    
+    if ( $options->{table} )
+    {
         my $curtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
         $curdef->{width} =
              $curtabledef->{qxactivatewidth}
@@ -480,10 +487,12 @@ sub showActivate {
         $curdef->{label} = $curtabledef->{label} || $options->{table};
         $curdef->{icon} = $curtabledef->{icon};
     }
+
     $curdef->{label} ||=
          $options->{label}
       || $options->{activate}
       || $self->{text}->{qx}->{unnamed};
+
     $curdef->{height} ||= $options->{height} || $qxheight;
     $curdef->{width}  ||= $options->{width}  || $qxwidth;
     $curdef->{icon}   ||= $options->{icon}   || '';
@@ -499,7 +508,9 @@ sub showActivate {
     $poe_kernel->yield( sendToQX => "addobject "
           . CGI::escape($window) . " "
           . CGI::escape( $window . "_iframe" ) );
+    
     $poe_kernel->yield( sendToQX => "open " . CGI::escape($window) . " 1" );
+
     $poe_kernel->yield( sendToQX => "modal " . CGI::escape($window) . " 1" )
       if ( $options->{modal} );
 }
