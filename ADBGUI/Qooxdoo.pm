@@ -538,7 +538,18 @@ sub showActivate
       if ( $options->{modal} );
 }
 
-sub handleAjax {
+=pod
+
+=head2 handleAjax( )
+
+  Gets called on any URL which contains "/ajax" from ClientInput Event of the POE Weserver.
+  Also handles Activates and calls the corresponding shell processes.
+
+=cut
+
+
+sub handleAjax
+{
     my $self       = shift;
     my $action     = shift;
     my $kernel     = shift;
@@ -548,25 +559,28 @@ sub handleAjax {
     my $response   = shift;
     my $curSession = shift;
 
-#$self->SUPER::handleAjax($action, $kernel, $session, $heap) if $self->SUPER::can("handleAjax");
-    if ( $heap->{connection}->{"q"}->param("job") eq "preactivate" ) {
-        if ( $action == $AJAXSTART ) {
+    #$self->SUPER::handleAjax($action, $kernel, $session, $heap) if $self->SUPER::can("handleAjax");
+    if ( $heap->{connection}->{"q"}->param("job") eq "preactivate" )
+    {
+        if ( $action == $AJAXSTART )
+        {
             my $activate = $heap->{connection}->{"q"}->param("activate") || '';
             $response->code(RC_OK);
             $response->content_type("text/html; charset=UTF-8");
-            if ( my $activatecmd =
-                $self->{dbm}->{config}->{ "activatecmd" . $activate } )
+
+            if ( my $activatecmd = $self->{dbm}->{config}->{ "activatecmd" . $activate } )
             {
                 my $activateparams = [];
-                if ( $activate && $curSession ) {
+                if ( $activate && $curSession )
+                {
                     $activateparams = $curSession->{activateparams}->{$activate}
                       || [];
                     delete $curSession->{activateparams}->{$activate};
                 }
                 $response->content("<pre>");
                 $heap->{client}->put($response);
-                $heap->{client}
-                  ->set_output_filter( POE::Filter::Stream->new() );
+                $heap->{client}->set_output_filter( POE::Filter::Stream->new() );
+                
                 $heap->{connection}->{activate} = POE::Session->create(
                     inline_states => {
                         _start => sub {
