@@ -4,22 +4,22 @@ package ADBGUI::Qooxdoo;
 
 =head1 NAME
 
-  ADBGUI::Qooxdoo  -- The Frontend Component of the ADBGUI Framework.
+ADBGUI::Qooxdoo  -- The Frontend Component of the ADBGUI Framework.
 
-  Talks to javascript components of the Qooxdoo Web Framework running in the Browser of the Client.
+Talks to javascript components of the Qooxdoo Web Framework running in the Browser of the Client.
 
 =head1 SYNOPSIS
 
-  Not needed, since it gets only called by other Framework Components
+Not needed, since it gets only called by other Framework Components
 
 =head1 DESCRIPTION
 
-  Subroutines in here get called on Events coming from the client and call subroutines from DBManager.pm
-  The events for example include:
+Subroutines in here get called on Events coming from the client and call subroutines from DBManager.pm
+The events for example include:
 
 =over
 
-=over
+=over 2
 
 =item * I<onAuthenticate> The User opens the website or is pressing the login button.
 
@@ -34,7 +34,7 @@ package ADBGUI::Qooxdoo;
 
 =back
 
-  
+
 =head1 METHODS
 
 =cut
