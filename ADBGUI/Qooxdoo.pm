@@ -419,6 +419,29 @@ sub sendToQXForSession {
    }
 }
 
+=pod
+
+=head2 showActivate( $options, $suffix, $moreparams )
+
+Execute a shell command and display the output in a new window.
+(This is called an I<Activate> in ADBGUI Terminology).
+Using Ajax therefore nearly "live" output.
+Calls sendToQx() with createiframe as Parameter, this call contains
+a /ajax url, therefore handleAjax() will be called which does the
+actual invokation of the Activate.
+
+The concrete Activate is stored in I<$options-E<gt>{activate}>
+The mapping from activate to command is stored in dbm.cfg.   
+  For example:
+  I<activatecmd>B<Addkey> ./command.sh
+
+defines the activate B<Addkey>
+
+I<Returns:> Nothing of meaning.
+
+=cut
+
+
 sub showActivate
 {
     my $self       = shift;
