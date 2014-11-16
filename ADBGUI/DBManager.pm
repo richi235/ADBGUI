@@ -1399,7 +1399,15 @@ sub sendTheMail {
 
 =pod
 
-B<get_single_value_from_db( $session, $table, $column, $id )>
+B<get_single_value_from_db( $options )>
+  Where $options has to contain at least:
+  I<$options> = 
+  {
+     curSession => ...
+     table      => ...
+     column     => ...
+     id         => ...
+  }
   A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handlung for you.
   I<Returns:> the requested single value as scalar.
 
@@ -1409,13 +1417,9 @@ B<get_single_value_from_db( $session, $table, $column, $id )>
 sub get_single_value_from_db
 {
     my $self    = shift;
-    my $session = shift;
-    my $table   = shift;
-    my $column  = shift; 
-    my $id      = shift;
-
+    my $options = shift;
     
-    my $db = $self->getDBBackend($table);
+    my $db = $self->getDBBackend($options->{table});
 
     if ( !defined($db) ) {
         Log("Requested table not existing in Database \n(###   Hint: ADBGUI works case-sensitive on Table names, even if the Database doesn't)\n", $ERROR);
@@ -1423,20 +1427,16 @@ sub get_single_value_from_db
     }
 
     # Where_Pre returns all currently set filters on this table and session
-    my $where = $self->Where_Pre(
-        {
-            table      => $table,
-            curSession => $session
-        });
+    my $where = $self->Where_Pre( $options );
     
 
     # fetch the data set from the db
     my $result_set = $db->getDataSet(
         {
-            table    => $table,
-            session  => $session,
+            table    => $options->{table},
+            session  => $options->{curSession},
             wherePre => $where,
-            id       => $id
+            id       => $options->{id}
         }
     );
 
@@ -1449,10 +1449,10 @@ sub get_single_value_from_db
 
     my $single_value;
 
-    if ( exists($result_set->[0]->[0]->{ $table . $TSEP . $column }) )
+    if ( exists($result_set->[0]->[0]->{ $options->{table} . $TSEP . $options->{column} }) )
     {
         $single_value =
-          $result_set->[0]->[0]->{ $table . $TSEP . $column };
+          $result_set->[0]->[0]->{ $options->{table} . $TSEP . $options->{column} };
     } else
     {
         Log("Requested column not existing in Database \n(###   Hint: ADBGUI works case-sensitive on column names, even if the Database doesn't)\n", $ERROR);
