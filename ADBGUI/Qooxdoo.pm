@@ -3084,9 +3084,12 @@ sub addFilterTables
                                       ($curtabledef->{columns}->{$_}->{type} ne "virtual")
       } hashKeysRightOrder($curtabledef->{columns})) {
          my $label = $curtabledef->{columns}->{$curcolum}->{label};
-         $label =~ s,^\s+,,g;
-         $label =~ s,\s+$,,g;
-         $label ||= $curcolum;
+         if ($label) {
+            $label =~ s,^\s+,,g;
+            $label =~ s,\s+$,,g;
+         } else {
+            $label = $curcolum;
+         }
          $poe_kernel->yield(sendToQX => "addtreeentry ".CGI::escape($oid)." ".CGI::escape($table)." ".CGI::escape($tree->{name}.$TSEP.$curcolum)." ".CGI::escape($label));
       }
    }
