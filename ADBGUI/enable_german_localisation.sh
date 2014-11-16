@@ -3,6 +3,8 @@
 ### Just execute to switch to german localisation
 
     # overwrite the current lang file with the german ones
-    cp ./locale-files/Text_de.pm Text.pm
+    rm Text.pm
+    ln -s locale-files/Text_de.pm Text.pm
     # overwrite the current DBDesign_Labels file with the german one
-    cp ./locale-files/DBDesign_Labels_de.pm DBDesign_Labels.pm
+    rm DBDesign_Labels.pm
+    ln -s locale-files/DBDesign_Labels_de.pm DBDesign_Labels.pm
