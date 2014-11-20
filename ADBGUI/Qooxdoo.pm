@@ -1,5 +1,46 @@
 package ADBGUI::Qooxdoo;
 
+=pod
+
+=head1 NAME
+
+ADBGUI::Qooxdoo  -- The Frontend Component of the ADBGUI Framework.
+
+Talks to javascript components of the Qooxdoo Web Framework running in the Browser of the Client.
+
+=head1 SYNOPSIS
+
+Not needed, since it gets only called by other Framework Components
+
+=head1 DESCRIPTION
+
+Subroutines in here get called on Events coming from the client and call subroutines from DBManager.pm
+The events for example include:
+
+=over
+
+=over 2
+
+=item * I<onAuthenticate> The User opens the website or is pressing the login button.
+
+=item * I<onAuthenticated> The user logged in succesfully. Used for default window etc.
+
+=item * I<onShow> Draw the window for a table.
+
+=item * I<And much more...>
+
+
+=back
+
+=back
+
+
+=head1 METHODS
+
+=cut
+
+
+
 use warnings;
 use strict;
 use ADBGUI::BasicVariables;
@@ -378,189 +419,343 @@ sub sendToQXForSession {
    }
 }
 
-sub showActivate {
-   my $self = shift;
-   my $options = shift;
-   my $suffix = shift;
-   my $moreparams = shift;
-   unless ((!$moreparams) && $options->{curSession}) {
-      Log("onClientData: Missing parameters: connection session=".$options->{curSession}.": !", $ERROR);
-      return undef;
-   }
-   my $window = ($options->{window} || ("activate".($options->{table} ? "_".$options->{table} : $options->{activate} ? "_".$options->{activate} : '')));
-   $poe_kernel->yield(sendToQX => "destroy ".CGI::escape($window."_iframe"));
-   $options->{curSession}->{activateparams}->{$options->{activate}} =
-      ($options->{params} &&
-  (ref($options->{params}) eq "ARRAY")) ?
-       $options->{params} : 
-       $options->{params} ?
-      [$options->{params}] : [];
-   $poe_kernel->yield(sendToQX => "createiframe ".CGI::escape($window."_iframe")." ".CGI::escape("/ajax?nocache=".rand(999999999999)."&job=preactivate&activate=".$options->{activate}."&table=".$options->{table}."&sessionid=".$options->{curSession}->{sessionid}));
-   #$poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape($window."_".$suffix."_acticate_iframe));
-   my $curdef = {};
-   if ($options->{table}) { 
-      my $curtabledef   = $self->{dbm}->getTableDefiniton($options->{table});
-      $curdef->{width}  = $curtabledef->{qxactivatewidth}  || $curtabledef->{qxwidth}  || $qxwidth;
-      $curdef->{height} = $curtabledef->{qxactivateheight} || $curtabledef->{qxheight} || $qxheight;
-      $curdef->{label}  = $curtabledef->{label} || $options->{table};
-      $curdef->{icon}   = $curtabledef->{icon};
-   }
-   $curdef->{label}  ||= $options->{label}  || $options->{activate} || $self->{text}->{qx}->{unnamed};
-   $curdef->{height} ||= $options->{height} || $qxheight;
-   $curdef->{width}  ||= $options->{width}  || $qxwidth;
-   $curdef->{icon}   ||= $options->{icon}   || '';
+=pod
 
-   $poe_kernel->yield( sendToQX => "createwin " . CGI::escape($window) . " "
-         . CGI::escape( $curdef->{width} ) . " " . CGI::escape( $curdef->{height} ) . " "
-         . CGI::escape( $self->{text}->{qx}->{enable} . $curdef->{label} ) . " "
-         . CGI::escape( $curdef->{icon} ) );
+=head2 showActivate( $options, $suffix, $moreparams )
 
-   $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape($window."_iframe"));
-   $poe_kernel->yield(sendToQX => "open ".CGI::escape($window)." 1");
-   $poe_kernel->yield(sendToQX => "modal ".CGI::escape($window)." 1") 
-      if ($options->{modal});
+Execute a shell command and display the output in a new window.
+(This is called an I<Activate> in ADBGUI Terminology).
+Using Ajax therefore nearly "live" output.
+Calls sendToQx() with createiframe as Parameter, this call contains
+a /ajax url, therefore handleAjax() will be called which does the
+actual invokation of the Activate.
+
+The concrete Activate is stored in I<$options-E<gt>{activate}>
+The mapping from activate to command is stored in dbm.cfg.   
+  For example:
+  I<activatecmd>B<Addkey> ./command.sh
+
+defines the activate B<Addkey>
+
+I<Returns:> Nothing of meaning.
+
+=cut
+
+
+sub showActivate
+{
+    my $self       = shift;
+    my $options    = shift;
+    my $suffix     = shift;
+    my $moreparams = shift;
+
+    unless ( ( !$moreparams ) && $options->{curSession} ) {
+        Log(
+            "onClientData: Missing parameters: connection session="
+              . $options->{curSession} . ": !",
+            $ERROR
+        );
+        return undef;
+    }
+
+    my $window = (
+        $options->{window}
+          || (
+            "activate"
+            . (
+                  $options->{table}    ? "_" . $options->{table}
+                : $options->{activate} ? "_" . $options->{activate}
+                : ''
+            )
+          )
+    );
+
+    $poe_kernel->yield(sendToQX => "destroy " . CGI::escape( $window . "_iframe" ) );
+
+    $options->{curSession}->{activateparams}->{ $options->{activate} } =
+      ( $options->{params} && ( ref( $options->{params} ) eq "ARRAY" ) )
+      ? $options->{params}
+      : $options->{params} ? [ $options->{params} ]
+      :                      [];
+
+    $poe_kernel->yield(
+            sendToQX => "createiframe "
+          . CGI::escape( $window . "_iframe" ) . " "
+          . CGI::escape(
+                "/ajax?nocache="
+              . rand(999999999999)
+              . "&job=preactivate&activate="
+              . $options->{activate}
+              . "&table="
+              . $options->{table}
+              . "&sessionid="
+              . $options->{curSession}->{sessionid}
+          )
+    );
+
+#$poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape($window."_".$suffix."_acticate_iframe));
+    my $curdef = {};
+    
+    if ( $options->{table} )
+    {
+        my $curtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
+        $curdef->{width} =
+             $curtabledef->{qxactivatewidth}
+          || $curtabledef->{qxwidth}
+          || $qxwidth;
+        $curdef->{height} =
+             $curtabledef->{qxactivateheight}
+          || $curtabledef->{qxheight}
+          || $qxheight;
+        $curdef->{label} = $curtabledef->{label} || $options->{table};
+        $curdef->{icon} = $curtabledef->{icon};
+    }
+
+    $curdef->{label} ||=
+         $options->{label}
+      || $options->{activate}
+      || $self->{text}->{qx}->{unnamed};
+
+    $curdef->{height} ||= $options->{height} || $qxheight;
+    $curdef->{width}  ||= $options->{width}  || $qxwidth;
+    $curdef->{icon}   ||= $options->{icon}   || '';
+
+    $poe_kernel->yield( sendToQX => "createwin "
+          . CGI::escape($window) . " "
+          . CGI::escape( $curdef->{width} ) . " "
+          . CGI::escape( $curdef->{height} ) . " "
+          . CGI::escape( $self->{text}->{qx}->{enable} . $curdef->{label} )
+          . " "
+          . CGI::escape( $curdef->{icon} ) );
+
+    $poe_kernel->yield( sendToQX => "addobject "
+          . CGI::escape($window) . " "
+          . CGI::escape( $window . "_iframe" ) );
+    
+    $poe_kernel->yield( sendToQX => "open " . CGI::escape($window) . " 1" );
+
+    $poe_kernel->yield( sendToQX => "modal " . CGI::escape($window) . " 1" )
+      if ( $options->{modal} );
 }
 
-sub handleAjax {
-   my $self = shift;
-   my $action = shift;
-   my $kernel = shift;
-   my $session = shift;
-   my $heap = shift;
-   my $request = shift;
-   my $response = shift;
-   my $curSession = shift;
-   #$self->SUPER::handleAjax($action, $kernel, $session, $heap) if $self->SUPER::can("handleAjax");
-   if ($heap->{connection}->{"q"}->param("job") eq "preactivate") {
-      if ($action == $AJAXSTART) {
-         my $activate = $heap->{connection}->{"q"}->param("activate") || '';
-         $response->code(RC_OK);
-         $response->content_type("text/html; charset=UTF-8");
-         if (my $activatecmd = $self->{dbm}->{config}->{"activatecmd".$activate}) {
-            my $activateparams = [];
-            if ($activate && $curSession) {
-               $activateparams = $curSession->{activateparams}->{$activate} || [];
-               delete $curSession->{activateparams}->{$activate};
+=pod
+
+=head2 handleAjax( )
+
+  Gets called on any URL which contains "/ajax" from ClientInput Event of the POE Weserver.
+  Also handles Activates and calls the corresponding shell processes.
+
+=cut
+
+
+sub handleAjax
+{
+    my $self       = shift;
+    my $action     = shift;
+    my $kernel     = shift;
+    my $session    = shift;
+    my $heap       = shift;
+    my $request    = shift;
+    my $response   = shift;
+    my $curSession = shift;
+
+    #$self->SUPER::handleAjax($action, $kernel, $session, $heap) if $self->SUPER::can("handleAjax");
+    if ( $heap->{connection}->{"q"}->param("job") eq "preactivate" )
+    {
+        if ( $action == $AJAXSTART )
+        {
+            my $activate = $heap->{connection}->{"q"}->param("activate") || '';
+            $response->code(RC_OK);
+            $response->content_type("text/html; charset=UTF-8");
+
+            if ( my $activatecmd = $self->{dbm}->{config}->{ "activatecmd" . $activate } )
+            {
+                my $activateparams = [];
+                if ( $activate && $curSession )
+                {
+                    $activateparams = $curSession->{activateparams}->{$activate}
+                      || [];
+                    delete $curSession->{activateparams}->{$activate};
+                }
+                $response->content("<pre>");
+                $heap->{client}->put($response);
+                $heap->{client}->set_output_filter( POE::Filter::Stream->new() );
+                
+                $heap->{connection}->{activate} = POE::Session->create(
+                    inline_states => {
+                        _start => sub {
+                            my (
+                                $kernel,        $heap,
+                                $parentsession, $client,
+                                $activatecmd,   $activateparams,
+                                $timeout,       $activate,
+                                $qooxdoo,       $curSession
+                              )
+                              = @_[
+                              KERNEL, HEAP, ARG0, ARG1, ARG2, ARG3,
+                              ARG4,   ARG5, ARG6, ARG7
+                              ];
+                            $heap->{parentsession}  = $parentsession;
+                            $heap->{parentclient}   = $client;
+                            $heap->{timeout}        = $timeout;
+                            $heap->{qooxdoo}        = $qooxdoo;
+                            $heap->{activate}       = $activate;
+                            $heap->{activatecmd}    = $activatecmd;
+                            $heap->{activateparams} = $activateparams;
+                            $heap->{curSession}     = $curSession;
+                            my $cmd = undef;
+                            eval {
+                                $cmd = POE::Wheel::Run->new(
+                                    Program     => $activatecmd,
+                                    ProgramArgs => $activateparams || [],
+
+                                    #CloseOnCall => 1,
+                                    StdoutEvent => 'output',
+                                    StderrEvent => 'output',
+                                    ErrorEvent  => 'error',
+                                    CloseEvent  => 'close',
+                                    StdioFilter => POE::Filter::Stream->new()
+                                );
+                            };
+                            if ($@) {
+                                $heap->{parentclient}
+                                  ->put( "ERROR STARTING:" . $@ )
+                                  if ( defined( $heap->{parentclient} ) );
+                            }
+                            $heap->{cmd} = $cmd;
+                            my $pid = "Unknown";
+                            if ( defined( $heap->{cmd} ) ) {
+                                $pid = $heap->{cmd}->PID;
+                            }
+                            $heap->{parentclient}
+                              ->put( "Program started (PID:" . $pid . ")\n" )
+                              if ( defined( $heap->{parentclient} ) );
+                            $poe_kernel->delay( "timeout" => $heap->{timeout} )
+                              if $heap->{timeout};
+                        },
+                        _stop => sub {
+
+                           #delete $heap->{parentclient};
+                           #$kernel->call($heap->{parentsession} => "shutdown");
+                           #print "DONE\n";
+                        },
+                        output => sub {
+
+                            #print "OUTPUT\n";
+                            my ( $kernel, $heap, $output, $wheel_id ) =
+                              @_[ KERNEL, HEAP, ARG0, ARG1 ];
+
+                            #$output =~ s,\n,<br>\n,g;
+                            #$output = $output.(join(",", split(//, $output)));
+                            $heap->{parentclient}
+                              ->put( $heap->{qooxdoo}->can("onCmdRead")
+                                ? $heap->{qooxdoo}->onCmdRead( $heap, $output )
+                                : $output )
+                              if ( defined( $heap->{parentclient} ) );
+
+                            #syswrite(STDOUT, "PUT".length($output)."\n");
+                        },
+                        error => sub {
+                            my ( $kernel, $heap, $operation, $errnum, $errstr,
+                                $wheel_id )
+                              = @_[ KERNEL, HEAP, ARG0 .. ARG3 ];
+                            return
+                              if ( $operation eq "read" ) && ( $errnum == 0 );
+                            $heap->{parentclient}->put( "ERROR:"
+                                  . $operation
+                                  . " error "
+                                  . $errnum . ": "
+                                  . $errstr )
+                              if ( defined( $heap->{parentclient} ) );
+                            delete $heap->{parentclient};
+                            $kernel->call(
+                                $heap->{parentsession} => "shutdown" );
+
+                            #print "ERROR:".$errnum."\n";
+                        },
+                        close => sub {
+                            my ( $kernel, $heap ) = @_[ KERNEL, HEAP ];
+                            my $pid    = "Unknown";
+                            my $return = "Unknown";
+
+                            #print "CLOSE\n";
+                            if ( defined( $heap->{cmd} ) ) {
+                                $pid = $heap->{cmd}->PID;
+                                $return = waitpid( $pid, 0 );
+                            }
+                            delete $heap->{cmd};
+                            $heap->{parentclient}
+                              ->put( $heap->{qooxdoo}->onCmdClose($heap) )
+                              if $heap->{qooxdoo}->can("onCmdClose");
+                            $heap->{parentclient}
+                              ->put("Program terminated (PID:"
+                                  . $pid
+                                  . ", RET:"
+                                  . $return
+                                  . ")" )
+                              if ( defined( $heap->{parentclient} ) );
+                            delete $heap->{parentclient};
+                            $kernel->call(
+                                $heap->{parentsession} => "shutdown" );
+                            $poe_kernel->delay( "timeout" => undef );
+
+                            #print "CLOSEEND\n";
+                        },
+                        timeout => sub {
+                            my ( $kernel, $heap ) = @_[ KERNEL, HEAP ];
+                            my $pid = "unknown";
+                            if ( defined( $heap->{cmd} ) ) {
+                                $pid = $heap->{cmd}->PID;
+                            }
+                            $heap->{parentclient}
+                              ->put("TIMEOUT: Killing process(PID:"
+                                  . $pid
+                                  . ") after "
+                                  . $heap->{timeout}
+                                  . " seconds." )
+                              if ( defined( $heap->{parentclient} ) );
+                            $poe_kernel->yield("terminate");
+                        },
+                        terminate => sub {
+                            my ( $kernel, $heap ) = @_[ KERNEL, HEAP ];
+                            $heap->{cmd}->kill()
+                              if ( defined( $heap->{cmd} ) );
+                          }
+                    },
+                    args => [
+                        $session,
+                        $heap->{client},
+                        $activatecmd,
+                        $activateparams,
+                        $self->{dbm}->{config}->{"cmdtimeout"} || 3600,
+                        $activate,
+                        $self,
+                        $curSession
+                    ]
+                );
             }
-            $response->content("<pre>");
-            $heap->{client}->put($response);
-            $heap->{client}->set_output_filter(POE::Filter::Stream->new());
-            $heap->{connection}->{activate} = POE::Session->create(
-               inline_states => {
-                  _start  => sub {
-                     my ( $kernel, $heap, $parentsession, $client, $activatecmd, $activateparams, $timeout, $activate, $qooxdoo, $curSession ) = @_[ KERNEL, HEAP, ARG0, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7 ];
-                     $heap->{parentsession} = $parentsession;
-                     $heap->{parentclient}  = $client;
-                     $heap->{timeout} = $timeout;
-                     $heap->{qooxdoo} = $qooxdoo;
-                     $heap->{activate} = $activate;
-                     $heap->{activatecmd} = $activatecmd;
-                     $heap->{activateparams} = $activateparams;
-                     $heap->{curSession} = $curSession;
-                     my $cmd = undef;
-                     eval {
-                        $cmd = POE::Wheel::Run->new(
-                           Program      => $activatecmd,
-                           ProgramArgs  => $activateparams || [],
-                           #CloseOnCall => 1,
-                           StdoutEvent  => 'output',
-                           StderrEvent  => 'output',
-                           ErrorEvent   => 'error',
-                           CloseEvent   => 'close',
-                           StdioFilter  => POE::Filter::Stream->new()
-                        );
-                     };
-                     if ($@) {
-                        $heap->{parentclient}->put("ERROR STARTING:".$@)
-                           if(defined($heap->{parentclient}));
-                     }
-                     $heap->{cmd} = $cmd;
-                     my $pid = "Unknown";
-                     if (defined($heap->{cmd})) {
-                        $pid = $heap->{cmd}->PID;
-                     }
-                     $heap->{parentclient}->put("Program started (PID:".$pid.")\n")
-                        if(defined($heap->{parentclient}));
-                     $poe_kernel->delay("timeout" => $heap->{timeout})
-                        if $heap->{timeout};
-                  },
-                  _stop   => sub {
-                     #delete $heap->{parentclient};
-                     #$kernel->call($heap->{parentsession} => "shutdown");
-                     #print "DONE\n";
-                  },
-                  output => sub {
-                     #print "OUTPUT\n";
-                     my ($kernel, $heap, $output, $wheel_id) = @_[KERNEL, HEAP, ARG0, ARG1];
-                     #$output =~ s,\n,<br>\n,g;
-                     #$output = $output.(join(",", split(//, $output)));
-                     $heap->{parentclient}->put($heap->{qooxdoo}->can("onCmdRead") ?
-                                                $heap->{qooxdoo}->     onCmdRead($heap, $output) : $output)
-                        if(defined($heap->{parentclient}));
-                     #syswrite(STDOUT, "PUT".length($output)."\n");
-                  },
-                  error  => sub {
-                     my ($kernel, $heap, $operation, $errnum, $errstr, $wheel_id) = @_[KERNEL, HEAP, ARG0..ARG3];
-                     return if ($operation eq "read") && ($errnum == 0);
-                     $heap->{parentclient}->put("ERROR:".$operation." error ".$errnum.": ".$errstr)
-                        if(defined($heap->{parentclient}));
-                     delete $heap->{parentclient};
-                     $kernel->call($heap->{parentsession} => "shutdown");
-                     #print "ERROR:".$errnum."\n";
-                  },
-                  close  => sub {
-                     my ($kernel, $heap) = @_[KERNEL, HEAP];
-                     my $pid = "Unknown";
-                     my $return = "Unknown";
-                     #print "CLOSE\n";
-                     if (defined($heap->{cmd})) {
-                        $pid = $heap->{cmd}->PID;
-                        $return = waitpid($pid, 0);
-                     }
-                     delete $heap->{cmd};
-                     $heap->{parentclient}->put($heap->{qooxdoo}->onCmdClose($heap))
-                        if $heap->{qooxdoo}->can("onCmdClose");
-                     $heap->{parentclient}->put("Program terminated (PID:".$pid.", RET:".$return.")")
-                        if(defined($heap->{parentclient}));
-                     delete $heap->{parentclient};
-                     $kernel->call($heap->{parentsession} => "shutdown");
-                     $poe_kernel->delay("timeout" => undef);
-                     #print "CLOSEEND\n";
-                  },
-                  timeout => sub {
-                     my ($kernel, $heap) = @_[KERNEL, HEAP];
-                     my $pid = "unknown";
-                     if (defined($heap->{cmd})) {
-                        $pid = $heap->{cmd}->PID;
-                     }
-                     $heap->{parentclient}->put("TIMEOUT: Killing process(PID:".$pid.") after ".$heap->{timeout}." seconds.")
-                        if (defined($heap->{parentclient}));
-                     $poe_kernel->yield("terminate");
-                  },
-                  terminate => sub {
-                     my ($kernel, $heap) = @_[KERNEL, HEAP];
-                     $heap->{cmd}->kill()
-                        if (defined($heap->{cmd}));
-                  }
-               }, args => [ $session, $heap->{client}, $activatecmd, $activateparams, $self->{dbm}->{config}->{"cmdtimeout"} || 3600, $activate, $self, $curSession ]
-            );
-         }  else {
-            $response->content( $self->{text}->{qx}->{activate_not_configured} . $activate );
-            $heap->{client}->put($response);
+            else {
+                $response->content(
+                        $self->{text}->{qx}->{activate_not_configured}
+                      . $activate );
+                $heap->{client}->put($response);
+                $kernel->yield("shutdown");
+                return 1;
+            }
+        }
+        elsif ( $action == $AJAXDISCONNECTED ) {
+
+            #print "TERM\n";
+            $poe_kernel->call( $heap->{connection}->{activate}, "terminate" );
+
+            #$heap->{client}->put(" " x 20)
+            #   if (exists($heap->{client}) && defined($heap->{client}));
+            #delete $heap->{client};
             $kernel->yield("shutdown");
-            return 1;
-         }
-      } elsif($action == $AJAXDISCONNECTED) {
-         #print "TERM\n";
-         $poe_kernel->call($heap->{connection}->{activate}, "terminate");
-         #$heap->{client}->put(" " x 20)
-         #   if (exists($heap->{client}) && defined($heap->{client}));
-         #delete $heap->{client};
-         $kernel->yield("shutdown");
-      }
-      return 1;
-   }
-   return 0;
+        }
+        return 1;
+    }
+    return 0;
 }
 
 sub resetQX {
