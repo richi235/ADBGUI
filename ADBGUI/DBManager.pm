@@ -1274,7 +1274,9 @@ sub protokolError {
    my $self = shift;
    my $client = shift;
    my $error = shift || 'UNSPECIFIED';
-   $client->send("PROTOKOLL ERROR; CLOSING CONNECTION: ".$error."\n");
+   my $err = "PROTOKOLL ERROR; CLOSING CONNECTION: ".$error;
+   Log($err, $WARNING);
+   $client->send($err."\n");
    $client->close;
 }
 
