@@ -16,7 +16,7 @@ my $dbs = [$DB];
 
 my $adbgui = $loader->newObject("Qooxdoo", [
    $loader->newObject("GUI",       [$dbs,              $loader->newObject("Text", []), 'gui.cfg']),
-   $loader->newObject("DBManager", [$dbs, $configkeys, $loader->newObject("Text", []), 'dbm.cfg']),
+   $loader->newObject("DBManager", [$dbs, $configkeys, 'dbm.cfg', $loader->newObject("Text", []) ]),
 ]);
 
 print "Running ".localtime(time())."\n";
