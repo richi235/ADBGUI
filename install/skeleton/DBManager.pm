@@ -22,4 +22,8 @@ sub new
     return $self;
 }
 
+# Here, You can directly use $self->{text} and all the other
+# Member variables of DBManager.pm of the superclass and all other modules.
+
+
 1;
