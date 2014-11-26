@@ -28,6 +28,9 @@ fi
 rm -r bilder 2>/dev/null
 mkdir bilder
 
+# copy dbm.pl from install to production in case it got updated
+cp install/dbm.pl ../
+
 unset IFS
 for i in `echo */bilder`; do
    export IFS=$(echo -en "\n\b")
