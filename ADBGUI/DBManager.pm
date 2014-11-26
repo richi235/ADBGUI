@@ -71,8 +71,8 @@ sub new
     my $class      = ref($proto) || $proto;
     my $DB         = shift;
     my $keys       = shift;
-    my $text       = shift;
     my $configfile = shift;
+    my $text       = shift;
     my $self       = {};
     bless( $self, $class );
 
