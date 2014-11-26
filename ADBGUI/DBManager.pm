@@ -67,13 +67,15 @@ my $qxmaxquesize = 4000;
 
 sub new
 {
+    my $self       = {};
+
     my $proto      = shift;
-    my $class      = ref($proto) || $proto;
     my $DB         = shift;
     my $keys       = shift;
     my $configfile = shift;
-    my $text       = shift;
-    my $self       = {};
+    $self->{text}  = shift;    
+
+    my $class      = ref($proto) || $proto;
     bless( $self, $class );
 
     # States, die unsere Handler einnehmen koennen
