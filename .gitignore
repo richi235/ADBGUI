@@ -7,3 +7,5 @@
 /gui.pl
 /url.css
 /DBDesign.pm
+/ADBGUI/Text.pm
+/ADBGUI/DBDesign_Labels.pm

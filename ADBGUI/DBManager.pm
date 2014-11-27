@@ -1,5 +1,46 @@
 package ADBGUI::DBManager;
 
+=pod
+
+=head1 NAME
+
+  ADBGUI::DBManager  -- The DBManager Component of the ADBGUI Framework
+
+=head1 SYNOPSIS
+
+  Not needed, since it gets only called by other Framework Components
+
+=head1 DESCRIPTION
+
+  Subroutines in here get called from Qooxdoo.pm and call Subroutines in DBBackend.pm.
+  It provides a database-un-specific interface to the database.
+  Which for example includes:
+
+=over
+
+=over
+
+=item * I<checkRights>
+
+    ADBGUI has an own user and permission managment which goes way beyond that of your Database.
+
+=item * I<Fetch Data from DB>
+
+=item * I<Save Data to DB>
+
+=item * I<And much more...>
+
+
+=back
+
+=back
+
+  
+=head1 METHODS
+
+=cut
+
+
 use warnings;
 use strict;
 use Carp;
@@ -19,6 +60,7 @@ use Email::Send;
 # RefCycle Detection
 #use Devel::Cycle qw/find_cycle/;
 #use PadWalker;
+use Data::Dumper;
 
 my $qxsessiontimeout = 240;
 my $qxmaxquesize = 4000;
@@ -1236,25 +1278,49 @@ sub protokolError {
    $client->close;
 }
 
-sub Where_Pre {
-   my $self = shift;
-   my $a = shift;
-   my $b = shift;
-   Log("INVALID OLD FORMAT!", $ERROR)
+
+=pod
+
+B<Where_Pre( { table =E<gt> ... , curSession =E<gt> ... } )>
+  I<Returns:> the currently set default filters for this table and session.
+  Must be included before every use of I<getDataSet>.
+
+=cut
+
+sub Where_Pre
+{
+    my $self = shift;
+    my $a    = shift;
+    my $b    = shift;
+    Log( "INVALID OLD FORMAT!", $ERROR )
       if $b;
-   my $moreparams = shift;
-   my $options = undef;
-   if ($b) {
-      $options->{curSession} = $a;
-      $options->{table} = $b;
-   } else {
-      $options = $a;
-   }
-   unless ((!$moreparams) && $options->{curSession} && $options->{table}) {
-      Log("DBManager: Where_Pre: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
-      return "ACCESS DENIED";
-   }
-   return (defined(my $err = $self->checkRights($options->{curSession}, $ADMIN))) ? [] : undef;
+    my $moreparams = shift;
+
+    
+    my $options    = undef;
+    if ($b)
+    {
+        $options->{curSession} = $a;
+        $options->{table}      = $b;
+    }
+    else {
+        $options = $a;
+    }
+
+    unless ( ( !$moreparams ) && $options->{curSession} && $options->{table} )
+    {
+        Log(
+            "DBManager: Where_Pre: Missing parameters: table:"
+              . $options->{table}
+              . ":curSession:"
+              . $options->{curSession} . ": !",
+            $ERROR
+        );
+        return "ACCESS DENIED";
+    }
+
+    return (defined(my $err = $self->checkRights( $options->{curSession}, $ADMIN )))
+              ? [] : undef;
 }
 
 sub checkRights {
@@ -1330,6 +1396,131 @@ sub sendTheMail {
    return $sender->send($email);
 }
 
+
+=pod
+
+B<get_single_value_from_db( $options )>
+  Where $options has to contain at least:
+  I<$options> = 
+  {
+     curSession => ...
+     table      => ...
+     column     => ...
+     id         => ...
+  }
+  A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handlung for you.
+  I<Returns:> the requested single value as scalar.
+
+=cut
+
+
+sub get_single_value_from_db
+{
+    my $self    = shift;
+    my $options = shift;
+    
+    my $db = $self->getDBBackend($options->{table});
+
+    if ( !defined($db) ) {
+        Log("Requested table not existing in Database \n(###   Hint: ADBGUI works case-sensitive on Table names, even if the Database doesn't)\n", $ERROR);
+        return undef;
+    }
+
+    # Where_Pre returns all currently set filters on this table and session
+    my $where = $self->Where_Pre( $options );
+    
+
+    # fetch the data set from the db
+    my $result_set = $db->getDataSet(
+        {
+            table    => $options->{table},
+            session  => $options->{curSession},
+            wherePre => $where,
+            id       => $options->{id}
+        }
+    );
+
+        # $result_set->[0]->[0] contains the results as reference to a hash
+        # if they don't exist abort
+    if ( !$result_set->[0]->[0] ) {
+        Log("Empty result set. Requested row not existing in Database", $ERROR);
+        return undef;
+    }
+
+    my $single_value;
+
+    if ( exists($result_set->[0]->[0]->{ $options->{table} . $TSEP . $options->{column} }) )
+    {
+        $single_value =
+          $result_set->[0]->[0]->{ $options->{table} . $TSEP . $options->{column} };
+    } else
+    {
+        Log("Requested column not existing in Database \n(###   Hint: ADBGUI works case-sensitive on column names, even if the Database doesn't)\n", $ERROR);
+        return undef;
+    }
+
+    return $single_value;
+}
+
+=pod
+
+B<get_single_row_from_db( $session, $table, $id )>
+  A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handling.
+  I<Returns:> the requested row(and referenced ones) as reference to a hash.
+
+  Expample:
+    my $result_row = $self->get_single_row_from_db( $session, $table, $id );
+
+    # to access single columns use:
+    $result_row->{$table . $TSEP . $column_name }
+    # the table name is needed
+
+=cut
+
+
+sub get_single_row_from_db
+{
+    my $self    = shift;
+    my $session = shift;
+    my $table   = shift;
+    my $id      = shift;
+
+    
+    my $db = $self->getDBBackend($table);
+    if ( !defined($db) ) {
+        Log("Requested table not existing in Database \n(###   Hint: ADBGUI works case-sensitive on Table names, even if the Database doesn't)\n", $ERROR);
+        return undef;
+    }
+
+    # Where_Pre returns all currently set filters on this table in session
+    my $where = $self->Where_Pre(
+        {
+            table      => $table,
+            curSession => $session
+        });
+    
+    # fetch the data set from the db
+    my $result_set = $db->getDataSet(
+        {
+            table    => $table,
+            session  => $session,
+            wherePre => $where,
+            id       => $id
+        });
+
+        # $result_set->[0]->[0] contains the results as reference to a hash
+        # if they don't exist abort
+    if ( !$result_set->[0]->[0] ) {
+        Log("Empty result set. Requested row not existing in Database", $ERROR);
+        return undef;
+    }
+
+    my $single_row = $result_set->[0]->[0];
+
+    return $single_row;
+}
+
+
 package ADBGUI::DBManagerServer;
 
 use ADBGUI::BasicVariables;
@@ -1356,5 +1547,6 @@ sub LineHandler {
    #Log("DBManager: DBManagerServer: ".($onConnect ? "Connected." : "Read ".$_), $DEBUG);
    $self->{parent}->LineHandler($_, $client, $onConnect);
 }
+
 
 1;

@@ -618,7 +618,7 @@ sub insertDataSet {
          tablebackrefs => $params->{tablebackrefs},
       })) && (ref($retx) eq "ARRAY")) {
          Log("DBBackend: insertDataSet: SQL GET Query failed after INSERT.", $ERROR);
-         die;
+         return undef;
       }
       if ( (ref($retx->[0]) ne "ARRAY") || (scalar(@{$retx->[0]}) != 1) ) {
          Log("DBBackend: insertDataSet: Wanted one line, but got :".scalar(@{$retx->[0]}).":", $ERROR);
@@ -809,12 +809,12 @@ sub updateDataSet {
    my $retx;
    unless ($self->{config}->{DB}->{tables}->{$params->{table}}->{nolog}) {
       unless (defined($retx = $self->getDataSet({
+         %$params,
          table => $params->{table},
          wherePre => $params->{wherePre},
          id => $params->{id},
          session => $params->{session},
          nodeleted => $params->{nodeleted},
-         simple => 1,
          tablebackrefs => $params->{tablebackrefs},
          simple => $params->{tablebackrefs} ? 0 : 1,
       })) && (ref($retx) eq "ARRAY")) {
@@ -849,6 +849,7 @@ sub updateDataSet {
    unless ($self->{config}->{DB}->{tables}->{$params->{table}}->{nolog}) {
       my $rety;
       unless (defined($rety = $self->getDataSet({
+         %$params,
          table => $params->{table},
          id => $params->{id},
          session => $params->{session},

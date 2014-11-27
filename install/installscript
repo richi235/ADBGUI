@@ -38,7 +38,7 @@ if [[ $1 == "noap" || $2 == "noap" ]]; then
    /bin/true;
 else
    cp $apachefiles ..;
-   chmod +x ../gui.pl;
+   $sudocommand chmod +x ../gui.pl;
 fi
 
 echo "\$DB->{name} = '$PROJECTNAME';" >>../DBDesign.pm
@@ -56,6 +56,11 @@ if [[ $1 == "qx" || $2 == "qx" ]]; then
 fi
 
 cd ..
+
+# enabling english localisation
+# since succesfull import of ADBGUI::DBDesign_Labels
+# in DBDesign.pm is needed vor createMysql.pl to work
+cp ADBGUI/locale-files/DBDesign_Labels_en.pm ADBGUI/DBDesign_Labels.pm ;
 
 # MySQL
 echo -e "\n"
@@ -101,7 +106,14 @@ else
    for i in $apachelinks; do
       $sudocommand rm /usr/lib/cgi-bin/$i 2>/dev/null;
       $sudocommand ln -s `pwd`/$i /usr/lib/cgi-bin/$i;
+      # owner of the cgi-bin files has to be www-data not root:
+      $sudocommand chown -h www-data:www-data /usr/lib/cgi-bin/$i;
    done;
+   # for apache www-data has to be owner of executed cgi-bin files read and execute permission is not sufficient
+   $sudocommand chown www-data:www-data gui.pl;
+   # done so that programmers still easily can edit gui.pl
+   $sudocommand chmod o+w gui.pl;
+   $sudocommand chmod +x gui.pl;
 fi;
 
 # Pictures Directory
