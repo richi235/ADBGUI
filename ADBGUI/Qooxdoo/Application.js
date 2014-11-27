@@ -1649,6 +1649,56 @@ qx.Class.define("myproject.Application", {
                         dstitem.buttonedit = new Array();
                         var x = 0;
                         var linenum = 0;
+                        dstitem.saveFunc = function(e) {
+                           var params = "job=";
+                           if ((typeof(dstitem.rowid) != "undefined") && (dstitem.rowid != "")) {
+                              params = params + "saveedit";
+                           } else {
+                              params = params + "newedit";
+                           }
+                           params = params + ",oid=" + escape(this.id.toString()) + ",table=" + escape(this.table) + ",wid=" + escape(this.wid) + this.urlappend;
+                           for (var j = 0; j < dstitem.columns.length; j++) {
+                              if (dstitem.types[j] == "composite") {
+                              } else if (((dstitem.viewstatus[j] == "readonly") && ((dstitem.types[j] != "list"))) ||
+                                  (dstitem.types[j] == "text") ||
+                                  (dstitem.types[j] == "password") ||
+                                  (dstitem.types[j] == "number") ||
+                                  (dstitem.types[j] == "double") ||
+                                  (dstitem.types[j] == "id")) {
+                                 params = params + "," + dstitem.dbname[j] + "=" + escape(dstitem.form[dstitem.dbname[j]].getValue());
+                              } else if (dstitem.types[j] == "boolean") {
+                                 params = params + "," + dstitem.dbname[j] + "=";
+                                 if (dstitem.form[dstitem.dbname[j]].getValue()) {
+                                    params = params + "1";
+                                 } else {
+                                    params = params + "0";
+                                 }
+                              } else if (dstitem.types[j] == "list") {
+                                 var selection = dstitem.form[dstitem.dbname[j]].getSelection();
+                                 if (selection.length > 0) {
+                                    params = params + "," + dstitem.dbname[j] + "=" + escape(selection[0].getModel());
+                                 }
+                              } else if (dstitem.types[j] == "date") {
+                                 params = params + "," + dstitem.dbname[j] + "=" + escape(new qx.util.format.DateFormat("yyyy-MM-dd").format(dstitem.form[dstitem.dbname[j]].getValue()));
+                              } else if (dstitem.types[j] == "datetime") {
+                                 params = params + "," + dstitem.dbname[j] + "=" + escape(new qx.util.format.DateFormat("yyyy-MM-dd HH:mm").format(dstitem.form[dstitem.dbname[j]].getValue()));
+                              }
+                              if (typeof(dstitem.label[j]) != 'undefined') {
+                                 dstitem.label[j].setEnabled(false);
+                              } else {
+                                 this.main.debug("crateedit: Unable to send content for field '" + dstitem.dbname[j] + "' of type '" + dstitem.types[j] + "'... Sending nothing for it!");
+                              }
+                              if (typeof(dstitem.unit[j]) != 'undefined') {
+                                 dstitem.unit[j].setEnabled(false);
+                              }
+                              dstitem.form[dstitem.dbname[j]].setEnabled(false);
+                           }
+                           for (var i = 0; i < this.lockable.length; ++i) {
+                              this.main.processCommands("setactive " + this.lockable[i] + " ");
+                           }
+                           dstitem.changed = 0;
+                           this.main.sendRequest(params);
+                        }
                         for (var j = 0; j < dstitem.columns.length; j++) {
                            if (dstitem.types[j] == "id") {
                               dstitem.rowid = unescape(dstitem.values[j]);
@@ -1778,9 +1828,17 @@ qx.Class.define("myproject.Application", {
                                     //height: 150,
                                     autoSize: true
                                  });
+                                 dstitem.form[dstitem.dbname[j]].noEnterSave = 1;
                               } else {
                                  dstitem.types[j] = "text";
                                  dstitem.form[dstitem.dbname[j]] = new qx.ui.form.TextField(unescape(dstitem.values[j]));
+                              }
+                              if (!dstitem.form[dstitem.dbname[j]].noEnterSave) {
+                                 dstitem.form[dstitem.dbname[j]].addListener("keypress", function(e) {
+                                    if (e.getKeyIdentifier().toLowerCase() == "enter") {
+                                       dstitem.saveFunc.call(dstitem, e);
+                                    }
+                                 }, dstitem);
                               }
                               dstitem.form[dstitem.dbname[j]].setNativeContextMenu(true);
                               dstitem.form[dstitem.dbname[j]].parent = dstitem;
@@ -1858,56 +1916,7 @@ qx.Class.define("myproject.Application", {
                            }
                         }
                         dstitem.main = this.main;
-                        this.main.processCommands("createtoolbarbutton " + dstid + "_toolbar_speichern Speichern resource/qx/icon/Tango/32/actions/document-save.png", function(e) {
-                           var params = "job=";
-                           if ((typeof(dstitem.rowid) != "undefined") && (dstitem.rowid != "")) {
-                              params = params + "saveedit";
-                           } else {
-                              params = params + "newedit";
-                           }
-                           params = params + ",oid=" + escape(this.id.toString()) + ",table=" + escape(this.table) + ",wid=" + escape(this.wid) + this.urlappend;
-                           for (var j = 0; j < dstitem.columns.length; j++) {
-                              if (dstitem.types[j] == "composite") {
-                              } else if (((dstitem.viewstatus[j] == "readonly") && ((dstitem.types[j] != "list"))) ||
-                                  (dstitem.types[j] == "text") ||
-                                  (dstitem.types[j] == "password") ||
-                                  (dstitem.types[j] == "number") ||
-                                  (dstitem.types[j] == "double") ||
-                                  (dstitem.types[j] == "id")) {
-                                 params = params + "," + dstitem.dbname[j] + "=" + escape(dstitem.form[dstitem.dbname[j]].getValue());
-                              } else if (dstitem.types[j] == "boolean") {
-                                 params = params + "," + dstitem.dbname[j] + "=";
-                                 if (dstitem.form[dstitem.dbname[j]].getValue()) {
-                                    params = params + "1";
-                                 } else {
-                                    params = params + "0";
-                                 }
-                              } else if (dstitem.types[j] == "list") {
-                                 var selection = dstitem.form[dstitem.dbname[j]].getSelection();
-                                 if (selection.length > 0) {
-                                    params = params + "," + dstitem.dbname[j] + "=" + escape(selection[0].getModel());
-                                 }
-                              } else if (dstitem.types[j] == "date") {
-                                 params = params + "," + dstitem.dbname[j] + "=" + escape(new qx.util.format.DateFormat("yyyy-MM-dd").format(dstitem.form[dstitem.dbname[j]].getValue()));
-                              } else if (dstitem.types[j] == "datetime") {
-                                 params = params + "," + dstitem.dbname[j] + "=" + escape(new qx.util.format.DateFormat("yyyy-MM-dd HH:mm").format(dstitem.form[dstitem.dbname[j]].getValue()));
-                              }
-                              if (typeof(dstitem.label[j]) != 'undefined') {
-                                 dstitem.label[j].setEnabled(false);
-                              } else {
-                                 this.main.debug("crateedit: Unable to send content for field '" + dstitem.dbname[j] + "' of type '" + dstitem.types[j] + "'... Sending nothing for it!");
-                              }
-                              if (typeof(dstitem.unit[j]) != 'undefined') {
-                                 dstitem.unit[j].setEnabled(false);
-                              }
-                              dstitem.form[dstitem.dbname[j]].setEnabled(false);
-                           }
-                           for (var i = 0; i < this.lockable.length; ++i) {
-                              this.main.processCommands("setactive " + this.lockable[i] + " ");
-                           }
-                           dstitem.changed = 0;
-                           this.main.sendRequest(params);
-                        }, dstitem);
+                        this.main.processCommands("createtoolbarbutton " + dstid + "_toolbar_speichern Speichern resource/qx/icon/Tango/32/actions/document-save.png", dstitem.saveFunc, dstitem);
                         this.lockable.push(dstid + "_toolbar_speichern");
                         this.main.processCommands("addobject " + dstid + "_toolbar " + dstid + "_toolbar_speichern");
                         this.main.processCommands("addobject " + id + " " + dstid + "_toolbar");
