@@ -2285,7 +2285,7 @@ qx.Class.define("myproject.Application", {
                            curtable.getTableColumnModel().setDataCellRenderer(j, new qx.ui.table.cellrenderer.Date("yyyy-MM-dd"));
                         } else if (curtable.types[j] == "datetime") {
                            curtable.getTableColumnModel().setDataCellRenderer(j, new qx.ui.table.cellrenderer.Date("yyyy-MM-dd kk:mm:ss"));
-                        } else if (curtable.types[j] == "html") { 
+                        } else if ((curtable.types[j] == "html") || (curtable.types[j] == "list")) { 
                            curtable.getTableColumnModel().setDataCellRenderer(j, new qx.ui.table.cellrenderer.Html("center", "blue"));
                         } else if (curtable.types[j] == "boolean") { 
                            curtable.getTableColumnModel().setDataCellRenderer(j, new qx.ui.table.cellrenderer.Boolean());
