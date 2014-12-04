@@ -65,48 +65,62 @@ use Data::Dumper;
 my $qxsessiontimeout = 240;
 my $qxmaxquesize = 4000;
 
-sub new {
-   my $proto = shift;
-   my $class = ref($proto) || $proto;
-   my $DB = shift;
-   my $keys = shift;
-   my $configfile = shift;
-   my $self  = {};
-   bless ($self, $class);
+sub new
+{
+    my $self       = {};
 
-   # States, die unsere Handler einnehmen koennen
-   $self->{NOSTATE}      = 0;
-   $self->{NEW_DATA}     = 1;
-   $self->{NEW_DATA_LOG} = 2;
-   Log("You need to migrate to multi DB! You have now to use getDBBackend to access the DB Backend!", $WARNING) unless (ref($DB) eq "ARRAY");
-   $self->{DBs} = (ref($DB) eq "ARRAY") ? $DB : [$DB];
-   $self->{DB} = "YOU NEED TO MIGRAGE!!!";
+    my $proto      = shift;
+    my $DB         = shift;
+    my $keys       = shift;
+    my $configfile = shift;
+    $self->{text}  = shift;    
 
-   my $i = 0;
+    my $class      = ref($proto) || $proto;
+    bless( $self, $class );
 
-   # Oeffnet die Konfigurationsdatei, und oeffnet die Ports
-   # fuer die Entgegennahme der Laufzeitkonfiguration
+    # States, die unsere Handler einnehmen koennen
+    $self->{NOSTATE}      = 0;
+    $self->{NEW_DATA}     = 1;
+    $self->{NEW_DATA_LOG} = 2;
+    Log(
+"You need to migrate to multi DB! You have now to use getDBBackend to access the DB Backend!",
+        $WARNING
+    ) unless ( ref($DB) eq "ARRAY" );
+    $self->{DBs} = ( ref($DB) eq "ARRAY" ) ? $DB : [$DB];
+    $self->{DB} = "YOU NEED TO MIGRAGE!!!";
 
-   # Das Folgende macht nun ReadConfigAndInit, damit openSocket bereits auf die DB zugreifen kann.
-   $self->ReadConfigAndInit($configfile || "/etc/sshplex/dbm.cfg", {
-      # Die folgenden Definitionen sollten eigentlich aus der
-      # Konfigurationsdatei kommen. Falls diese das nicht tun,
-      # werden folgende gewisse Standardwerte verwendet:
-      listenip => '127.0.0.1', # Standardmaessig binden wir uns auf localhost
-      qooxdoolistenip => '127.0.0.1', # Standardmaessig binden wir uns auf localhost
-      readtimeout => 0,        # Wie lange lassen wir einen Connect offen,
-                               # der keine Daten schickt? Einheiten: Sekunden
-      readlinetimeout => 0,    # So lange warte wir bis eine Zeile fertig
-                               # ist (-> "\n" ). Einheiten: Sekunden
-      debug  => 0,
-   }, $keys);
-   #Log("DBManager: Startup: Can't connect to database!", $ERROR) && die
-   #   unless ($config->{dbbackend}->db_open());
-   #unlink($PIDFILE);
-   #$kernel->run();
-   #exit(0);
-   
-   return $self;
+    my $i = 0;
+
+    # Oeffnet die Konfigurationsdatei, und oeffnet die Ports
+    # fuer die Entgegennahme der Laufzeitkonfiguration
+
+# Das Folgende macht nun ReadConfigAndInit, damit openSocket bereits auf die DB zugreifen kann.
+    $self->ReadConfigAndInit(
+        $configfile || "/etc/sshplex/dbm.cfg",
+        {
+            # Die folgenden Definitionen sollten eigentlich aus der
+            # Konfigurationsdatei kommen. Falls diese das nicht tun,
+            # werden folgende gewisse Standardwerte verwendet:
+            listenip =>
+              '127.0.0.1',    # Standardmaessig binden wir uns auf localhost
+            qooxdoolistenip =>
+              '127.0.0.1',    # Standardmaessig binden wir uns auf localhost
+            readtimeout     => 0, # Wie lange lassen wir einen Connect offen,
+                                  # der keine Daten schickt? Einheiten: Sekunden
+            readlinetimeout => 0, # So lange warte wir bis eine Zeile fertig
+                                  # ist (-> "\n" ). Einheiten: Sekunden
+            debug           => 0,
+        },
+        $keys
+    );
+
+    #Log("DBManager: Startup: Can't connect to database!", $ERROR) && die
+    #   unless ($config->{dbbackend}->db_open());
+    #unlink($PIDFILE);
+    #$kernel->run();
+    #exit(0);
+
+    return $self;
 }
 
 sub getIdColumnName {
