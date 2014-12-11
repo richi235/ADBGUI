@@ -164,7 +164,7 @@ sub new
           before                  =>  " Before: ",
           after_specific_date     =>  "After specific date",
           before_specific_date    =>  "Before specific date",
-          filter_in               =>  "Filter on",
+          filter_in               =>  "Filter on: ",
           filter_criterion        =>  "Filtering criterion",
           further_selection       =>  "Further selections",
           link_to_broken          =>  "Link to following table broken: ",
