@@ -1762,6 +1762,7 @@ sub onGetLines {
    $db->getDataSet({
       %$options,
       $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
+      skip => $options->{start},
       rows => $count,
       searchdef => $self->{dbm}->getFilter($options),
       wherePre => $where,
