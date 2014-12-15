@@ -1204,8 +1204,7 @@ sub onClientData {
       });
    }
    elsif(($options->{job} eq "saveedit") ||
-           ($options->{job} eq "newedit"))
-   {
+         ($options->{job} eq "newedit")) {
       my $id = $options->{$UNIQIDCOLUMNNAME} || $options->{connection}->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
       my $params = {
          crosslink => $options->{crosslink},
