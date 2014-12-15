@@ -2146,6 +2146,13 @@ qx.Class.define("myproject.Application", {
                      });
                      curlist.addListener("changeSelection", function(e) {
                         if (this.getSelection().length > 0) {
+                           var model = this.getSelection();
+                           var id = model[0].dbid;
+                           if ((id != "") && (id != "null") && (id != null)) {
+                              this.main.sendRequest("job=listselectline,type=table,oid=" + this.id.toString() + ",table=" + this.tablename + ",id=" + id + this.urlappend);
+                           } else {
+                              this.main.sendRequest("job=listselectline,type=table,oid=" + this.id.toString() + ",table=" + this.tablename + ",id=" + this.urlappend);
+                           }
                            for (var j = 0; j < this.buttonnames.length; j++) {
                               if (this.buttontype[j] == "row") {
                                  this.main.processCommands("setactive " + this.id + "_toolbar_" + this.buttonnames[j] + " 1");
@@ -2325,10 +2332,13 @@ qx.Class.define("myproject.Application", {
                         var i = 0;
                         this.getSelectionModel().iterateSelection(function(ind) {
                            this.debug("idcol2");
-                           if (this.getTableModel().getValueById(this.idcol, ind) != null) {
+                           var id = this.getTableModel().getValueById(this.idcol, ind);
+                           if ((id != "") && (id != "null") && (id != null)) {
+                              if (i == 0) this.main.sendRequest("job=tableselectline,type=table,oid=" + this.id.toString() + ",table=" + this.tablename + ",id=" + id + this.urlappend);
                               i++;
                            }
                         }, this);
+                        if (i == 0) this.main.sendRequest("job=tableselectline,type=table,oid=" + this.id.toString() + ",table=" + this.tablename + ",id=" + this.urlappend);
                         for (var j = 0; j < this.buttonnames.length; j++) {
                            if (this.buttontype[j] == "row") {
                               if (i == 0) {

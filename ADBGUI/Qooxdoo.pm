@@ -1324,6 +1324,8 @@ sub onClientData {
       $options->{response}->code(RC_OK);
       $options->{response}->content_type("text/html; charset=UTF-8");
       ${$options->{content}} = $value;
+   } elsif($options->{job} eq "tableselectline") {
+   } elsif($options->{job} eq "listselectline") {
    } else {
       $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape($self->{text}->{qx}->{internal_error}) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{unknown_command} . $options->{job}) );
    }
