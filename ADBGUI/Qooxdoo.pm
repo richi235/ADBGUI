@@ -1323,11 +1323,26 @@ sub onClientData {
       $options->{response}->code(RC_OK);
       $options->{response}->content_type("text/html; charset=UTF-8");
       ${$options->{content}} = $value;
-   } elsif($options->{job} eq "tableselectline") {
-   } elsif($options->{job} eq "listselectline") {
+   } elsif(($options->{job} eq "tableselectline") ||
+           ($options->{job} eq "listselectline")) {
+      $self->onSelectLine({
+         %$options,
+         list => ($options->{job} eq "listselectline") ? 1 : 0,
+      });
    } else {
       $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape($self->{text}->{qx}->{internal_error}) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{unknown_command} . $options->{job}) );
    }
+}
+
+sub onSelectLine {
+   my $self = shift;
+   my $options = shift;
+   my $moreparams = shift;
+   unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{connection}) {
+      Log("onGetLines: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
+      return undef;
+   }
+   Log("User selected entry ".$options->{$UNIQIDCOLUMNNAME}." for table ".$options->{table}, $INFO);
 }
 
 sub parseFormularData {
