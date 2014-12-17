@@ -297,7 +297,7 @@ sub getDB {
    };
 
    $DB->{tables}->{$USERSTABLENAME}->{columns}->{$PASSWORDCOLUMNNAME} = {
-      type => "text",
+      type => "password",
       writeonly => 1,
       secret => 1,
       comment => $labels->{pw_comment} ,
