@@ -802,13 +802,13 @@ sub doQxContext {
          $poe_kernel->yield( sendToQX => "createwin "
                . $window
                . " 500 160 "
-               . CGI::escape( $self->{text}->{qx}->{accessing} . $username )
+               . CGI::escape( $self->{text}->{"qx"}->{accessing} . $username )
                . " "
                . CGI::escape('') );
          $poe_kernel->yield(sendToQX => "open ".$window." 1");
 
          $poe_kernel->yield(sendToQX => "createedit contextedit " . $options->{loginjob} . " " . 
-            CGI::escape( $self->{text}->{qx}->{username} ) . "," . CGI::escape( $self->{text}->{qx}->{password} ) . "," . CGI::escape( $self->{text}->{qx}->{context} ) . " " . 
+            CGI::escape( $self->{text}->{"qx"}->{username} ) . "," . CGI::escape( $self->{text}->{"qx"}->{password} ) . "," . CGI::escape( $self->{text}->{"qx"}->{context} ) . " " .
             CGI::escape("text")     . "," . CGI::escape("password") . "," . CGI::escape("text") . " " . 
             CGI::escape("username") . "," . CGI::escape("password") . "," . CGI::escape("contextid") . " " . 
             CGI::escape("hidden")   . "," . CGI::escape("")         . "," . CGI::escape("hidden") . " " . 
@@ -827,8 +827,8 @@ sub doQxContext {
       else
       {
          $poe_kernel->yield( sendToQX => "showmessage "
-            . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 "
-            . CGI::escape( $self->{text}->{qx}->{qx_context_error} . $contextid ) );
+            . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 50 "
+            . CGI::escape( $self->{text}->{"qx"}->{qx_context_error} . $contextid ) );
       }
    }
 
@@ -874,8 +874,8 @@ sub doContext {
    if (ref($return) ne "HASH")
    {
       $poe_kernel->yield(sendToQX => "showmessage " . 
-         CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 300 50 " . 
-         CGI::escape( $self->{text}->{qx}->{context_error} . ($contextid||"UNDEF") . ")"));
+         CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 300 50 " .
+         CGI::escape( $self->{text}->{"qx"}->{context_error} . ($contextid||"UNDEF") . ")"));
       return undef;
    }
    return $return;
@@ -1108,14 +1108,14 @@ sub onClientData {
         } else 
         {
             my $msg           = "Error loading column: '"             . $table . "' -> '" . $column . "'";
-            my $localised_msg = $self->{text}->{qx}->{col_load_error} . $table . "' -> '" . $column . "'"; 
+            my $localised_msg = $self->{text}->{"qx"}->{col_load_error} . $table . "' -> '" . $column . "'";
 
             Log("Qooxdoo: listnewentry: ".$msg, $WARNING);
             $poe_kernel->yield(  sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $localised_msg ) );
          }
       } else {
          my $msg           = "Bad column information: '" . $column . "'";
-         my $localised_msg = $self->{text}->{qx}->{col_info_error}  . $column . "'";
+         my $localised_msg = $self->{text}->{"qx"}->{col_info_error}  . $column . "'";
          
          Log("Qooxdoo: listnewentry: ".$msg, $WARNING);
          $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $localised_msg ) );
@@ -1470,13 +1470,13 @@ sub onDelRow {
 
          if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $MODIFY, $options->{table}, $options->{$UNIQIDCOLUMNNAME})))
          {
-            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{permission_denied} ));
+            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{permission_denied} ));
             return Log("DBManager: onNewLineServer: ".$cmd.": ACCESS DENIED: ".$err->[0], $err->[1]);
          }
 
          if (($curtabledef->{readonly}) || ($curtabledef->{editonly}))
          {
-            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{table_non_modifiable} ));
+            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{table_non_modifiable} ));
             return Log("DBManager: onNewLineServer: ".$cmd.": ACCESS DENIED: ACCESS_LOG not allowed!");
          }
          
@@ -1511,9 +1511,9 @@ sub onDelRow {
          {
             Log("DBManager: onNewLineServer: ".$cmd." ".$options->{table}." FAILED: SQL Query failed: ".$ret, $ERROR);
             $poe_kernel->yield( sendToQX => "showmessage "
-                  . CGI::escape( $self->{text}->{qx}->{internal_error} )
+                  . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
                   . " 400 200 "
-                  . CGI::escape( $self->{text}->{qx}->{delrow_linex_failed} . $ret ) );
+                  . CGI::escape( $self->{text}->{"qx"}->{delrow_linex_failed} . $ret ) );
          }
 
          return $ret;
@@ -1562,9 +1562,9 @@ sub onAuthenticate
         {
             $poe_kernel->yield(
                     sendToQX => "showmessage "
-                  . CGI::escape( $self->{text}->{qx}->{login_error} )
+                  . CGI::escape( $self->{text}->{"qx"}->{login_error} )
                   . " 400 50 "
-                  . CGI::escape( $self->{text}->{qx}->{application_unavailable} )
+                  . CGI::escape( $self->{text}->{"qx"}->{application_unavailable} )
             );
         }
     }
@@ -1603,9 +1603,9 @@ sub onAuthenticate
 
             if ($user) {
                 $poe_kernel->yield( sendToQX => "showmessage "
-                  . CGI::escape( $self->{text}->{qx}->{login_error} )
+                  . CGI::escape( $self->{text}->{"qx"}->{login_error} )
                   . " 400 50 "
-                  . CGI::escape( $self->{text}->{qx}->{wrong_pw_user_combo} )
+                  . CGI::escape( $self->{text}->{"qx"}->{wrong_pw_user_combo} )
             );
             }
         }
@@ -2124,9 +2124,9 @@ sub doCSVonShow {
             $ret = "destroy ".$options->{table}."_".$suffix."\n";
             $ret .=
                 "showmessage "
-              . CGI::escape( $self->{text}->{qx}->{no_log_data} )
+              . CGI::escape( $self->{text}->{"qx"}->{no_log_data} )
               . " 400 100 "
-              . CGI::escape( $self->{text}->{qx}->{no_log_data} );
+              . CGI::escape( $self->{text}->{"qx"}->{no_log_data} );
             return $ret;
          }
 
@@ -2142,9 +2142,9 @@ sub doCSVonShow {
          $ret = "destroy " . $options->{table} . "_" . $suffix . "\n";
          $ret .=
              "showmessage "
-           . CGI::escape( $self->{text}->{qx}->{no_log_data} )
+           . CGI::escape( $self->{text}->{"qx"}->{no_log_data} )
            . " 400 100 "
-           . CGI::escape( $self->{text}->{qx}->{no_log_data} );
+           . CGI::escape( $self->{text}->{"qx"}->{no_log_data} );
          return $ret;
       }
    }
@@ -2272,10 +2272,10 @@ sub getTableButtonsDef
 
         
         return [
-            CGI::escape( $self->{text}->{qx}->{new} ) . ","
-              . CGI::escape( $self->{text}->{qx}->{edit} ) . ","
-              . CGI::escape( $self->{text}->{qx}->{delete} ) . ","
-              . CGI::escape( $self->{text}->{qx}->{filter} ),
+            CGI::escape( $self->{text}->{"qx"}->{new} ) . ","
+              . CGI::escape( $self->{text}->{"qx"}->{edit} ) . ","
+              . CGI::escape( $self->{text}->{"qx"}->{delete} ) . ","
+              . CGI::escape( $self->{text}->{"qx"}->{filter} ),
             CGI::escape("resource/qx/icon/Tango/32/actions/list-add.png") . ","
               . CGI::escape("/bilder/edit.png") . ","
               . CGI::escape("resource/qx/icon/Tango/32/actions/list-remove.png")
@@ -2303,7 +2303,7 @@ sub getTableButtonsDef
         (
             {
                 name  => "new",
-                label => $self->{text}->{qx}->{new} ,
+                label => $self->{text}->{"qx"}->{new} ,
                 image => "resource/qx/icon/Tango/"
                   . ( $options->{smallbuttons} ? "16" : "32" )
                   . "/actions/list-add.png",
@@ -2312,14 +2312,14 @@ sub getTableButtonsDef
             },
             {
                 name  => "edit",
-                label => $self->{text}->{qx}->{edit} ,
+                label => $self->{text}->{"qx"}->{edit} ,
                 image => ( $options->{smallbuttons} ? "" : "/bilder/edit.png" ),
                 action => "neweditentry",
                 bindto => "row",
             },
             {
                 name  => "del",
-                label => $self->{text}->{qx}->{delete} ,
+                label => $self->{text}->{"qx"}->{delete} ,
                 image => "resource/qx/icon/Tango/"
                   . ( $options->{smallbuttons} ? "16" : "32" )
                   . "/actions/list-remove.png",
@@ -2336,7 +2336,7 @@ sub getTableButtonsDef
             @$return,
             {
                 name  => "filter",
-                label => $self->{text}->{qx}->{filter} ,
+                label => $self->{text}->{"qx"}->{filter} ,
                 image => "resource/qx/icon/Tango/"
                   . ( $options->{smallbuttons} ? "16" : "32" )
                   . "/actions/system-search.png",
@@ -2367,14 +2367,14 @@ sub onHTMLPreview
                                    $options->{table}."_".$options->{column}."_".$suffix." ".
                                    ($curtabledef->{qxeditwidth} || $qxwidth)." ".
                                    ($curtabledef->{qxeditheight} || $qxheight)." ".
-                                   CGI::escape( $self->{text}->{qx}->{preview_of} .
+                                   CGI::escape( $self->{text}->{"qx"}->{preview_of} .
                                       (exists($curtabledef->{columns}->{$options->{column}}) &&
                                       defined($curtabledef->{columns}->{$options->{column}}) &&
                                               $curtabledef->{columns}->{$options->{column}}->{label} ? 
                                               $curtabledef->{columns}->{$options->{column}}->{label} :
                                                                         $options->{column})
                                           . ($options->{$UNIQIDCOLUMNNAME} ?  $self->{text}->{qx}->{of_entry} . $options->{$UNIQIDCOLUMNNAME} : $self->{text}->{qx}->{new_entry} ).
-                                      $self->{text}->{qx}->{in} . ($curtabledef->{label} || $options->{table})) . " " . 
+                                      $self->{text}->{"qx"}->{in} . ($curtabledef->{label} || $options->{table})) . " " .
                                    CGI::escape($curtabledef->{icon}));
 
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "open ".$options->{table}."_".$options->{column}."_".$suffix." 1");
@@ -2396,7 +2396,7 @@ sub onHTMLPreview
            $options->{table} . "_" . $options->{column} . "_" . $suffix . "_button"
          )
          . " "
-         . CGI::escape( $self->{text}->{qx}->{close} ) . " "
+         . CGI::escape( $self->{text}->{"qx"}->{close} ) . " "
          . CGI::escape("resource/qx/icon/Tango/32/actions/dialog-close.png") . " "
          . CGI::escape(
                "job=closeobject,oid="
@@ -2479,14 +2479,14 @@ sub onSaveEditEntry
                $options->{qxself}->afterNewUpdate($options, $options->{columns}, $ret);
             } elsif($ret) {
                $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "unlock ".CGI::escape($options->{"q"}->param("oid")));
-               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape( $self->{text}->{qx}->{internal_error} ) . " " . ($ret ? ((length($ret)+15) * 7) : 400)." 100 ".CGI::escape($ret));
+               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " " . ($ret ? ((length($ret)+25) * 7) : 400)." 100 ".CGI::escape($ret));
             } else {
                $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "unlock ".CGI::escape($options->{"q"}->param("oid")));
-               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape( $self->{text}->{qx}->{internal_error} )." 500 100 ".CGI::escape($ret ? "onSaveEditEntry: " . $ret : $self->{text}->{qx}->{onSaveEditEntry_error} ));
+               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape( $self->{text}->{"qx"}->{internal_error} )." 500 100 ".CGI::escape($ret ? "onSaveEditEntry: " . $ret : $self->{text}->{"qx"}->{onSaveEditEntry_error} ));
             }
          } else {
             $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "unlock ".CGI::escape($options->{"q"}->param("oid")));
-            $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape( $self->{text}->{qx}->{internal_error} )." 400 100 ".CGI::escape( $self->{text}->{qx}->{onSaveEditEntry_error} ));
+            $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape( $self->{text}->{"qx"}->{internal_error} )." 400 100 ".CGI::escape( $self->{text}->{"qx"}->{onSaveEditEntry_error} ));
          }
          
          return $ret;
@@ -2548,9 +2548,9 @@ sub onFilter {
             )))
     {
         $poe_kernel->yield( sendToQX => "showmessage "
-              . CGI::escape( $self->{text}->{qx}->{internal_error} )
+              . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
               . " 400 200 "
-              . CGI::escape( $self->{text}->{qx}->{permission_denied} ) );
+              . CGI::escape( $self->{text}->{"qx"}->{permission_denied} ) );
         Log( "Qooxdoo: onFilter: GET: ACCESS DENIED: " . $err->[0], $err->[1] );
         return undef;
     }
@@ -2574,7 +2574,7 @@ sub onFilter {
           )
           . " "
           . CGI::escape(
-            $self->{text}->{qx}->{filter_in} . ( $curtabledef->{label} || $options->{table} )
+            $self->{text}->{"qx"}->{filter_in} . ( $curtabledef->{label} || $options->{table} )
           )
           . " "
           . ( CGI::escape( $curtabledef->{icon} || '' ) )
@@ -2601,7 +2601,7 @@ sub onFilter {
         {
             id      => $options->{oid} . "_filter_toolbar_add",
             job     => "createtoolbarbutton",
-            label   => $self->{text}->{qx}->{filter_criterion} ,
+            label   => $self->{text}->{"qx"}->{filter_criterion} ,
             image   => "resource/qx/icon/Tango/16/actions/list-add.png",
             popupid => $options->{oid} . "_filter_popup",
             action  => "job=filterselecttable,table="
@@ -2620,7 +2620,7 @@ sub onFilter {
         {
             id      => $options->{oid} . "_filter_toolbar_open",
             job     => "createtoolbarbutton",
-            label   => $self->{text}->{qx}->{load} ,
+            label   => $self->{text}->{"qx"}->{load} ,
             image   => "resource/qx/icon/Tango/16/actions/document-open.png",
             popupid => $options->{oid} . "_filteropen",
             action  => "job=filteropen,table="
