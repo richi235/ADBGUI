@@ -13,7 +13,7 @@ package ADBGUI::DBManager;
 =head1 DESCRIPTION
 
   Subroutines in here get called from Qooxdoo.pm and call Subroutines in DBBackend.pm.
-  It provides a database-un-specific interface to the database.
+  It provides a database-un-specific high-level interface to the database.
   Which for example includes:
 
 =over
@@ -1295,9 +1295,10 @@ sub protokolError {
 
 =pod
 
-B<Where_Pre( { table =E<gt> ... , curSession =E<gt> ... } )>
-  I<Returns:> the currently set default filters for this table and session.
-  Must be included before every use of I<getDataSet>.
+=head2 Where_Pre( I<{ table =E<gt> ... , curSession =E<gt> ... }> )
+
+I<Returns:> the currently set default filters for this table and session.
+Must be included before every use of I<getDataSet()>.
 
 =cut
 
@@ -1413,17 +1414,21 @@ sub sendTheMail {
 
 =pod
 
-B<get_single_value_from_db( $options )>
-  Where $options has to contain at least:
-  I<$options> = 
-  {
-     curSession => ...
-     table      => ...
-     column     => ...
-     id         => ...
-  }
-  A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handlung for you.
-  I<Returns:> the requested single value as scalar.
+=head2 get_single_value_from_db( I<$options> )
+
+Where $options has to contain at least:
+
+I<$options> = 
+    {
+       curSession => ...
+       table      => ...
+       column     => ...
+       id         => ...
+    }
+
+A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handlung for you.
+
+I<Returns:> the requested single value as scalar.
 
 =cut
 
@@ -1478,16 +1483,18 @@ sub get_single_value_from_db
 
 =pod
 
-B<get_single_row_from_db( $session, $table, $id )>
-  A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handling.
-  I<Returns:> the requested row(and referenced ones) as reference to a hash.
+=head2 get_single_row_from_db( I<$session>, I<$table>, I<$id> )
 
-  Expample:
-    my $result_row = $self->get_single_row_from_db( $session, $table, $id );
+A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handling.
 
-    # to access single columns use:
-    $result_row->{$table . $TSEP . $column_name }
-    # the table name is needed
+I<Returns:> the requested row(and referenced ones) as reference to a hash.
+
+I<Expample:>
+  my $result_row = $self->get_single_row_from_db( $session, $table, $id );
+
+  # to access single columns use:
+  $result_row->{$table . $TSEP . $column_name }
+  # the table name is needed
 
 =cut
 
