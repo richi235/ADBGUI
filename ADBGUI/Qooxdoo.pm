@@ -378,50 +378,83 @@ sub new {
    return $self;
 }
 
-sub sendToQXForSession {
-   my $self = shift;
-   my $sessionid = shift;
-   my $text = shift;
-   my $ids = undef;
-   my $noque = shift || 0;
-   my $response = HTTP::Response->new();
-   $response->code(RC_OK);
-   $response->content($text."\n") if defined($text);
-   $response->content_type("text/plain; charset=UTF-8");
-   if ($sessionid) {
-      if (defined($self->{dbm}->getSession($sessionid))) {
-         $ids = [$sessionid];
-      } else {
-         Log("Qooxdoo.pm: sendToQX: Unknown session: ".$sessionid."!", $WARNING);
-         return; #die("Unknown session!");
-      }
-   } else {
-      $ids = [keys %{$self->{dbm}->{sessions}}];
-   }
-   foreach my $sessionid (@$ids) {
-      if (defined(my $curSession = $self->{dbm}->getSession($sessionid))) {
-         if (exists($curSession->{client}) &&
-            defined($curSession->{client})) {
-            Log("Sending for session ".$sessionid." to poesession ".$curSession->{client}, $DEBUG);
-            $poe_kernel->call($curSession->{client} => send_message => $response);
-            $poe_kernel->call($curSession->{client} => "shutdown");
-            delete $curSession->{client};
-         } else {
-            #Log("Writing for session ".$sessionid." to buffer.", $DEBUG);
-            unless ($noque) {
-               push(@{$curSession->{que}}, $text);
-               Log("Qued ".scalar(@{$curSession->{que}})." packets for ".$sessionid."!", $DEBUG);
+=pod
+
+=head2 sendToQXForSession( I<$sessionid>, I<$qooxdoocmd>, I<$noque> )
+
+Send I<$qooxdoocmd> to Session with id I<$sessionid>. I<$noque> is a optional parameter.
+
+I<Returns:> Nothing of meaning.
+
+=cut
+sub sendToQXForSession
+{
+    my $self      = shift;
+    my $sessionid = shift;
+    my $text      = shift;
+    my $noque     = shift || 0;
+
+    my $ids       = undef;
+
+    my $response  = HTTP::Response->new();
+    $response->code(RC_OK);
+    $response->content( $text . "\n" ) if defined($text);
+    $response->content_type("text/plain; charset=UTF-8");
+
+    if ($sessionid) {
+        if ( defined( $self->{dbm}->getSession($sessionid) ) ) {
+            $ids = [$sessionid];
+        }
+        else {
+            Log( "Qooxdoo.pm: sendToQX: Unknown session: " . $sessionid . "!",
+                $WARNING );
+            return;    #die("Unknown session!");
+        }
+    }
+    else {
+        $ids = [ keys %{ $self->{dbm}->{sessions} } ];
+    }
+
+    foreach my $sessionid (@$ids)
+    {
+        if ( defined( my $curSession = $self->{dbm}->getSession($sessionid) ) )
+        {
+            if ( exists( $curSession->{client} )
+                && defined( $curSession->{client} ) )
+            {
+                Log("Sending for session "
+                      . $sessionid
+                      . " to poesession "
+                      . $curSession->{client},
+                    $DEBUG
+                );
+
+                $poe_kernel->call( $curSession->{client} => send_message => $response );
+                $poe_kernel->call( $curSession->{client} => "shutdown" );
+                delete $curSession->{client};
             }
-         }
-      } else {
-         Log("Session ".$sessionid." not found.", $WARNING);
-      }
-   }
+            else {
+                #Log("Writing for session ".$sessionid." to buffer.", $DEBUG);
+                unless ($noque) {
+                    push( @{ $curSession->{que} }, $text );
+                    Log("Qued "
+                          . scalar( @{ $curSession->{que} } )
+                          . " packets for "
+                          . $sessionid . "!",
+                        $DEBUG
+                    );
+                }
+            }
+        }
+        else {
+            Log( "Session " . $sessionid . " not found.", $WARNING );
+        }
+    }
 }
 
 =pod
 
-=head2 showActivate( $options, $suffix, $moreparams )
+=head2 showActivate( I<$options>, I<$suffix>, I<$moreparams> )
 
 Execute a shell command and display the output in a new window.
 (This is called an I<Activate> in ADBGUI Terminology).
