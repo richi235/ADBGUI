@@ -11,7 +11,7 @@ if [[ "$1" != "" ]]; then
       echo;
       echo "[ADBGUI]";
       echo;
-      bach -c "$cmd";
+      bash -c "$cmd";
       exit 0;
    fi;
 else
