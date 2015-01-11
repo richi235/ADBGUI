@@ -32,8 +32,12 @@ cd $PROJECTNAME
 # If you do not want apache to be installed: paramter "noap"
 install/installscript qx noap
 
-# if you want skeleton files for your module (recommended), use:
+# install all wanted modules, to start a new module you might
+# want to install a skeleton:
 perl install/skeleton.pl $PROJECTNAME
+
+# reconfiure your project activating all installed modules
+install/reconfig.debian.sh
 ```
 ## Usage
 Your Project now already works with basic configuration.
