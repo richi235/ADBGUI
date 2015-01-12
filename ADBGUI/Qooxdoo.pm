@@ -942,6 +942,7 @@ sub onClientData {
    #print "INPUT: ".$options->{connection}->{sessionid}."\n";
    if ($options->{job} eq "delrow") {
       $self->onDelRow({
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -953,6 +954,7 @@ sub onClientData {
       });
    } elsif ($options->{job} eq "treechange") {
       $self->onTreeChange({
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -1003,17 +1005,15 @@ sub onClientData {
   #    } else {
   #       ${$options->{content}} .= "Unable to build table reference tree!";
   #    }
-   }
-   elsif($options->{job} eq "auth")
-   {
+   } elsif($options->{job} eq "auth") {
       $self->onAuthenticate({
+         %$options,
          connection => $options->{connection},
          curSession => $options->{curSession}
       });
-   }
-   elsif($options->{job} eq "neweditentry")
-   {
+   } elsif($options->{job} eq "neweditentry") {
       $self->onNewEditEntry({
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -1025,12 +1025,11 @@ sub onClientData {
          curSession => $options->{curSession},
          "q" => $options->{connection}->{"q"},
       });
-   }
-   elsif($options->{job} eq "filterselecttable")
-   {
+   } elsif($options->{job} eq "filterselecttable") {
       if (my $popupid = $options->{connection}->{"q"}->param("popupid")) {
          #$poe_kernel->yield(sendToQX => "show ".$popupid." 1");
          $self->onTableSelect({
+            %$options,
             table => $options->{table},
             oid => $options->{oid},
             curSession => $options->{curSession},
@@ -1041,14 +1040,10 @@ sub onClientData {
       } else {
          $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{popupid_missing} . $options->{job} ));
       }
-   }
-   elsif( ($options->{job} eq "filteropen")
-          || ($options->{job} eq "filtersave") )
-   {
-        if ( my $popupid = $options->{connection}->{"q"}->param("popupid") )
-        {
+   } elsif( ($options->{job} eq "filteropen")
+         || ($options->{job} eq "filtersave") ) {
+        if ( my $popupid = $options->{connection}->{"q"}->param("popupid") ) {
             my $urlappend = ",popupid=" . $popupid . ",table=" . $options->{table};
-
             $poe_kernel->yield(
                   sendToQX => "createtree "
                   . CGI::escape( $popupid . "_" . $options->{job} )     . " "
@@ -1086,19 +1081,17 @@ sub onClientData {
                   . CGI::escape( $self->{text}->{qx}->{popupid_missing} . $options->{job} )
             );
         }
-   }
-   elsif($options->{job} eq "filter")
-   {
+   } elsif($options->{job} eq "filter") {
       $self->onFilter({
+         %$options,
          table => $options->{table},
          oid => $options->{oid},
          curSession => $options->{curSession},
          "q" => $options->{connection}->{"q"},
       });
-   }
-   elsif($options->{job} eq "filterhtml")
-   {
+   } elsif($options->{job} eq "filterhtml") {
       $self->onFilterHTML({
+         %$options,
          table => $options->{table},
          oid => $options->{oid},
          curSession => $options->{curSession},
@@ -1107,8 +1100,7 @@ sub onClientData {
          "q" => $options->{connection}->{"q"},
       });
    }
-   elsif($options->{job} eq "listcreateentry")
-   {
+   elsif($options->{job} eq "listcreateentry") {
       my $column = $options->{connection}->{"q"}->param("column") || '';
       my $id = $options->{connection}->{"q"}->param($UNIQIDCOLUMNNAME) || undef;
       my $table = undef,
@@ -1126,6 +1118,7 @@ sub onClientData {
       {
          if (my $curtabledef = $self->{dbm}->getTableDefiniton($table)) {
             $self->onNewEditEntry({
+               %$options,
                table => $table,
                oid => $options->{oid},
                connection => $options->{connection},
@@ -1156,6 +1149,7 @@ sub onClientData {
    }
    elsif($options->{job} eq "show") {
       $self->onShow({
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          connection => $options->{connection},
@@ -1168,6 +1162,7 @@ sub onClientData {
       });
    } elsif($options->{job} eq "showlist") {
       $self->onShowList({
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          oid => $options->{oid},
@@ -1179,6 +1174,7 @@ sub onClientData {
       });
    } elsif($options->{job} eq "updatelist") {
       $self->onUpdateList({
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -1191,6 +1187,7 @@ sub onClientData {
       });
    } elsif($options->{job} eq "getrowcount") {
       $self->onGetRowCount({
+         %$options,
          "q" => $options->{connection}->{q},
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
@@ -1202,6 +1199,7 @@ sub onClientData {
       });
    } elsif($options->{job} eq "closeobject") {
       $self->onCloseObject({
+         %$options,
          curSession => $options->{curSession},
          oid => $options->{oid},
       });
@@ -1220,6 +1218,7 @@ sub onClientData {
          }
       }
       $self->onGetLines({
+         %$options,
          "q" => $options->{connection}->{"q"},
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
@@ -1240,6 +1239,7 @@ sub onClientData {
          ($options->{job} eq "newedit")) {
       my $id = $options->{$UNIQIDCOLUMNNAME} || $options->{connection}->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
       my $params = {
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -1258,6 +1258,7 @@ sub onClientData {
    elsif($options->{job} eq "htmlpreview")
    {
       $self->onHTMLPreview({
+         %$options,
          table => $options->{table},
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          oid => $options->{oid},
