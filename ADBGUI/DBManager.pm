@@ -729,7 +729,7 @@ sub NewUpdateData {
          table => $options->{table},
          $UNIQIDCOLUMNNAME => $options->{uniqid},
          nodeleted => $options->{nodeleted},
-         searchdef => $self->getFilter({ curSession => $options->{curSession}, table => $options->{table} }),
+         #searchdef => $self->getFilter({ curSession => $options->{curSession}, table => $options->{table} }),
          columns => $options->{columns},
          session => $options->{curSession},
          wherePre => $self->Where_Pre($options)
