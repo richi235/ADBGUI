@@ -3572,8 +3572,8 @@ sub onNewEditEntry {
             } @$columns), map { $options->{override}->{$_} } @$overridecolumns)
          ), # 7. Die Werte des Eintrags, oder die Defaultwerte wenns neu is
          join(",", ((map { CGI::escape($curtabledef->{columns}->{$_}->{unit} || "") } @$columns), map { "" } @$overridecolumns)),    # 8. Units
-         CGI::escape( $curtabledef->{infotextedit} || '' ), # 9. Hilfetext
-         CGI::escape( $window || '' ),    # 10. Parentwindow
+         CGI::escape($curtabledef->{infotextedit} || ''), # 9. Hilfetext
+         CGI::escape($window || ''),    # 10. Parentwindow
          CGI::escape(($options->{crosslink} ? ",crosslink=".CGI::escape($options->{crosslink}).",crossid=".CGI::escape($options->{crossid}).",crosstable=".CGI::escape($options->{crosstable}) : '').($options->{urlappend} || '' )),    # 11. urlappend
    )));
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createtabview ".CGI::escape($window."_tabs"));
