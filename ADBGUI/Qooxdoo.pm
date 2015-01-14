@@ -3588,14 +3588,14 @@ sub onNewEditEntry {
       defaults => $ret->[0]->[0],
       oid      => $options->{oid},
    });
-   my $return = { $options->{table} => $ret };
+   my $return = {$options->{table} => $ret};
    $options->{override} ||= {};
    foreach my $column (keys %$links) {
       my $curTable = $links->{$column}->[0];
-      my $cursubtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
+      my $cursubtabledef = $self->{dbm}->getTableDefiniton($options->{table});
       my $columns = [@{getAffectedColumns($self->{dbm}->getDBBackend( $options->{table} )->{config}->{DB}, $cursubtabledef->{columns}, 1)}];
       if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $curTable))) {
-         Log( "Qooxdoo: onNewEditEntry: GET: ACCESS DENIED: " . $err->[0], $err->[1] );
+         Log("Qooxdoo: onNewEditEntry: GET: ACCESS DENIED: " . $err->[0], $err->[1]);
          next;
       }
       my $db        = $self->{dbm}->getDBBackend($curTable);
