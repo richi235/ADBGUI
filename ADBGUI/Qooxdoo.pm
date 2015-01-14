@@ -3619,7 +3619,7 @@ sub onNewEditEntry {
          session   => $options->{curSession},
          nodeleted => $nodeleted,
          searchdef => $self->{dbm}->getFilter($options),
-      })) && ( ref($curret) eq "ARRAY" )) {
+      })) && (ref($curret) eq "ARRAY")) {
          Log("Qooxdoo: onNewEditEntry: GET ".$curTable." FAIL: SQL Query failed.", $WARNING);
          $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{"qx"}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{"qx"}->{failed}));
          return undef;
