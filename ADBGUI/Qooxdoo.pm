@@ -85,7 +85,7 @@ sub new {
 
    $self->{clients} = {};
 
-   $self->{dbm}->{config}->{qooxdooprepath} = $self->{dbm}->{cwd} . $self->{text}->{qx}->{paths}->{qx_building_subdir}
+   $self->{dbm}->{config}->{qooxdooprepath} = $self->{dbm}->{cwd} . $self->{text}->{"qx"}->{paths}->{qx_building_subdir}
       unless $self->{dbm}->{config}->{qooxdooprepath};
 
    $self->{telnetserver} = POE::Component::Server::TCP->new(
@@ -193,7 +193,7 @@ sub new {
             $heap->{connection}->{ip} = $request->header('X-Forwarded-For') || $heap->{remote_ip};
             $heap->{connection}->{port} = $heap->{remote_port};
             $heap->{connection}->{sessionid} = $q->param("sessionid");
-            $heap->{connection}->{q} = $q;
+            $heap->{connection}->{"q"} = $q;
             $heap->{connection}->{request} = $request;
             Log("Ajax: sessionid=".$heap->{connection}->{sessionid}.":".$request->method().":".$request->uri().":".length($request->content())." Bytes:", $DEBUG);
             my $job = $q->param("job") || "";
@@ -547,7 +547,7 @@ sub showActivate
     $curdef->{label} ||=
          $options->{label}
       || $options->{activate}
-      || $self->{text}->{qx}->{unnamed};
+      || $self->{text}->{"qx"}->{unnamed};
 
     $curdef->{height} ||= $options->{height} || $qxheight;
     $curdef->{width}  ||= $options->{width}  || $qxwidth;
@@ -557,7 +557,7 @@ sub showActivate
           . CGI::escape($window) . " "
           . CGI::escape( $curdef->{width} ) . " "
           . CGI::escape( $curdef->{height} ) . " "
-          . CGI::escape( $self->{text}->{qx}->{enable} . $curdef->{label} )
+          . CGI::escape( $self->{text}->{"qx"}->{enable} . $curdef->{label} )
           . " "
           . CGI::escape( $curdef->{icon} ) );
 
@@ -769,7 +769,7 @@ sub handleAjax
             }
             else {
                 $response->content(
-                        $self->{text}->{qx}->{activate_not_configured}
+                        $self->{text}->{"qx"}->{activate_not_configured}
                       . $activate );
                 $heap->{client}->put($response);
                 $kernel->yield("shutdown");
@@ -1038,7 +1038,7 @@ sub onClientData {
          });
          $poe_kernel->yield(sendToQX => "addobject " . CGI::escape($popupid) . " " . CGI::escape($options->{oid} . "_tableselect_tree"));
       } else {
-         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{popupid_missing} . $options->{job} ));
+         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{"qx"}->{popupid_missing} . $options->{job} ));
       }
    } elsif( ($options->{job} eq "filteropen")
          || ($options->{job} eq "filtersave") ) {
@@ -1047,7 +1047,7 @@ sub onClientData {
             $poe_kernel->yield(
                   sendToQX => "createtree "
                   . CGI::escape( $popupid . "_" . $options->{job} )     . " "
-                  . CGI::escape( $self->{text}->{qx}->{saved_filters} ) . " "
+                  . CGI::escape( $self->{text}->{"qx"}->{saved_filters} ) . " "
                   . CGI::escape( ",treeaction=select" . $options->{job} . ",table=" . $options->{table}
                                  . ",loid=" . $options->{oid} . $urlappend )
             );
@@ -1057,16 +1057,16 @@ sub onClientData {
                   . CGI::escape( $popupid . "_" . $options->{job} ) . " "
                   . CGI::escape("") . " "
                   . CGI::escape("1") . " "
-                  . CGI::escape( $self->{text}->{qx}->{first_entry} ) . " "
-                  . CGI::escape( $self->{text}->{qx}->{paths}->{system_search_png} )
+                  . CGI::escape( $self->{text}->{"qx"}->{first_entry} ) . " "
+                  . CGI::escape( $self->{text}->{"qx"}->{paths}->{system_search_png} )
             );
 
             $poe_kernel->yield( sendToQX => "addtreeentry "
                   . CGI::escape( $popupid . "_" . $options->{job} ) . " "
                   . CGI::escape("") . " "
                   . CGI::escape("newentry") . " "
-                  . CGI::escape( $self->{text}->{qx}->{new_entry} ) . " "
-                  . CGI::escape( $self->{text}->{qx}->{paths}->{list_add} ) )
+                  . CGI::escape( $self->{text}->{"qx"}->{new_entry} ) . " "
+                  . CGI::escape( $self->{text}->{"qx"}->{paths}->{list_add} ) )
               unless ( $options->{job} eq "filteropen" );
 
             $poe_kernel->yield( sendToQX => "addobject "
@@ -1076,9 +1076,9 @@ sub onClientData {
         else   
         {
             $poe_kernel->yield( sendToQX => "showmessage "
-                  . CGI::escape( $self->{text}->{qx}->{internal_error} )
+                  . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
                   . " 400 200 "
-                  . CGI::escape( $self->{text}->{qx}->{popupid_missing} . $options->{job} )
+                  . CGI::escape( $self->{text}->{"qx"}->{popupid_missing} . $options->{job} )
             );
         }
    } elsif($options->{job} eq "filter") {
@@ -1137,14 +1137,14 @@ sub onClientData {
             my $localised_msg = $self->{text}->{"qx"}->{col_load_error} . $table . "' -> '" . $column . "'";
 
             Log("Qooxdoo: listnewentry: ".$msg, $WARNING);
-            $poe_kernel->yield(  sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $localised_msg ) );
+            $poe_kernel->yield(  sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 200 " . CGI::escape( $localised_msg ) );
          }
       } else {
          my $msg           = "Bad column information: '" . $column . "'";
          my $localised_msg = $self->{text}->{"qx"}->{col_info_error}  . $column . "'";
          
          Log("Qooxdoo: listnewentry: ".$msg, $WARNING);
-         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $localised_msg ) );
+         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 200 " . CGI::escape( $localised_msg ) );
       }
    }
    elsif($options->{job} eq "show") {
@@ -1188,7 +1188,7 @@ sub onClientData {
    } elsif($options->{job} eq "getrowcount") {
       $self->onGetRowCount({
          %$options,
-         "q" => $options->{connection}->{q},
+         "q" => $options->{connection}->{"q"},
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -1273,7 +1273,7 @@ sub onClientData {
       my $url = "/ajax?nocache=".rand(999999999999)."&job=statsval&sessionid=".$options->{curSession}->{sessionid};
 
       $poe_kernel->yield(sendToQX => "destroy ".CGI::escape($winname));
-      $poe_kernel->yield(sendToQX => "createwin " . CGI::escape($winname) . " " . ($qxwidth) . " " . ($qxheight) . " " . CGI::escape( $self->{text}->{qx}->{live_stats} ) . " " . CGI::escape("icon"));
+      $poe_kernel->yield(sendToQX => "createwin " . CGI::escape($winname) . " " . ($qxwidth) . " " . ($qxheight) . " " . CGI::escape( $self->{text}->{"qx"}->{live_stats} ) . " " . CGI::escape("icon"));
       $poe_kernel->yield(sendToQX => "createiframe ".CGI::escape($winname."_iframe")." ".CGI::escape($url));
       $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($winname)." ".CGI::escape($winname."_iframe"));
       $poe_kernel->yield(sendToQX => "open ".CGI::escape($winname));
@@ -1282,11 +1282,11 @@ sub onClientData {
    {
       if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ADMIN)))
       {
-         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{permission_denied} )  );
+         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{"qx"}->{permission_denied} )  );
          return Log("DBManager: onNewLineServer: ".$options->{job}.": ACCESS DENIED: ".$err->[0], $err->[1]);
       }
 
-      my $translations = $self->{text}->{qx}->{stats_window};
+      my $translations = $self->{text}->{"qx"}->{stats_window};
 
       my $value = "";
       my $url = "/ajax?nocache=".rand(999999999999)."&job=statsval&sessionid=".$options->{curSession}->{sessionid};
@@ -1321,7 +1321,7 @@ sub onClientData {
                     || 0)
             );
           $value .= $session
-            . " ($self->{text}->{qx}->{username}: "
+            . " (".$self->{text}->{"qx"}->{username}.": "
             . ( $cursession->{ $USERSTABLENAME . $TSEP . "username" } || "-" )
             . " / ID:"
             . ($cursession->{
@@ -1364,7 +1364,7 @@ sub onClientData {
          list => ($options->{job} eq "listselectline") ? 1 : 0,
       });
    } else {
-      $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape($self->{text}->{qx}->{internal_error}) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{unknown_command} . $options->{job}) );
+      $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape($self->{text}->{"qx"}->{internal_error}) . " 400 200 " . CGI::escape( $self->{text}->{"qx"}->{unknown_command} . $options->{job}) );
    }
 }
 
@@ -1417,13 +1417,13 @@ sub onTreeChange {
       Log("onDelRow: Missing parameters: connection:".$options->{table}.": !", $ERROR);
       return undef;
    }
-   my $treeaction = $options->{q}->param("treeaction");
+   my $treeaction = $options->{"q"}->param("treeaction");
    if ($treeaction eq "filter") {
-      if (my $popupid = $options->{q}->param("popupid")) {
-         my $loid = $options->{q}->param("loid");
+      if (my $popupid = $options->{"q"}->param("popupid")) {
+         my $loid = $options->{"q"}->param("loid");
          if ($options->{$UNIQIDCOLUMNNAME}) {
-            #if ($options->{q}->param("entry")) {
-               if ($self->addFilterEntry($options->{q}->param("entry"), $options->{curSession}, $options->{table}, $options->{$UNIQIDCOLUMNNAME})) {
+            #if ($options->{"q"}->param("entry")) {
+               if ($self->addFilterEntry($options->{"q"}->param("entry"), $options->{curSession}, $options->{table}, $options->{$UNIQIDCOLUMNNAME})) {
                   $poe_kernel->yield(sendToQX => "destroy ".$popupid);
                   $poe_kernel->yield(sendToQX => "destroy ".CGI::escape($loid."_filter_iframe"));
                   $poe_kernel->yield(sendToQX => "createiframe ".CGI::escape($loid."_filter_iframe")." ".CGI::escape("/ajax?nocache=".rand(999999999999)."&job=filterhtml&table=".$options->{table}."&sessionid=".$options->{curSession}->{sessionid}."&oid=".$loid));
@@ -1504,13 +1504,13 @@ sub onDelRow {
 
          if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $MODIFY, $options->{table}, $options->{$UNIQIDCOLUMNNAME})))
          {
-            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{permission_denied} ));
+            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{"qx"}->{permission_denied} ));
             return Log("DBManager: onNewLineServer: ".$cmd.": ACCESS DENIED: ".$err->[0], $err->[1]);
          }
 
          if (($curtabledef->{readonly}) || ($curtabledef->{editonly}))
          {
-            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{table_non_modifiable} ));
+            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{"qx"}->{table_non_modifiable} ));
             return Log("DBManager: onNewLineServer: ".$cmd.": ACCESS DENIED: ACCESS_LOG not allowed!");
          }
          
@@ -1525,7 +1525,7 @@ sub onDelRow {
          if (defined(my $err = $self->{dbm}->BeforeNewUpdate($options->{table}, $cmd, { $options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table}) => $options->{$UNIQIDCOLUMNNAME} }, $options->{curSession})))
          {
             Log("ADBGUI::Qooxdoo::onDelRow: BeforeNewUpdate failed: ".$err, $INFO);
-            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{delrow_failed} ));
+            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{"qx"}->{delrow_failed} ));
             return;
          }
 
@@ -1762,7 +1762,7 @@ sub handleCrossLink {
       }
       else
       {
-         $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape( $self->{text}->{qx}->{internal_error} )." 400 200 ".CGI::escape( $self->{text}->{qx}->{no_crosslink_id} ));
+         $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape( $self->{text}->{"qx"}->{internal_error} )." 400 200 ".CGI::escape( $self->{text}->{"qx"}->{no_crosslink_id} ));
          push(@$where, "(1 == 2)");
       }
 
@@ -1776,7 +1776,7 @@ sub onGetLines {
    my $self = shift;
    my $options = shift;
    my $moreparams = shift;
-   unless ((!$moreparams) && $options->{q} && $options->{curSession} && $options->{table} && $options->{connection} && ($options->{start} =~ /^\d+$/) && ($options->{end} =~ /^\d+$/) && ($options->{end} >= $options->{start})) {
+   unless ((!$moreparams) && $options->{"q"} && $options->{curSession} && $options->{table} && $options->{connection} && ($options->{start} =~ /^\d+$/) && ($options->{end} =~ /^\d+$/) && ($options->{end} >= $options->{start})) {
       Log("onGetLines: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}." q=".$options->{"q"}.": !", $ERROR);
       return undef;
    }
@@ -1796,7 +1796,7 @@ sub onGetLines {
    } hashKeysRightOrder($curtabledef->{columns})];
    unshift(@$columns, $self->{dbm}->getIdColumnName($options->{table})) if exists($curtabledef->{columns}->{$self->{dbm}->getIdColumnName($options->{table})});
    if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}, $options->{$UNIQIDCOLUMNNAME}))) {
-      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{qx}->{permission_denied})."\n");
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{"qx"}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{"qx"}->{permission_denied})."\n");
       return Log("DBManager: onGetLines: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
    }
    my $ret = undef;
@@ -1825,7 +1825,7 @@ sub onGetLines {
          my $msg = shift;
          unless (ref($ret) eq "ARRAY") {
             Log("DBManager: onGetLines: GET ".$options->{table}." FAILED SQL Query failed.", $WARNING);
-            $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{qx}->{failed}."\n"));
+            $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{"qx"}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{"qx"}->{failed}."\n"));
             return;         
          };
          # TODO/XXX/FIXME: Derzeit wird onGetLines einmal für getRowsCount und ein zweites mal für getRows abgefragt, das könnten wir cachen!
@@ -1893,9 +1893,9 @@ sub updateList {
       $self->sendToQXForSession(
           $options->{connection}->{sessionid} || 0,
           "showmessage "
-            . CGI::escape( $self->{text}->{qx}->{internal_error} )
+            . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
             . " 400 200 "
-            . CGI::escape( $self->{text}->{qx}->{permission_denied} . "\n" )
+            . CGI::escape( $self->{text}->{"qx"}->{permission_denied} . "\n" )
       );
       Log("Qooxdoo: updateList: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
       return undef;
@@ -1953,9 +1953,9 @@ sub updateList {
        $self->sendToQXForSession(
            $options->{connection}->{sessionid} || 0,
            "showmessage "
-             . CGI::escape( $self->{text}->{qx}->{internal_error} )
+             . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
              . " 400 200 "
-             . CGI::escape( $self->{text}->{qx}->{failed} . "\n" )
+             . CGI::escape( $self->{text}->{"qx"}->{failed} . "\n" )
        );
        return undef;
    }
@@ -2407,7 +2407,7 @@ sub onHTMLPreview
                                               $curtabledef->{columns}->{$options->{column}}->{label} ? 
                                               $curtabledef->{columns}->{$options->{column}}->{label} :
                                                                         $options->{column})
-                                          . ($options->{$UNIQIDCOLUMNNAME} ?  $self->{text}->{qx}->{of_entry} . $options->{$UNIQIDCOLUMNNAME} : $self->{text}->{qx}->{new_entry} ).
+                                          . ($options->{$UNIQIDCOLUMNNAME} ?  $self->{text}->{"qx"}->{of_entry} . $options->{$UNIQIDCOLUMNNAME} : $self->{text}->{"qx"}->{new_entry} ).
                                       $self->{text}->{"qx"}->{in} . ($curtabledef->{label} || $options->{table})) . " " .
                                    CGI::escape($curtabledef->{icon}));
 
@@ -2543,7 +2543,7 @@ sub afterNewUpdate {
       } elsif ($self->{dbm}->{config}->{oldlinklogic} && ($column =~ m,^(.+)_$UNIQIDCOLUMNNAME$,)) {
          $curtable = $1;
       }
-      my $value = "".($curtable ? $self->{gui}->getValueForTable($curtable, $columns) : undef) || $self->{text}->{qx}->{created_entry} ;
+      my $value = "".($curtable ? $self->{gui}->getValueForTable($curtable, $columns) : undef) || $self->{text}->{"qx"}->{created_entry} ;
       my $tmp = "addtoeditlist ".CGI::escape($addAndSelect)." ".CGI::escape($column)." ".CGI::escape($value)." ".CGI::escape($id);
       #Log($tmp, $WARNING);
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, $tmp);
@@ -2670,7 +2670,7 @@ sub onFilter {
         {
             id      => $options->{oid} . "_filter_toolbar_save",
             job     => "createtoolbarbutton",
-            label   => $self->{text}->{qx}->{save} ,
+            label   => $self->{text}->{"qx"}->{save} ,
             image   => "resource/qx/icon/Tango/16/actions/document-save.png",
             popupid => $options->{oid} . "_filtersave",
             action  => "job=filtersave,table="
@@ -2768,7 +2768,7 @@ sub onFilterHTML {
 
    if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table})))
    {
-      $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape( $self->{text}->{qx}->{internal_error} )." 400 200 ".CGI::escape( $self->{text}->{qx}->{permission_denied} . "\n" ));
+      $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape( $self->{text}->{"qx"}->{internal_error} )." 400 200 ".CGI::escape( $self->{text}->{"qx"}->{permission_denied} . "\n" ));
       Log("Qooxdoo: onFilterHTML: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
       return undef;
    }
@@ -2789,9 +2789,9 @@ sub onFilterHTML {
       table => $options->{table},
    });
    # TODO:XXX:FIXME: Hier werden die Benutzereingaben ungefiltert übernommen!!!!
-   my $filterjob = $options->{q}->param("filterjob") || "";
-   my $filtername = $options->{q}->param("filtername");
-   my $filtervalue = $options->{q}->param("filtervalue");
+   my $filterjob = $options->{"q"}->param("filterjob") || "";
+   my $filtername = $options->{"q"}->param("filtername");
+   my $filtervalue = $options->{"q"}->param("filtervalue");
    my $doFilterUpdate = 0;
    if ($filterjob eq "deletefilter") {
       if ($filtername) {
@@ -2824,11 +2824,11 @@ sub onFilterHTML {
       $doFilterUpdate++;
    } elsif($filterjob eq "setfilterdatebegin") {
       #print "XXX:".$filtername.":".$filtervalue.":\n";
-      my $values = $self->{gui}->parseDateDefintion($filtervalue, $options->{q});
+      my $values = $self->{gui}->parseDateDefintion($filtervalue, $options->{"q"});
       $filter->{$filtername."_begin"} = $values->[0];
       $doFilterUpdate++;
    } elsif($filterjob eq "setfilterdateend") {
-      my $values = $self->{gui}->parseDateDefintion($filtervalue, $options->{q});
+      my $values = $self->{gui}->parseDateDefintion($filtervalue, $options->{"q"});
       $filter->{$filtername."_end"} = $values->[1];
       $doFilterUpdate++;
    } elsif($filterjob eq "deletefilterdatebegin") {
@@ -2851,9 +2851,9 @@ sub onFilterHTML {
    {
       my $showtype = 0;
 
-      ${$options->{content}} .= "<table width=100%><tr><td></td><td><b>" . $self->{text}->{qx}->{filter_criterion}
-                      . "</b></td><td><b>" . $self->{text}->{qx}->{table} . "</b></td>"
-                      . ($showtype ? "<td><center><b>" . $self->{text}->{qx}->{filter_criterion} . "</b></center></td>" : "")."</tr>";
+      ${$options->{content}} .= "<table width=100%><tr><td></td><td><b>" . $self->{text}->{"qx"}->{filter_criterion}
+                      . "</b></td><td><b>" . $self->{text}->{"qx"}->{table} . "</b></td>"
+                      . ($showtype ? "<td><center><b>" . $self->{text}->{"qx"}->{filter_criterion} . "</b></center></td>" : "")."</tr>";
 
       foreach my $curfilter ( sort {  (     (($b =~ m,^$options->{table},) ? 1 : 0)
                                         <=> (($a =~ m,^$options->{table},) ? 1 : 0))
@@ -2937,10 +2937,10 @@ sub onFilterHTML {
                         wherePre => $wherePre,
                         session => $options->{curSession},
                      });
-                     my $addtext = $self->{text}->{qx}->{selected_entries_only} ;
+                     my $addtext = $self->{text}->{"qx"}->{selected_entries_only} ;
                      if ($filter->{$curfilter} && (ref($filter->{$curfilter}) eq "ARRAY") && scalar(@{$filter->{$curfilter}}))
                      {
-                        ${ $options->{content} } .=  $self->{text}->{qx}->{only_the_following} . join(
+                        ${ $options->{content} } .=  $self->{text}->{"qx"}->{only_the_following} . join(
                             "",
                             map {
                                 my $id    = $_;
@@ -2975,7 +2975,7 @@ sub onFilterHTML {
                         );
 
                         #${$options->{content}} .= "<br>";
-                        $addtext = $self->{text}->{qx}->{further_selection} ;
+                        $addtext = $self->{text}->{"qx"}->{further_selection} ;
                      }
 
                     if (defined($ret)
@@ -3034,14 +3034,14 @@ sub onFilterHTML {
                               . "</option>\n";
                         }
                         ${ $options->{content} } .=
-                            "</select><input type=submit value=$self->{text}->{qx}->{add} ></form>";
+                            "</select><input type=submit value=".$self->{text}->{"qx"}->{add}."></form>";
 
                   #${$options->{content}} .= "</nobr></font></td></tr></table>";
                         ${ $options->{content} } .= hideend();
                     }
                      ${$options->{content}} .= "</font>";
                   } else {
-                     ${$options->{content}} .= "<font color=red>$self->{text}->{qx}->{link_to_broken}" . $table . "</font>";
+                     ${$options->{content}} .= "<font color=red>".$self->{text}->{"qx"}->{link_to_broken}." ".$table."</font>";
                   }
                }
                elsif (($columntype eq "date") ||
@@ -3058,67 +3058,67 @@ sub onFilterHTML {
 
                   ${$options->{content}} .= "<font size=2>";
 
-                  my $addtext = $plusimg . " " . $self->{text}->{qx}->{before_specific_date} ; #  . "<br>" . $curfilter . "_begin" . "<br>" . join(";", map { $_ . "=" . $filter->{$_} } keys %$filter);
+                  my $addtext = $plusimg . " " . $self->{text}->{"qx"}->{before_specific_date} ; #  . "<br>" . $curfilter . "_begin" . "<br>" . join(";", map { $_ . "=" . $filter->{$_} } keys %$filter);
 
                   if ($filter->{$curfilter."_begin"})
                   {
-                     ${$options->{content}} .= $self->getFilterActionLink($options, "deletefilterdatebegin", $curfilter).$minusimg."</a>" . $self->{text}->{qx}->{before} ;
+                     ${$options->{content}} .= $self->getFilterActionLink($options, "deletefilterdatebegin", $curfilter).$minusimg."</a>" . $self->{text}->{"qx"}->{before} ;
                      $addtext = $filter->{$curfilter."_begin"};
                   }
 
                   ${$options->{content}} .= hidebegin("filter".$table.$curfilter."begin", $addtext);
                   ${$options->{content}} .= $self->getFilterActionForm($options, "setfilterdatebegin", $curfilter, $column);
                   ${$options->{content}} .= $self->{gui}->printDateQuestion("search".$column."_begin_", $self->{gui}->getDatePredefFor($column, $filter->{$curfilter."_begin"}), $datedef);
-                  ${$options->{content}} .= "<input type=submit value=" .  $self->{text}->{qx}->{refresh} . ">";
+                  ${$options->{content}} .= "<input type=submit value=" .  $self->{text}->{"qx"}->{refresh} . ">";
                   ${$options->{content}} .= "</form>";
                   ${$options->{content}} .= hideend();
-                  $addtext = $plusimg . " " . $self->{text}->{qx}->{after_specific_date} ;
+                  $addtext = $plusimg . " " . $self->{text}->{"qx"}->{after_specific_date} ;
 
                   if ($filter->{$curfilter."_end"})
                   {
-                     ${$options->{content}}  .= $self->getFilterActionLink($options, "deletefilterdateend", $curfilter) . $minusimg . "</a>" . $self->{text}->{qx}->{after} ;
+                     ${$options->{content}}  .= $self->getFilterActionLink($options, "deletefilterdateend", $curfilter) . $minusimg . "</a>" . $self->{text}->{"qx"}->{after} ;
                      $addtext = $filter->{$curfilter."_end"};
                   }
                   ${$options->{content}} .= hidebegin("filter".$table.$curfilter."end", $addtext);
                   ${$options->{content}} .= $self->getFilterActionForm($options, "setfilterdateend", $curfilter, $column);
                   ${$options->{content}} .= $self->{gui}->printDateQuestion("search".$column."_end_", $self->{gui}->getDatePredefFor($column, $filter->{$curfilter."_end"}, 1), $datedef);
-                  ${$options->{content}} .= "<input type=submit value=" .  $self->{text}->{qx}->{refresh} . ">";
+                  ${$options->{content}} .= "<input type=submit value=" .  $self->{text}->{"qx"}->{refresh} . ">";
                   ${$options->{content}} .= "</form>";
                   ${$options->{content}} .= hideend();
                   ${$options->{content}} .= "</font>";
                } elsif ($columntype eq "boolean") {
                   ${$options->{content}} .= "<font size=2>";
                   if ($filter->{$curfilter} eq "1") {
-                     ${$options->{content}} .= $self->{text}->{qx}->{has_to_be_set} ;
+                     ${$options->{content}} .= $self->{text}->{"qx"}->{has_to_be_set} ;
                   } elsif ($filter->{$curfilter} eq "0") {
-                     ${$options->{content}} .= $self->{text}->{qx}->{must_not_be_set} ;
+                     ${$options->{content}} .= $self->{text}->{"qx"}->{must_not_be_set} ;
                   } else {
-                     ${$options->{content}} .= $plusimg . $self->{text}->{qx}->{has_to_be_set} ;
+                     ${$options->{content}} .= $plusimg . $self->{text}->{"qx"}->{has_to_be_set} ;
                      ${$options->{content}} .= "<br>";
-                     ${$options->{content}} .= $plusimg . $self->{text}->{qx}->{must_not_be_set} ;
+                     ${$options->{content}} .= $plusimg . $self->{text}->{"qx"}->{must_not_be_set} ;
                   }
                   ${$options->{content}} .= "</font>";
                } elsif ($columntype eq $DELETEDCOLUMNNAME) {
                   ${$options->{content}} .= "<font size=2>";
                   if ($filter->{$curfilter} eq "1") {
-                     ${$options->{content}}  .= $minusimg . $self->{text}->{qx}->{only_archived_entries} ;
+                     ${$options->{content}}  .= $minusimg . $self->{text}->{"qx"}->{only_archived_entries} ;
                   } elsif ($filter->{$curfilter} eq "0") {
-                     ${$options->{content}} .= $minusimg . $self->{text}->{qx}->{only_non_archived} ;
+                     ${$options->{content}} .= $minusimg . $self->{text}->{"qx"}->{only_non_archived} ;
                   } else {
-                     ${$options->{content}} .= $plusimg . $self->{text}->{qx}->{only_archived_entries} ;
+                     ${$options->{content}} .= $plusimg . $self->{text}->{"qx"}->{only_archived_entries} ;
                      ${$options->{content}} .= "<br>";
-                     ${$options->{content}} .= $plusimg . $self->{text}->{qx}->{only_non_archived} ;
+                     ${$options->{content}} .= $plusimg . $self->{text}->{"qx"}->{only_non_archived} ;
                   }
                   ${$options->{content}} .= "</font>";
                } elsif ($columntype eq "number") {
-                  ${$options->{content}} .= "<font size=2>" . $self->{text}->{qx}->{number} . "</font>";
+                  ${$options->{content}} .= "<font size=2>" . $self->{text}->{"qx"}->{number} . "</font>";
                #if (($columntype eq "text") ||
                #    ($columntype eq "textarea")) {
                } else {
                   ${$options->{content}} .= "<font size=2>";
-                  my $addtext = $plusimg . " " . $self->{text}->{qx}->{filter_for_text} ;
+                  my $addtext = $plusimg . " " . $self->{text}->{"qx"}->{filter_for_text} ;
                   if ($filter->{$curfilter}) {
-                     ${$options->{content}} .= $self->getFilterActionLink($options, "deletefilterval", $curfilter).$minusimg."</a> " . $self->{text}->{qx}->{contains} . ": ";
+                     ${$options->{content}} .= $self->getFilterActionLink($options, "deletefilterval", $curfilter).$minusimg."</a> " . $self->{text}->{"qx"}->{contains} . ": ";
                      $addtext = $filter->{$curfilter};
                   }
                   ${$options->{content}} .= hidebegin("filter".$table.$curfilter, $addtext);
@@ -3126,7 +3126,7 @@ sub onFilterHTML {
                   ${$options->{content}} .= "<table width=100%><tr><td>"; # " width=1%><font size=2>".$minusimg." Beinhaltet: ".$filter->{$curfilter}."</font>"."</td><td>";
                   ${$options->{content}} .= "<input type=text name=filtervalue style='width:100%' value='".($filter->{$curfilter}||"")."'>";
                   ${$options->{content}} .= "</td><td>";
-                  ${$options->{content}} .= "<input type=submit value=" . $self->{text}->{qx}->{refresh} . ">";
+                  ${$options->{content}} .= "<input type=submit value=" . $self->{text}->{"qx"}->{refresh} . ">";
                   ${$options->{content}} .= "</td></tr></table>";
                   ${$options->{content}} .= "</form>";
                   ${$options->{content}} .= hideend();
@@ -3137,7 +3137,7 @@ sub onFilterHTML {
             }
          } else {
             ${$options->{content}} .= "<td colspan=".(2 + ($showtype ? 1 : 0)).">";
-            ${$options->{content}} .= $curfilter." (<font color=red>" . $self->{text}->{qx}->{unknown_filter_crit} . "</font>)";
+            ${$options->{content}} .= $curfilter." (<font color=red>" . $self->{text}->{"qx"}->{unknown_filter_crit} . "</font>)";
          }
          ${$options->{content}} .= "</td></tr>";
          #${$options->{content}} .= " = ".(
@@ -3149,7 +3149,7 @@ sub onFilterHTML {
       }
       ${$options->{content}} .= "</table>";
    } else {
-       ${$options->{content}} .= "<br><font size=4><center>" . $self->{text}->{qx}->{no_filter_crit_selected} . "</center></font>";
+       ${$options->{content}} .= "<br><font size=4><center>" . $self->{text}->{"qx"}->{no_filter_crit_selected} . "</center></font>";
    }
    ${$options->{content}} .= "</font>";
 }
@@ -3187,9 +3187,9 @@ sub onTableSelect
       )
     {
         $poe_kernel->yield( sendToQX => "showmessage "
-              . CGI::escape( $self->{text}->{qx}->{internal_error} )
+              . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
               . " 400 200 "
-              . CGI::escape( $self->{text}->{qx}->{permission_denied} . "\n") );
+              . CGI::escape( $self->{text}->{"qx"}->{permission_denied} . "\n") );
         Log( "Qooxdoo: onTableSelect: GET: ACCESS DENIED: " . $err->[0],
             $err->[1] );
         return undef;
@@ -3244,7 +3244,7 @@ sub onTableSelect
         $poe_kernel->yield(
                 sendToQX => "createtree "
               . CGI::escape( $options->{oid} . "_tableselect_tree" ) . " "
-              . CGI::escape( $self->{text}->{qx}->{search_criteria} ) . " "
+              . CGI::escape( $self->{text}->{"qx"}->{search_criteria} ) . " "
               . CGI::escape(
                     ",treeaction=filter,table="
                   . $options->{table}
@@ -3268,9 +3268,9 @@ sub onTableSelect
     }
     else {
         $poe_kernel->yield( sendToQX => "showmessage "
-              . CGI::escape( $self->{text}->{qx}->{internal_error} )
+              . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
               . " 400 200 "
-              . CGI::escape( $self->{text}->{qx}->{table_ref_tree_error} ) );
+              . CGI::escape( $self->{text}->{"qx"}->{table_ref_tree_error} ) );
     }
 }
 
@@ -3347,11 +3347,11 @@ sub getDefaults {
 
     foreach my $column ( @{ $params->{columns} } ) {
         $mydefaults->{ $options->{table} . $TSEP . $column } =
-          $options->{q}->param( $options->{table} . $TSEP . $column )
-          if ( exists( $options->{q} )
-            && defined( $options->{q} )
-            && $options->{q}
-            && $options->{q}->param( $options->{table} . $TSEP . $column ) );
+          $options->{"q"}->param( $options->{table} . $TSEP . $column )
+          if ( exists( $options->{"q"} )
+            && defined( $options->{"q"} )
+            && $options->{"q"}
+            && $options->{"q"}->param( $options->{table} . $TSEP . $column ) );
         $mydefaults->{ $options->{table} . $TSEP . $column } ||=
           $params->{ret}->[0]->[0]->{ $options->{table} . $TSEP . $column }
           if (
@@ -3494,9 +3494,9 @@ sub onNewEditEntry
         $self->sendToQXForSession(
             $options->{connection}->{sessionid} || 0,
             "showmessage "
-              . CGI::escape( $self->{text}->{qx}->{internal_error} )
+              . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
               . " 400 200 "
-              . CGI::escape( $self->{text}->{qx}->{permission_denied} . "\n"),
+              . CGI::escape( $self->{text}->{"qx"}->{permission_denied} . "\n"),
             $options->{connection}->{sessionid} || 0
         );
         Log( "Qooxdoo: onNewEditEntry: GET: ACCESS DENIED: " . $err->[0],
@@ -3552,9 +3552,9 @@ sub onNewEditEntry
             $self->sendToQXForSession(
                 $options->{connection}->{sessionid} || 0,
                 "showmessage "
-                  . CGI::escape( $self->{text}->{qx}->{permission_denied} )
+                  . CGI::escape( $self->{text}->{"qx"}->{permission_denied} )
                   . " 300 50 "
-                  . CGI::escape( $self->{text}->{qx}->{permission_denied} ),
+                  . CGI::escape( $self->{text}->{"qx"}->{permission_denied} ),
                 $options->{connection}->{sessionid} || 0
             );
             return undef;
@@ -3593,9 +3593,9 @@ sub onNewEditEntry
                          $options->{newedittitle}
                       || $options->{title}
                       || ( $options->{$UNIQIDCOLUMNNAME}
-                        ?  $self->{text}->{qx}->{details_of_entry} . $options->{$UNIQIDCOLUMNNAME}
-                        :  $self->{text}->{qx}->{new_entry} )
-                      . $self->{text}->{qx}->{in} 
+                        ?  $self->{text}->{"qx"}->{details_of_entry} . $options->{$UNIQIDCOLUMNNAME}
+                        :  $self->{text}->{"qx"}->{new_entry} )
+                      . $self->{text}->{"qx"}->{in} 
                       . ( $curtabledef->{label} || $options->{table} )
                 )
               )
@@ -3723,7 +3723,7 @@ sub onNewEditEntry
         "addtab "
           . CGI::escape( $window . "_tabs" ) . " "
           . CGI::escape( $window . "_tabs_tab1" )
-          . " " . $self->{text}->{qx}->{basis_data} 
+          . " " . $self->{text}->{"qx"}->{basis_data} 
     );                # , $options->{connection}->{sessionid} || 0);
     $self->sendToQXForSession(
         $options->{connection}->{sessionid} || 0,
@@ -3861,9 +3861,9 @@ sub onNewEditEntry
             $self->sendToQXForSession(
                 $options->{connection}->{sessionid} || 0,
                 "showmessage "
-                  . CGI::escape( $self->{text}->{qx}->{internal_error} )
+                  . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
                   . " 400 200 "
-                  . CGI::escape( $self->{text}->{qx}->{failed} )
+                  . CGI::escape( $self->{text}->{"qx"}->{failed} )
             );    # , $options->{connection}->{sessionid} || 0);
             return undef;
         }
@@ -4117,7 +4117,7 @@ sub doSpecialColumns
                                  $linktabledef->{crosslinklabel}
                               || $linktabledef->{label}
                               || $crosslinktabledef->{crosslinklabel}
-                              || $self->{text}->{qx}->{assigned} . " " . $crosstable
+                              || $self->{text}->{"qx"}->{assigned} . " " . $crosstable
                         )
                       )
                 );    # , $options->{connection}->{sessionid} || 0);
@@ -4221,18 +4221,18 @@ sub showTabellen
                 #print "showTabellen: ".$db.":".join(",", keys(%$db))."\n";
                 my $menuname =
                   $db->{config}->{DB}->{tables}->{$curtable}->{menuname}
-                  || $self->{text}->{qx}->{tables} ;
+                  || $self->{text}->{"qx"}->{tables} ;
                 $poe_kernel->yield(
                     sendToQX => "addmenu "
                       . CGI::escape(
-                        ( $menuname eq  $self->{text}->{qx}->{tables} ) ? "" : $self->{text}->{qx}->{tables} )
+                        ( $menuname eq  $self->{text}->{"qx"}->{tables} ) ? "" : $self->{text}->{"qx"}->{tables} )
                       . " "
                       . CGI::escape($menuname) . " "
                       . CGI::escape(
                         $db->{config}->{DB}->{menu}->{$menuname}->{text}
-                          || ( ( $menuname eq  $self->{text}->{qx}->{tables} )
-                            ? $self->{text}->{qx}->{start} 
-                            :  $self->{text}->{qx}->{unnamed} )
+                          || ( ( $menuname eq  $self->{text}->{"qx"}->{tables} )
+                            ? $self->{text}->{"qx"}->{start} 
+                            :  $self->{text}->{"qx"}->{unnamed} )
                       )
                       . " "
                       . CGI::escape(
@@ -4268,9 +4268,9 @@ sub showTabellen
         }
     }
     $poe_kernel->yield( sendToQX => "addbutton "
-          . CGI::escape( $self->{text}->{qx}->{tables} ) . " "
+          . CGI::escape( $self->{text}->{"qx"}->{tables} ) . " "
           . CGI::escape("statistic") . " "
-          . CGI::escape( $self->{text}->{qx}->{live_stats} ) . " "
+          . CGI::escape( $self->{text}->{"qx"}->{live_stats} ) . " "
           . CGI::escape("icon") . " "
           . CGI::escape("job=statswin") );
 }
