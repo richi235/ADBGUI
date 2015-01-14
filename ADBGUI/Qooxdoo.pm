@@ -3536,7 +3536,7 @@ sub onNewEditEntry {
       ret         => $ret,
    });
    my $overridecolumns = [];
-   if ( $options->{override} ) {
+   if ($options->{override}) {
       $ret->[0]->[0] = { %{ $ret->[0]->[0] }, %{ $options->{override} } };
       #Log("COLUMNS PRE:".scalar(@$columns), $WARNING);
       $overridecolumns = [grep {
@@ -3547,7 +3547,7 @@ sub onNewEditEntry {
    }
    $self->sendToQXForSession(
       $options->{connection}->{sessionid} || 0, "createedit " . join(" ", (
-         CGI::escape($window . "_data"),    # 1. Interne Objekt ID
+         CGI::escape($window . "_data"), # 1. Interne Objekt ID
          @{$self->getBasicDataDefine({
             %$options,
             crosslink       => $options->{crosslink},
@@ -3572,7 +3572,7 @@ sub onNewEditEntry {
             } @$columns), map { $options->{override}->{$_} } @$overridecolumns)
          ), # 7. Die Werte des Eintrags, oder die Defaultwerte wenns neu is
          join(",", ((map { CGI::escape($curtabledef->{columns}->{$_}->{unit} || "") } @$columns), map { "" } @$overridecolumns)),    # 8. Units
-         CGI::escape( $curtabledef->{infotextedit} || '' ),     # 9. Hilfetext
+         CGI::escape( $curtabledef->{infotextedit} || '' ), # 9. Hilfetext
          CGI::escape( $window || '' ),    # 10. Parentwindow
          CGI::escape(($options->{crosslink} ? ",crosslink=".CGI::escape($options->{crosslink}).",crossid=".CGI::escape($options->{crossid}).",crosstable=".CGI::escape($options->{crosstable}) : '').($options->{urlappend} || '' )),    # 11. urlappend
    )));
@@ -3580,7 +3580,7 @@ sub onNewEditEntry {
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addtab ".CGI::escape($window."_tabs")." ".CGI::escape($window."_tabs_tab1")." ".$self->{text}->{"qx"}->{basis_data});
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($window)." ".CGI::escape($window."_tabs"));
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($window."_tabs_tab1")." ".CGI::escape($window."_data"));
-   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape( $window . "_data_toolbar" )." ".CGI::escape($window."_data_toolbar_close"));
+   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($window . "_data_toolbar")." ".CGI::escape($window."_data_toolbar_close"));
    $self->doSpecialColumns({
       %$options,
       basetable => $options->{table},
