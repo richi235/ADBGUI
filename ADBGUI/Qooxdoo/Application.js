@@ -2628,11 +2628,11 @@ qx.Class.define("myproject.Application", {
                   //msg.setLayout(new qx.ui.layout.VBox());
                   msg.center();
                   // TODO:FIXME:XXX: Nicht <br> ändern sondern chr(10)!
-                  var lines = decode_utf8(escape(cmdparam.join(" "))).split("<br>");
+                  var lines = decode_utf8(unescape(cmdparam.join(" "))).split("<br>");
                   this.debug("Adding lines...");
                   for (var line in lines) {
                      if (typeof(lines[line]) == "string") {
-                        var text = new qx.ui.basic.Label("yyy" + lines[line]);
+                        var text = new qx.ui.basic.Label(lines[line]);
                         text.setWrap(true);
                         msg.root.add(text);
                      }
