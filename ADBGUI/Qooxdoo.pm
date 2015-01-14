@@ -3634,7 +3634,7 @@ sub onNewEditEntry {
           defined($options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) &&
                   $options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) ?
                   $options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)} :
-                  $dbline->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}));
+                               $dbline->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}));
       }
    }
    return $return;
