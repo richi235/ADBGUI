@@ -1702,8 +1702,8 @@ sub getBasicDataDefine {
             ($self->{dbm}->{config}->{oldlinklogic} && ($column eq $_."_".$UNIQIDCOLUMNNAME)))
          } keys(%{$db->{config}->{DB}->{tables}})]) && scalar(@$curTable)) {
             $options->{links}->{$column} = $curTable;
-         }
-         CGI::escape($curtabledef->{columns}->{$_}->{label} || $_)
+         };
+         CGI::escape(encode("utf8", ($curtabledef->{columns}->{$column}->{label} || $column)))
       } @{$options->{columns}}), @{$options->{overridecolumns}})),                                                     # 3. Spaltename, uebersetzt. Zudem werden Tabellenverknuepfungen erkannt.
       join(",", ((map {                    
          CGI::escape(($options->{links}->{$_}) ? "list" :
@@ -2024,7 +2024,7 @@ sub updateListloop {
       Log("Qooxdoo: updateListloop: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
       return undef;
    }
-   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createlistitem ".CGI::escape($curid)." ".CGI::escape($dbline->{$options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table})})." ".CGI::escape($line)." ".CGI::escape(
+   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createlistitem ".CGI::escape($curid)." ".CGI::escape($dbline->{$options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table})})." ".CGI::escape(encode("utf8", $line))." ".CGI::escape(
       ($curtabledef->{listimagecolumn} && $dbline->{$curtabledef->{listimagecolumn}}) ?
          $dbline->{$curtabledef->{listimagecolumn}} :
                    $curtabledef->{listimagedefault} ?
@@ -2544,7 +2544,7 @@ sub afterNewUpdate {
          $curtable = $1;
       }
       my $value = "".($curtable ? $self->{gui}->getValueForTable($curtable, $columns) : undef) || $self->{text}->{"qx"}->{created_entry} ;
-      my $tmp = "addtoeditlist ".CGI::escape($addAndSelect)." ".CGI::escape($column)." ".CGI::escape($value)." ".CGI::escape($id);
+      my $tmp = "addtoeditlist ".CGI::escape($addAndSelect)." ".CGI::escape($column)." ".CGI::escape(encode("utf8", $value))." ".CGI::escape($id);
       #Log($tmp, $WARNING);
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, $tmp);
       $tmp = "selectoneditlist ".CGI::escape($addAndSelect)." ".CGI::escape($column)." ".CGI::escape($id);
@@ -3460,11 +3460,10 @@ sub determineCrossLink {
 }
 
 
-sub onNewEditEntry
-{
-    my $self       = shift;
-    my $options    = shift;
-    my $moreparams = shift;
+sub onNewEditEntry {
+   my $self       = shift;
+   my $options    = shift;
+   my $moreparams = shift;
 
    unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{connection} ) {
       Log("Qooxdoo: onNewEditEntry: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession} . ": !", $ERROR);
@@ -3519,10 +3518,10 @@ sub onNewEditEntry
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createwin ".$window." ".
          ($curtabledef->{qxeditwidth} || $qxwidth)." ".
          ($curtabledef->{qxeditheight} || $qxheight)." ".
-         CGI::escape(($options->{newedittitle} || $options->{title} || ($options->{$UNIQIDCOLUMNNAME} ?
+         CGI::escape(encode("utf8", ($options->{newedittitle} || $options->{title} || ($options->{$UNIQIDCOLUMNNAME} ?
          $self->{text}->{"qx"}->{details_of_entry}.$options->{$UNIQIDCOLUMNNAME} :
          $self->{text}->{"qx"}->{new_entry}).
-         $self->{text}->{"qx"}->{in}.($curtabledef->{label} || $options->{table})))." ".
+         $self->{text}->{"qx"}->{in}.($curtabledef->{label} || $options->{table}))))." ".
          CGI::escape( $curtabledef->{icon} || '' )
       );    # , , $options->{connection}->{sessionid} || 0);
       $self->sendToQXForSession( $options->{connection}->{sessionid} || 0, "open ".$window." 1");
@@ -3563,16 +3562,16 @@ sub onNewEditEntry
          })},
          join(",", ((map {
             $self->determineCrossLink($_, $options->{crosslink}, $options->{crosstable}) ? $options->{crossid} :
-               CGI::escape($self->{gui}->doFormularColumn({
+               CGI::escape(encode("utf8", $self->{gui}->doFormularColumn({
                   table  => $options->{table},
                   column => $_,
                   targetself =>
                   $options->{curSession},
                   mydefaults => $mydefaults
-               }))
+               })))
             } @$columns), map { $options->{override}->{$_} } @$overridecolumns)
          ), # 7. Die Werte des Eintrags, oder die Defaultwerte wenns neu is
-         join(",", ((map { CGI::escape($curtabledef->{columns}->{$_}->{unit} || "")} @$columns), map { "" } @$overridecolumns)),    # 8. Units
+         join(",", ((map { CGI::escape($curtabledef->{columns}->{$_}->{unit} || "") } @$columns), map { "" } @$overridecolumns)),    # 8. Units
          CGI::escape( $curtabledef->{infotextedit} || '' ),     # 9. Hilfetext
          CGI::escape( $window || '' ),    # 10. Parentwindow
          CGI::escape(($options->{crosslink} ? ",crosslink=".CGI::escape($options->{crosslink}).",crossid=".CGI::escape($options->{crossid}).",crosstable=".CGI::escape($options->{crosstable}) : '').($options->{urlappend} || '' )),    # 11. urlappend
@@ -3629,8 +3628,8 @@ sub onNewEditEntry
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addtoeditlist ".$window."_data ".$column." ".CGI::escape("-")." ");
       my $curtabledef = $self->{dbm}->getTableDefiniton($curTable);
       foreach my $dbline (@{$curret->[0]}) {
-         $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addtoeditlist ".$window."_data ".$column." ".
-         (CGI::escape($self->{gui}->getValueForTable($curTable, $dbline)) || $dbline->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)})." ".
+         $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addtoeditlist ".$window."_data ".CGI::escape($column)." ".
+         (CGI::escape(encode("utf8", $self->{gui}->getValueForTable($curTable, $dbline)) || $dbline->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}))." ".
          ((exists($options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) &&
           defined($options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) &&
                   $options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) ?
