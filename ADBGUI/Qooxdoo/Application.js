@@ -324,6 +324,51 @@ if (typeof JSON !== 'object') {
     }
 }());
 
+function decode_utf8(utftext) {
+   var plaintext = ""; var i=0; var c=c1=c2=0;
+   // while-Schleife, weil einige Zeichen uebersprungen werden
+   while(i<utftext.length) {
+      c = utftext.charCodeAt(i);
+      if (c<128) {
+         plaintext += String.fromCharCode(c);
+         i++;
+      } else if((c>191) && (c<224)) {
+         c2 = utftext.charCodeAt(i+1);
+         plaintext += String.fromCharCode(((c&31)<<6) | (c2&63));
+         i+=2;
+      } else {
+         c2 = utftext.charCodeAt(i+1); c3 = utftext.charCodeAt(i+2);
+         plaintext += String.fromCharCode(((c&15)<<12) | ((c2&63)<<6) | (c3&63));
+         i+=3;
+      }
+   }
+   return plaintext;
+}
+
+function encode_utf8(rohtext) {
+   // dient der Normalisierung des Zeilenumbruchs
+   rohtext = rohtext.replace(/\r\n/g,"\n");
+   var utftext = "";
+   for(var n=0; n<rohtext.length; n++) {
+      // ermitteln des Unicodes des  aktuellen Zeichens
+      var c=rohtext.charCodeAt(n);
+      // alle Zeichen von 0-127 => 1byte
+      if (c<128) {
+         utftext += String.fromCharCode(c);
+         // alle Zeichen von 127 bis 2047 => 2byte
+      } else if((c>127) && (c<2048)) {
+         utftext += String.fromCharCode((c>>6)|192);
+         utftext += String.fromCharCode((c&63)|128);
+         // alle Zeichen von 2048 bis 66536 => 3byte
+      } else {
+         utftext += String.fromCharCode((c>>12)|224);
+         utftext += String.fromCharCode(((c>>6)&63)|128);
+         utftext += String.fromCharCode((c&63)|128);
+      }
+   }
+   return utftext;
+}
+
 qx.Class.define("myproject.Application", {
 /*
 #asset(qx/icon/Tango/32/actions/dialog-close.png)
@@ -678,7 +723,7 @@ qx.Class.define("myproject.Application", {
                var cmd = cmdparam.shift().toLowerCase();
                var json;
                if (cmd == "json") {
-                  var tmp = unescape(cmdparam.shift());
+                  var tmp = decode_utf8(unescape(cmdparam.shift()));
                   json = eval("(" + tmp + ")");
                   //this.debug("JSONFOUND: " + tmp + ":" + json);
                   cmd = json.job;
@@ -686,12 +731,12 @@ qx.Class.define("myproject.Application", {
                   json = undefined;
                }
                if (cmd == "showloginwin") {
-                  this.loginwin.setCaption(unescape(cmdparam.shift()));
+                  this.loginwin.setCaption(decode_utf8(unescape(cmdparam.shift())));
                   this.resetButton(true);
                   this.loginwin.open();
                   var username = cmdparam.shift();
                   if (typeof(username) != 'undefined') {
-                     this.loginwin.username.setValue(unescape(username));
+                     this.loginwin.username.setValue(decode_utf8(unescape(username)));
                      this.loginwin.password.focus();
                      this.loginwin.password.activate();
                   } else {
@@ -737,15 +782,15 @@ qx.Class.define("myproject.Application", {
                      /////////////
 
                } else if (cmd == "createwin") {
-                  var id = unescape(cmdparam.shift());
+                  var id = decode_utf8(unescape(cmdparam.shift()));
                   if (this.objects.hasItem(id)) {
                      this.debug("CREATEWIN: Object already existing: " + id);
                   } else {
                      var width = parseInt(cmdparam.shift(), 10);
                      var height = parseInt(cmdparam.shift(), 10);
-                     var title = unescape(cmdparam.shift());
-                     var image = unescape(cmdparam.shift());
-                     //var layout = unescape(cmdparam.shift());
+                     var title = decode_utf8(unescape(cmdparam.shift()));
+                     var image = decode_utf8(unescape(cmdparam.shift()));
+                     //var layout = decode_utf8(unescape(cmdparam.shift()));
                      if (this.objects.hasItem(id)) {
                         this.debug("CREATEWIN: Object already existing: " + id);
                      } else {
@@ -782,8 +827,8 @@ qx.Class.define("myproject.Application", {
                } else if (cmd == "show") {
                   if (typeof(json) != "object") {
                      json = new Object();
-                     json.id     = unescape(cmdparam.shift());
-                     json.open   = unescape(cmdparam.shift());
+                     json.id     = decode_utf8(unescape(cmdparam.shift()));
+                     json.open   = decode_utf8(unescape(cmdparam.shift()));
                   }
                   if (this.objects.hasItem(json.id)) {
                      if (json.open != "") {
@@ -795,8 +840,8 @@ qx.Class.define("myproject.Application", {
                } else if (cmd == "open") {
                   if (typeof(json) != "object") {
                      json = new Object();
-                     json.id     = unescape(cmdparam.shift());
-                     json.open   = unescape(cmdparam.shift());
+                     json.id     = decode_utf8(unescape(cmdparam.shift()));
+                     json.open   = decode_utf8(unescape(cmdparam.shift()));
                   }
                   if (this.objects.hasItem(json.id)) {
                      if (json.open != "") {
@@ -854,7 +899,7 @@ qx.Class.define("myproject.Application", {
                } else if (cmd == "destroy") {
                   if (typeof(json) != "object") {
                      json = new Object();
-                     json.id = unescape(cmdparam.shift());
+                     json.id = decode_utf8(unescape(cmdparam.shift()));
                   }
                   if (this.objects.hasItem(json.id)) {
                      this.unRegisterAndClose(this.objects.getItem(json.id));
@@ -877,10 +922,10 @@ qx.Class.define("myproject.Application", {
                } else if (cmd == "addobject") {
                   if (typeof(json) != "object") {
                      json = new Object();
-                     json.id               = unescape(cmdparam.shift());
-                     json.to               = unescape(cmdparam.shift());
-                     json.insertbeforeitem = unescape(cmdparam.shift());
-                     json.overrideflex     = unescape(cmdparam.shift());
+                     json.id               = decode_utf8(unescape(cmdparam.shift()));
+                     json.to               = decode_utf8(unescape(cmdparam.shift()));
+                     json.insertbeforeitem = decode_utf8(unescape(cmdparam.shift()));
+                     json.overrideflex     = decode_utf8(unescape(cmdparam.shift()));
                   }
                   var myobj;
                   if (json.id == 'desktop') {
@@ -930,7 +975,7 @@ qx.Class.define("myproject.Application", {
                   var id = cmdparam.shift();
                   if (this.objects.hasItem(id)) {
                      var item = this.objects.getItem(id);
-                     var dbname = unescape(cmdparam.shift());
+                     var dbname = decode_utf8(unescape(cmdparam.shift()));
                      if (typeof(item.formular) != 'undefined') {
                         if (typeof(item.form[dbname]) != 'undefined') {
                            item.form[dbname].removeAll();
@@ -947,10 +992,10 @@ qx.Class.define("myproject.Application", {
                   var id = cmdparam.shift();
                   if (this.objects.hasItem(id)) {
                      var item = this.objects.getItem(id);
-                     var dbname = unescape(cmdparam.shift());
+                     var dbname = decode_utf8(unescape(cmdparam.shift()));
                      if (typeof(item.formular) != 'undefined') {
                         if (typeof(item.form[dbname]) != 'undefined') {
-                           var listid = unescape(cmdparam.shift());
+                           var listid = decode_utf8(unescape(cmdparam.shift()));
                            item.form[dbname].selected = listid;
                            var curitems = item.form[dbname].getSelectables(true);
                            for (var i = 0; i < curitems.length; ++i) {
@@ -976,13 +1021,13 @@ qx.Class.define("myproject.Application", {
                   var id = cmdparam.shift();
                   if (this.objects.hasItem(id)) {
                      var item = this.objects.getItem(id);
-                     var dbname = unescape(cmdparam.shift());
+                     var dbname = decode_utf8(unescape(cmdparam.shift()));
                      if (typeof(item.formular) != 'undefined') {
                         if (typeof(item.form[dbname]) != 'undefined') {
                            var curitems = item.form[dbname].getSelectables(true);
                            var mylistitem = undefined;
-                           var text = unescape(cmdparam.shift());
-                           var listid = unescape(cmdparam.shift());
+                           var text = decode_utf8(unescape(cmdparam.shift()));
+                           var listid = decode_utf8(unescape(cmdparam.shift()));
                            for (var i = 0; i < curitems.length; ++i) {
                            //for (var mylistitem in item.form[dbname].getSelectables(true)) { kkk
                               var curmylistitem = curitems[i];
@@ -1022,11 +1067,11 @@ qx.Class.define("myproject.Application", {
                   var id = cmdparam.shift();
                   if (this.objects.hasItem(id)) {
                      var item = this.objects.getItem(id);
-                     var newid = unescape(cmdparam.shift());
+                     var newid = decode_utf8(unescape(cmdparam.shift()));
                      if (this.objects.hasItem(newid)) {
                         this.debug("ADDTAB: Object already existing: " + id);
                      } else {
-                        var newtab = new myproject.myTabViewPage(unescape(cmdparam.shift()));
+                        var newtab = new myproject.myTabViewPage(decode_utf8(unescape(cmdparam.shift())));
                         newtab.setLayout(new qx.ui.layout.VBox());
                         newtab.childs = new Hash();
                         newtab.id = newid;
@@ -1075,8 +1120,8 @@ qx.Class.define("myproject.Application", {
                      tree.id = id;
                      tree.main = this;
                      //tree.setHideRoot(1);
-                     var root = new qx.ui.tree.TreeFolder(unescape(cmdparam.shift()));
-                     tree.urlappend = unescape(cmdparam.shift());
+                     var root = new qx.ui.tree.TreeFolder(decode_utf8(unescape(cmdparam.shift())));
+                     tree.urlappend = decode_utf8(unescape(cmdparam.shift()));
                      tree.elements = new Hash();
                      tree.entries = new Hash();
                      tree.elements.setItem("", root);
@@ -1107,16 +1152,16 @@ qx.Class.define("myproject.Application", {
                   var id = cmdparam.shift();
                   if (this.objects.hasItem(id)) {
                      var item = this.objects.getItem(id);
-                     var parentid = unescape(cmdparam.shift());
+                     var parentid = decode_utf8(unescape(cmdparam.shift()));
                      // TODO:FIXME:XXX: Es sollte ueberprueft werden ob das ein createtree ist.
                      if (item.elements.hasItem(parentid)) {
                         var parent = item.elements.getItem(parentid);
-                        var folderid = unescape(cmdparam.shift());
+                        var folderid = decode_utf8(unescape(cmdparam.shift()));
                         if (item.elements.hasItem(folderid) ||
                           parent.elements.hasItem(folderid)) {
                            this.debug("ADDTREEFOLDER: Folder " + folderid + " already exists.");
                         } else {
-                           var folder = new qx.ui.tree.TreeFolder(unescape(cmdparam.shift()));
+                           var folder = new qx.ui.tree.TreeFolder(decode_utf8(unescape(cmdparam.shift())));
                            folder.elements = new Hash();
                            folder.entries = new Hash();
                            folder.id = folderid;
@@ -1137,11 +1182,11 @@ qx.Class.define("myproject.Application", {
                } else if (cmd == "addtreeentry") {
                   if (typeof(json) != "object") {
                      json = new Object();
-                     json.id       = unescape(cmdparam.shift());
-                     json.parentid = unescape(cmdparam.shift());
-                     json.entryid  = unescape(cmdparam.shift());
-                     json.label    = unescape(cmdparam.shift());
-                     json.icon     = unescape(cmdparam.shift());
+                     json.id       = decode_utf8(unescape(cmdparam.shift()));
+                     json.parentid = decode_utf8(unescape(cmdparam.shift()));
+                     json.entryid  = decode_utf8(unescape(cmdparam.shift()));
+                     json.label    = decode_utf8(unescape(cmdparam.shift()));
+                     json.icon     = decode_utf8(unescape(cmdparam.shift()));
                   }
                   if (this.objects.hasItem(json.id)) {
                      var item = this.objects.getItem(json.id);
@@ -1169,10 +1214,10 @@ qx.Class.define("myproject.Application", {
                   var id = cmdparam.shift();
                   if (this.objects.hasItem(id)) {
                      var item = this.objects.getItem(id);
-                     var folderid = unescape(cmdparam.shift());
+                     var folderid = decode_utf8(unescape(cmdparam.shift()));
                      if (item.elements.hasItem(folderid)) {
                         var parent = item.elements.getItem(folderid);
-                        var entryid = unescape(cmdparam.shift());
+                        var entryid = decode_utf8(unescape(cmdparam.shift()));
                         if (parent.entries.hasItem(entryid)) {
                            var entry = parent.entries.getItem(entryid);
                            parent.remove(entry);
@@ -1192,7 +1237,7 @@ qx.Class.define("myproject.Application", {
                   var id = cmdparam.shift();
                   if (this.objects.hasItem(id)) {
                      var item = this.objects.getItem(id);
-                     var folderid = unescape(cmdparam.shift());
+                     var folderid = decode_utf8(unescape(cmdparam.shift()));
                      if (item.elements.hasItem(folderid)) {
                         var folder = item.elements.getItem(folderid);
                         for (var j in folder.entries.items) {
@@ -1231,7 +1276,7 @@ qx.Class.define("myproject.Application", {
                   if (this.objects.hasItem(id)) {
                      var item = this.objects.getItem(id);
                      var text = cmdparam.shift();
-                     var dst = unescape(cmdparam.shift());
+                     var dst = decode_utf8(unescape(cmdparam.shift()));
                      var doc = item.getDocument();
                      if ((typeof(doc) != 'undefined') &&
                                 (doc  != null)) {
@@ -1248,7 +1293,7 @@ qx.Class.define("myproject.Application", {
                                    (tmp  != null)) {
                            if ((typeof(text) != 'undefined') &&
                                       (text  != null)) {
-                              tmp.write(unescape(text));
+                              tmp.write(decode_utf8(unescape(text)));
                            }
                            if (cmd == "iframewriteclose") {
                               tmp.close();
@@ -1269,9 +1314,9 @@ qx.Class.define("myproject.Application", {
                } else if (cmd == "createiframe") {
                   if (typeof(json) != "object") {
                      json = new Object();
-                     json.id     = unescape(cmdparam.shift());
-                     json.url    = unescape(cmdparam.shift());
-                     json.option = unescape(cmdparam.shift());
+                     json.id     = decode_utf8(unescape(cmdparam.shift()));
+                     json.url    = decode_utf8(unescape(cmdparam.shift()));
+                     json.option = decode_utf8(unescape(cmdparam.shift()));
                   }
                   if (this.objects.hasItem(json.id)) {
                      this.debug("CREATEIFRAME: Object already existing: " + json.id);
@@ -1304,12 +1349,12 @@ qx.Class.define("myproject.Application", {
                   if (this.objects.hasItem(id)) {
                      this.debug("ADDTEXTEDIT: Object already existing: " + id);
                   } else {
-                     var table = unescape(cmdparam.shift());
-                     var columnname = unescape(cmdparam.shift());
-                     var forid = unescape(cmdparam.shift());
-                     var textarea = new myproject.myTextArea(unescape(cmdparam.shift()).replace(/\&lt;/g, "<"));
-                     textarea.infotext = unescape(cmdparam.shift());
-                     textarea.urlappend = unescape(cmdparam.shift());
+                     var table = decode_utf8(unescape(cmdparam.shift()));
+                     var columnname = decode_utf8(unescape(cmdparam.shift()));
+                     var forid = decode_utf8(unescape(cmdparam.shift()));
+                     var textarea = new myproject.myTextArea(decode_utf8(unescape(cmdparam.shift()).replace(/\&lt;/g, "<")));
+                     textarea.infotext = decode_utf8(unescape(cmdparam.shift()));
+                     textarea.urlappend = decode_utf8(unescape(cmdparam.shift()));
                      textarea.flex = 1;
                      textarea.autoSize = true;
                      if (cmd == "createhtmltextedit") {
@@ -1385,8 +1430,8 @@ qx.Class.define("myproject.Application", {
                } else if (cmd == "selectradiobutton") {
                   if (typeof(json) != "object") {
                      json = new Object();
-                     json.id   = unescape(cmdparam.shift());
-                     json.toid = unescape(cmdparam.shift());
+                     json.id   = decode_utf8(unescape(cmdparam.shift()));
+                     json.toid = decode_utf8(unescape(cmdparam.shift()));
                   }
                   if (this.objects.hasItem(json.id)) {
                      var dstitem = this.objects.getItem(json.id);
@@ -1403,10 +1448,10 @@ qx.Class.define("myproject.Application", {
 	                       (cmd == "createbutton")) {
                   if (typeof(json) != "object") {
                      json = new Object();
-                     json.id     = unescape(cmdparam.shift());
-                     json.label  = unescape(cmdparam.shift());
-                     json.image  = unescape(cmdparam.shift());
-                     json.action = unescape(cmdparam.shift());
+                     json.id     = decode_utf8(unescape(cmdparam.shift()));
+                     json.label  = decode_utf8(unescape(cmdparam.shift()));
+                     json.image  = decode_utf8(unescape(cmdparam.shift()));
+                     json.action = decode_utf8(unescape(cmdparam.shift()));
                   }
                   if (this.objects.hasItem(json.id)) {
                      this.debug("CREATE(TOOLBAR)BUTTON: Object already existing: " + json.id);
@@ -1443,10 +1488,10 @@ qx.Class.define("myproject.Application", {
                            for (var j = 0; j < dstitem.json.menu.length; j++) {
                               var curbutton;
                               if (dstitem.json.menutype == "radio") {
-                                 curbutton = new qx.ui.menu.RadioButton(unescape(dstitem.json.menu[j].label));
+                                 curbutton = new qx.ui.menu.RadioButton(decode_utf8(unescape(dstitem.json.menu[j].label)));
                                  curbutton.setGroup(dstitem.groupobj);
                               } else {
-                                 curbutton = new qx.ui.menu.Button(unescape(dstitem.json.menu[j].label), dstitem.json.menu[j].image);
+                                 curbutton = new qx.ui.menu.Button(decode_utf8(unescape(dstitem.json.menu[j].label)), dstitem.json.menu[j].image);
                               }
                               curbutton.action    = dstitem.json.menu[j].action;
                               curbutton.urlappend = dstitem.json.menu[j].urlappend;
@@ -1593,19 +1638,19 @@ qx.Class.define("myproject.Application", {
                      scroller.flex = 1;
                      scroller.setContentPadding(10, 10, 10, 10);
                      scroller.setHeight(0);
-                     scroller.table = unescape(cmdparam.shift()); // 2
+                     scroller.table = decode_utf8(unescape(cmdparam.shift())); // 2
                      scroller.columns = cmdparam.shift().split(","); // 3
                      for (var j = 0; j < scroller.columns.length; j++) {
-                        scroller.columns[j] = unescape(scroller.columns[j]);
+                        scroller.columns[j] = decode_utf8(unescape(scroller.columns[j]));
                      }
                      scroller.types = cmdparam.shift().split(","); // 4
                      scroller.dbname = cmdparam.shift().split(","); // 5
                      scroller.viewstatus = cmdparam.shift().split(","); // 6
                      scroller.values = cmdparam.shift().split(","); // 7
                      scroller.units = cmdparam.shift().split(","); // 8
-                     scroller.infotext = unescape(cmdparam.shift()); // 9
-                     scroller.wid = unescape(cmdparam.shift()); // 10
-                     scroller.urlappend = unescape(cmdparam.shift()); // 11
+                     scroller.infotext = decode_utf8(unescape(cmdparam.shift())); // 9
+                     scroller.wid = decode_utf8(unescape(cmdparam.shift())); // 10
+                     scroller.urlappend = decode_utf8(unescape(cmdparam.shift())); // 11
                      scroller.label = new Array();
                      scroller.unit = new Array();
                      scroller.lockable = new Array();
@@ -1701,7 +1746,7 @@ qx.Class.define("myproject.Application", {
                         }
                         for (var j = 0; j < dstitem.columns.length; j++) {
                            if (dstitem.types[j] == "id") {
-                              dstitem.rowid = unescape(dstitem.values[j]);
+                              dstitem.rowid = decode_utf8(unescape(dstitem.values[j]));
                            }
                            if (dstitem.types[j] == "composite") {
                               /* dstitem.form[dstitem.dbname[j]] = new myproject.myIframe().set({
@@ -1709,7 +1754,7 @@ qx.Class.define("myproject.Application", {
                                  height: 0,
                                  //minWidth: 200,
                                  minHeight: 150,
-                                 //source: unescape(dstitem.values[j]),
+                                 //source: decode_utf8(unescape(dstitem.values[j])),
                                  source: "http://www.priv.de/",
                                  decorator: null,
                                  nativeContextMenu: true
@@ -1747,12 +1792,12 @@ qx.Class.define("myproject.Application", {
                               this.childs.setItem(dstitem.form[dstitem.dbname[j]].id, dstitem.form[dstitem.dbname[j]]);
                               this.main.objects.setItem(dstitem.form[dstitem.dbname[j]].id, dstitem.form[dstitem.dbname[j]]);
                            } else if (dstitem.types[j] == "html") {
-                              dstitem.form[dstitem.dbname[j]] = new qx.ui.basic.Label(unescape(dstitem.values[j]));
+                              dstitem.form[dstitem.dbname[j]] = new qx.ui.basic.Label(decode_utf8(unescape(dstitem.values[j])));
                               dstitem.form[dstitem.dbname[j]].set({
                                  rich : true
                               });
                            } else if ((dstitem.viewstatus[j] == "readonly") && (dstitem.types[j] != "list")) {
-                              dstitem.form[dstitem.dbname[j]] = new qx.ui.basic.Label(unescape(dstitem.values[j]));
+                              dstitem.form[dstitem.dbname[j]] = new qx.ui.basic.Label(decode_utf8(unescape(dstitem.values[j])));
                               dstitem.form[dstitem.dbname[j]].setWrap(true);
                               //dstitem.form[dstitem.dbname[j]].setRich(true);
                               //dstitem.form[dstitem.dbname[j]].setFocusable(true);
@@ -1768,10 +1813,10 @@ qx.Class.define("myproject.Application", {
                                  } else {
                                     dstitem.form[dstitem.dbname[j]].setDateFormat(new qx.util.format.DateFormat("dd.MM.yyyy"));
                                  }
-                                 if ((unescape(dstitem.values[j]) != "") &&
-                                     (unescape(dstitem.values[j]) != "0000-00-00 0:0:0") &&
-                                     (unescape(dstitem.values[j]) != "0000-00-00 00:00:00")) {
-                                    var mydate = unescape(dstitem.values[j]).split(" ");
+                                 if ((decode_utf8(unescape(dstitem.values[j])) != "") &&
+                                     (decode_utf8(unescape(dstitem.values[j])) != "0000-00-00 0:0:0") &&
+                                     (decode_utf8(unescape(dstitem.values[j])) != "0000-00-00 00:00:00")) {
+                                    var mydate = decode_utf8(unescape(dstitem.values[j])).split(" ");
                                     if (mydate.length == 2) {
                                        var mytime = mydate[1].split(":");
                                        mydate = mydate[0].split("-");
@@ -1786,52 +1831,52 @@ qx.Class.define("myproject.Application", {
                                              //this.debug("SET TIME " + parseInt(mytime[0], 10).toString() + ":" + parseInt(mytime[1], 10).toString() + ":" + parseInt(mytime[2], 10).toString());
                                           }
                                           dstitem.form[dstitem.dbname[j]].setValue(date);
-                                          //this.debug("SET VALUE " + unescape(dstitem.values[j]) + ":" + mytime[0] + ':' + parseInt(mytime[0], 10).toString() + ":" + mytime.length.toString());
+                                          //this.debug("SET VALUE " + decode_utf8(unescape(dstitem.values[j])) + ":" + mytime[0] + ':' + parseInt(mytime[0], 10).toString() + ":" + mytime.length.toString());
                                        } else {
-                                          this.debug("Bad value as datetime " + unescape(dstitem.values[j]));
+                                          this.debug("Bad value as datetime " + decode_utf8(unescape(dstitem.values[j])));
                                        }
                                     } else {
-                                       this.debug("Bad value as date " + unescape(dstitem.values[j]));
+                                       this.debug("Bad value as date " + decode_utf8(unescape(dstitem.values[j])));
                                     }
                                  }
                               } else if (dstitem.types[j] == "double") {
-                                 dstitem.form[dstitem.dbname[j]] = new qx.ui.form.TextField(unescape(dstitem.values[j]));
+                                 dstitem.form[dstitem.dbname[j]] = new qx.ui.form.TextField(decode_utf8(unescape(dstitem.values[j])));
                                  dstitem.form[dstitem.dbname[j]].setTextAlign("right");
                               } else if (dstitem.types[j] == "number") {
                                  //var thenumber = 0;
-                                 //if (unescape(dstitem.values[j]) != "") {
-                                 //   thenumber = parseInt(unescape(dstitem.values[j]), 10);
+                                 //if (decode_utf8(unescape(dstitem.values[j])) != "") {
+                                 //   thenumber = parseInt(decode_utf8(unescape(dstitem.values[j])), 10);
                                  //}
                                  //if (typeof(thenumber) != 'undefined') {
                                  //   dstitem.form[dstitem.dbname[j]] = new qx.ui.form.Spinner(thenumber);tabview
                                  //} else {
-                                 //   this.debug("BAD NUMBER is :" + unescape(dstitem.values[j]) + ":");
-                                    dstitem.form[dstitem.dbname[j]] = new qx.ui.form.TextField(unescape(dstitem.values[j]));
+                                 //   this.debug("BAD NUMBER is :" + decode_utf8(unescape(dstitem.values[j])) + ":");
+                                    dstitem.form[dstitem.dbname[j]] = new qx.ui.form.TextField(decode_utf8(unescape(dstitem.values[j])));
                                     dstitem.form[dstitem.dbname[j]].setTextAlign("right");
                                  //}
                               } else if (dstitem.types[j] == "id") {
-                                 dstitem.form[dstitem.dbname[j]] = new qx.ui.form.TextField(unescape(dstitem.values[j]));
+                                 dstitem.form[dstitem.dbname[j]] = new qx.ui.form.TextField(decode_utf8(unescape(dstitem.values[j])));
                               } else if (dstitem.types[j] == "password") {
-                                 dstitem.form[dstitem.dbname[j]] = new qx.ui.form.PasswordField(unescape(dstitem.values[j]));
+                                 dstitem.form[dstitem.dbname[j]] = new qx.ui.form.PasswordField(decode_utf8(unescape(dstitem.values[j])));
                               } else if (dstitem.types[j] == "boolean") { 
                                  dstitem.form[dstitem.dbname[j]] = new qx.ui.form.CheckBox();
-                                 dstitem.form[dstitem.dbname[j]].setValue(unescape(dstitem.values[j]) == "1");
+                                 dstitem.form[dstitem.dbname[j]].setValue(decode_utf8(unescape(dstitem.values[j])) == "1");
                               } else if (dstitem.types[j] == "list") {
                                  dstitem.form[dstitem.dbname[j]] = new qx.ui.form.SelectBox();
                                  dstitem.form[dstitem.dbname[j]].removeListener("mousewheel", dstitem.form[dstitem.dbname[j]]._onMouseWheel, dstitem.form[dstitem.dbname[j]]); 
-                                 dstitem.form[dstitem.dbname[j]].selected = unescape(dstitem.values[j]);
+                                 dstitem.form[dstitem.dbname[j]].selected = decode_utf8(unescape(dstitem.values[j]));
                                  if (dstitem.viewstatus[j] == "readonly")
                                     dstitem.form[dstitem.dbname[j]].setEnabled(false);
                               } else if (dstitem.types[j] == "textarea") {
                                  dstitem.types[j] = "text";
-                                 dstitem.form[dstitem.dbname[j]] = new qx.ui.form.TextArea(unescape(dstitem.values[j])).set({
+                                 dstitem.form[dstitem.dbname[j]] = new qx.ui.form.TextArea(decode_utf8(unescape(dstitem.values[j]))).set({
                                     //height: 150,
                                     autoSize: true
                                  });
                                  dstitem.form[dstitem.dbname[j]].noEnterSave = 1;
                               } else {
                                  dstitem.types[j] = "text";
-                                 dstitem.form[dstitem.dbname[j]] = new qx.ui.form.TextField(unescape(dstitem.values[j]));
+                                 dstitem.form[dstitem.dbname[j]] = new qx.ui.form.TextField(decode_utf8(unescape(dstitem.values[j])));
                               }
                               if (!dstitem.form[dstitem.dbname[j]].noEnterSave) {
                                  dstitem.form[dstitem.dbname[j]].addListener("keypress", function(e) {
@@ -1862,15 +1907,15 @@ qx.Class.define("myproject.Application", {
                            }
                            if ((!((dstitem.viewstatus[j] == "hidden") ||
                                 ((dstitem.viewstatus[j] == "readonly") &&
-                                 (unescape(dstitem.columns[j]) == " ") &&
-                                 (unescape(dstitem.values[j]) == ""))))) {
+                                 (decode_utf8(unescape(dstitem.columns[j])) == " ") &&
+                                 (decode_utf8(unescape(dstitem.values[j])) == ""))))) {
                               var tmp = "";
-                              if (unescape(dstitem.columns[j]) != " ") {
-                                 tmp = unescape(dstitem.columns[j]) + " :";
+                              if (decode_utf8(unescape(dstitem.columns[j])) != " ") {
+                                 tmp = decode_utf8(unescape(dstitem.columns[j])) + " :";
                               }
                               dstitem.label[j] = new qx.ui.basic.Label(tmp);
                               dstitem.label[j].set({alignX: "right"});
-                              dstitem.unit[j] = new qx.ui.basic.Label(unescape(dstitem.units[j]));
+                              dstitem.unit[j] = new qx.ui.basic.Label(decode_utf8(unescape(dstitem.units[j])));
                               dstitem.formular.add(dstitem.label[j], {row: linenum+x, column: 0}); 
                               dstitem.formular.add(dstitem.form[dstitem.dbname[j]], {row: linenum+x, column: 1});
                               if ((dstitem.types[j] == "list") &&
@@ -1908,7 +1953,7 @@ qx.Class.define("myproject.Application", {
                                  }, dstitem.buttonedit[j]);
                                  dstitem.formular.add(dstitem.buttonedit[j], {row: linenum+x, column: 3});
                               }
-                              if (unescape(dstitem.units[j]) != "") {
+                              if (decode_utf8(unescape(dstitem.units[j])) != "") {
                                  x++;
                                  dstitem.formular.add(dstitem.unit[j], {row: linenum+x, column: 1}); 
                               }
@@ -1948,11 +1993,11 @@ qx.Class.define("myproject.Application", {
                         for (var j = 0; j < dstitem.columns.length; j++) {
                            if (!((dstitem.viewstatus[j] == "hidden") ||
                                 ((dstitem.viewstatus[j] == "readonly") &&
-                                 (unescape(dstitem.columns[j]) == " ") &&
-                                 (unescape(dstitem.values[j]) == "")))) {
+                                 (decode_utf8(unescape(dstitem.columns[j])) == " ") &&
+                                 (decode_utf8(unescape(dstitem.values[j])) == "")))) {
                               dstitem.formular.remove(dstitem.label[j]);
                               dstitem.label[j].destroy();
-                              if (unescape(dstitem.units[j]) != "") {
+                              if (decode_utf8(unescape(dstitem.units[j])) != "") {
                                  dstitem.formular.remove(dstitem.unit[j]);
                                  dstitem.unit[j].destroy();
                               }
@@ -1983,7 +2028,7 @@ qx.Class.define("myproject.Application", {
                      this.debug("CREATETEXT: Object already existing: " + id);
                   } else {
                      var rich = cmdparam.shift();
-                     var text = new myproject.myLabel(unescape(cmdparam.join(' ')));
+                     var text = new myproject.myLabel(decode_utf8(unescape(cmdparam.join(' '))));
                      text.flex = 1;
                      text.setWrap(true);
                      if (rich != "") {
@@ -2000,11 +2045,11 @@ qx.Class.define("myproject.Application", {
                   var id = cmdparam.shift();
                   if (this.objects.hasItem(id)) {
                      var item = this.objects.getItem(id);
-                     var rich = unescape(cmdparam.shift());
+                     var rich = decode_utf8(unescape(cmdparam.shift()));
                      if (rich != "") {
                         item.set({
                            rich : true,
-                           value: unescape(cmdparam.shift())
+                           value: decode_utf8(unescape(cmdparam.shift()))
                         });
                         if (parseInt(rich, 10) > 0) {
                            item.set({ width: parseInt(rich, 10) });
@@ -2020,7 +2065,7 @@ qx.Class.define("myproject.Application", {
                   } else {
                      var curlist = new myproject.myList();
                      curlist.flex = 1;
-                     curlist.tablename = unescape(cmdparam.shift());
+                     curlist.tablename = decode_utf8(unescape(cmdparam.shift()));
                      //curlist.buttonnames = cmdparam.shift().split(",");
                      //curlist.buttonimages = cmdparam.shift().split(",");
                      //curlist.buttonaction = cmdparam.shift().split(",");
@@ -2031,7 +2076,7 @@ qx.Class.define("myproject.Application", {
                      curlist.buttontype   = new Array();
                      var tmp = cmdparam.shift();
                      if (tmp == 'JSON') {
-                        var myjson = eval('(' + unescape(cmdparam.shift()) + ')');
+                        var myjson = eval('(' + decode_utf8(unescape(cmdparam.shift())) + ')');
                         for (var j = 0; j < myjson.length; j++) {
                            curlist.buttonnames.push(myjson[j].label);
                            curlist.buttonimages.push("JSON");
@@ -2044,8 +2089,8 @@ qx.Class.define("myproject.Application", {
                         curlist.buttonaction = cmdparam.shift().split(",");
                         curlist.buttontype = cmdparam.shift().split(",");
                      }
-                     curlist.infotext = unescape(cmdparam.shift());
-                     curlist.urlappend = unescape(cmdparam.shift());
+                     curlist.infotext = decode_utf8(unescape(cmdparam.shift()));
+                     curlist.urlappend = decode_utf8(unescape(cmdparam.shift()));
                      curlist.childs = new Hash();
                      curlist.id = id;
                      curlist.main = this;
@@ -2184,14 +2229,14 @@ qx.Class.define("myproject.Application", {
                   if (this.objects.hasItem(id)) {
                      this.debug("CREATELISTITEM: Object already existing: " + id);
                   } else {
-                     var dbid = unescape(cmdparam.shift());
-                     var label = unescape(cmdparam.shift());
-                     var image = unescape(cmdparam.shift());
+                     var dbid = decode_utf8(unescape(cmdparam.shift()));
+                     var label = decode_utf8(unescape(cmdparam.shift()));
+                     var image = decode_utf8(unescape(cmdparam.shift()));
                      var imagepos = cmdparam.shift();
                      if ((typeof(imagepos) == 'undefined') || (imagepos == "")) {
                         imagepos = "top-left";
                      } else {
-                        imagepos = unescape(imagepos);
+                        imagepos = decode_utf8(unescape(imagepos));
                      }
                      var curlistitem = new myproject.myListItem(label.replace(/\n/g, "<br>"), image, dbid);
                      curlistitem.setRich(true);
@@ -2221,12 +2266,12 @@ qx.Class.define("myproject.Application", {
                   if (this.objects.hasItem(id)) {
                      this.debug("CREATETABLE: Object already existing: " + id);
                   } else {
-                     var table = unescape(cmdparam.shift()); // 2. Tabelle
+                     var table = decode_utf8(unescape(cmdparam.shift())); // 2. Tabelle
                      var columns = cmdparam.shift().split(","); // 3. ColumnTEXT
                      var types = cmdparam.shift().split(",");  // 4. Typen
                      var dbnames = cmdparam.shift().split(","); // 5. ColumnDBName
                      for (var j = 0; j < columns.length; j++) {
-                        columns[j] = unescape(columns[j]);
+                        columns[j] = decode_utf8(unescape(columns[j]));
                      }
                      var tableModel = new myproject.myRemoteTableModel();
                      tableModel.main = this;
@@ -2243,9 +2288,9 @@ qx.Class.define("myproject.Application", {
                      var buttonaction;
                      var buttontype;
                      if (tmp == 'JSON') {
-                        //var jsonpre = unescape(cmdparam.shift());
+                        //var jsonpre = decode_utf8(unescape(cmdparam.shift()));
                         //this.debug("Parsing..." + jsonpre);
-                        var myjson = eval('(' + unescape(cmdparam.shift()) + ')');
+                        var myjson = eval('(' + decode_utf8(unescape(cmdparam.shift())) + ')');
                         //this.debug("Parsed " + myjson);
                         buttonnames  = new Array();
                         buttonimages = new Array();
@@ -2263,9 +2308,9 @@ qx.Class.define("myproject.Application", {
                         buttonaction = cmdparam.shift().split(",");
                         buttontype = cmdparam.shift().split(",");
                      }
-                     var infotext = unescape(cmdparam.shift());
-                     var urlappend = unescape(cmdparam.shift());
-                     var rowHeight = unescape(cmdparam.shift());
+                     var infotext = decode_utf8(unescape(cmdparam.shift()));
+                     var urlappend = decode_utf8(unescape(cmdparam.shift()));
+                     var rowHeight = decode_utf8(unescape(cmdparam.shift()));
                      tableModel.urlappend = urlappend;
                      tableModel.setColumns(columns, dbnames);
                      var curtable = new myproject.myTable(tableModel, {
@@ -2274,7 +2319,7 @@ qx.Class.define("myproject.Application", {
                         }
                      });
                      this.debug("idcol4");
-                     curtable.idcol = unescape(cmdparam.shift());
+                     curtable.idcol = decode_utf8(unescape(cmdparam.shift()));
                      if ((typeof(curtable.idcol) == "undefined") || (curtable.idcol == "")) curtable.idcol = "id";
                      //curtable.idcol = "id";
                      curtable.flex = 1;
@@ -2502,7 +2547,7 @@ qx.Class.define("myproject.Application", {
                      var elements = cmdparam.join(" ").split(",");
                      var line = [];
                      for (var xx = 0; xx < elements.length; xx++) {
-                        line[curtable.dbname[xx]] = unescape(elements[xx]);
+                        line[curtable.dbname[xx]] = decode_utf8(unescape(elements[xx]));
                         if ((curtable.types[xx] == "id") || 
                             (curtable.types[xx] == "number")) {
                            if (line[curtable.dbname[xx]] != "")
@@ -2553,9 +2598,9 @@ qx.Class.define("myproject.Application", {
                   var dbid = cmdparam.shift();
                   this.onEntryChanged(table, dbid);
                } else if (cmd == "showmessage") {
-                  var msg = new qx.ui.window.Window(unescape(cmdparam.shift()));
-                  msg.setWidth(parseInt(unescape(cmdparam.shift()), 10));
-                  msg.setHeight(parseInt(unescape(cmdparam.shift()), 10));
+                  var msg = new qx.ui.window.Window(decode_utf8(unescape(cmdparam.shift())));
+                  msg.setWidth(parseInt(decode_utf8(unescape(cmdparam.shift())), 10));
+                  msg.setHeight(parseInt(decode_utf8(unescape(cmdparam.shift())), 10));
                   msg.setShowMinimize(false);
                   msg.setShowMaximize(false);
                   msg.setShowClose(true);
@@ -2583,11 +2628,11 @@ qx.Class.define("myproject.Application", {
                   //msg.setLayout(new qx.ui.layout.VBox());
                   msg.center();
                   // TODO:FIXME:XXX: Nicht <br> ändern sondern chr(10)!
-                  var lines = unescape(cmdparam.join(" ")).split("<br>");
+                  var lines = decode_utf8(escape(cmdparam.join(" "))).split("<br>");
                   this.debug("Adding lines...");
                   for (var line in lines) {
                      if (typeof(lines[line]) == "string") {
-                        var text = new qx.ui.basic.Label(lines[line]);
+                        var text = new qx.ui.basic.Label("yyy" + lines[line]);
                         text.setWrap(true);
                         msg.root.add(text);
                      }
@@ -2603,11 +2648,11 @@ qx.Class.define("myproject.Application", {
                   msg.open();
                   msg.button.activate();
                } else if (cmd == "addbutton") {
-                  var id = unescape(cmdparam.shift());
-                  var dstid = unescape(cmdparam.shift());
-                  var text = unescape(cmdparam.shift());
-                  var image = unescape(cmdparam.shift());
-                  var action = unescape(cmdparam.shift());
+                  var id = decode_utf8(unescape(cmdparam.shift()));
+                  var dstid = decode_utf8(unescape(cmdparam.shift()));
+                  var text = decode_utf8(unescape(cmdparam.shift()));
+                  var image = decode_utf8(unescape(cmdparam.shift()));
+                  var action = decode_utf8(unescape(cmdparam.shift()));
                   if (this.objects.hasItem(dstid)) {
                      this.debug("ADDBUTTON: Object already existing: " + id);
                   } else {
@@ -2647,10 +2692,10 @@ qx.Class.define("myproject.Application", {
                      }
                   }
                } else if (cmd == "addmenu") {
-                  var id = unescape(cmdparam.shift());
-                  var dstid = unescape(cmdparam.shift());
-                  var text = unescape(cmdparam.shift());
-                  var image = unescape(cmdparam.shift());
+                  var id = decode_utf8(unescape(cmdparam.shift()));
+                  var dstid = decode_utf8(unescape(cmdparam.shift()));
+                  var text = decode_utf8(unescape(cmdparam.shift()));
+                  var image = decode_utf8(unescape(cmdparam.shift()));
                   if (this.objects.hasItem(dstid)) {
                      this.debug("ADDMENU: Object already existing: " + id);
                   } else {

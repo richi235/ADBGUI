@@ -1840,7 +1840,7 @@ sub onGetLines {
                   $options->{curSession}->{hidebuttons}++;
                   # TODO/FIXME/XXX: Ausgabeformat beliebig ändern?
                   # TODO/FIXME/XXX: Hotfix fuer sayTRUST Logviewer: csv funktioniert mit Column_Handler nicht; es werden Spalten verschluckt.
-                  CGI::escape((lc($dbtype) eq "csv") ? $dbline->{$options->{table}.$TSEP.$curcolumn} : $self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $curcolumn))
+                  CGI::escape(encode("utf8", (lc($dbtype) eq "csv") ? $dbline->{$options->{table}.$TSEP.$curcolumn} : $self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $curcolumn)))
                } @$columns);
                $self->sendToQXForSession($options->{connection}->{sessionid} || 0, $line);
             }
