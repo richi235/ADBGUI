@@ -916,18 +916,23 @@ sub NewUpdateData
 }
 
 
-sub loginUser {
+sub loginUser
+{
    my $self = shift;
    my $user = shift;
    my $pass = shift;
-   my $su = shift;
-   die if shift;
+   my $su   = shift;
+   die if     shift;
+
    my $db = $self->getDBBackend($USERSTABLENAME);
+
    if (my $dbline = $db->verifyLoginData($user, $pass, $su)) {
       return $dbline;
    }
+
    return undef;
 }
+
 
 sub LineHandler {
    my $self = shift;
