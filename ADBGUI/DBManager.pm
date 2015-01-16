@@ -737,7 +737,7 @@ sub NewUpdateData
         #   Log("DBManager: onNewLineServer: NEW/UPDATE: Multiple matching columns ?! Can't be!!!", $ERROR);
         #   return $self->protokolError($client);
         #}
-        unless ( $matchingcolumns[0] )
+        unless ( $matchingcolumns[0] ) # @matchingcolumns is empty
         {
             Log("DBManager: NewUpdateData: NEW/UPDATE: Column: Unknown column :"
                   . $column
@@ -753,6 +753,7 @@ sub NewUpdateData
                 $options, $self
             );
         }
+
         my $curcolumndef = mergeColumnInfos( $db->{config}->{DB},
             $db->{config}->{DB}->{tables}->{ $options->{table} }->{columns}
               ->{ $matchingcolumns[0] } );
@@ -853,10 +854,9 @@ sub NewUpdateData
         if (   exists( $options->{columns}->{$column} )
             && defined( $options->{columns}->{$column} )
             && $options->{columns}->{$column}
-            && ( $curcolumndef eq "password" ) )
+            && ( $curcolumndef->{type} eq "password" ) )
         {
-            $options->{columns}->{$column} = md5pw( $options->{columns}->{$column} ); # relevant md5 line
-            # relevant stuff perhaps in ADBGUI::tools md5pw
+            $options->{columns}->{$column} = md5pw( $options->{columns}->{$column} );
         }
     }
     my $ret = undef;
