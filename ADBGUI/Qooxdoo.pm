@@ -1,5 +1,46 @@
 package ADBGUI::Qooxdoo;
 
+=pod
+
+=head1 NAME
+
+ADBGUI::Qooxdoo  -- The Frontend Component of the ADBGUI Framework.
+
+Talks to javascript components of the Qooxdoo Web Framework running in the Browser of the Client.
+
+=head1 SYNOPSIS
+
+Not needed, since it gets only called by other Framework Components
+
+=head1 DESCRIPTION
+
+Subroutines in here get called on Events coming from the client and call subroutines from DBManager.pm
+The events for example include:
+
+=over
+
+=over 2
+
+=item * I<onAuthenticate> The User opens the website or is pressing the login button.
+
+=item * I<onAuthenticated> The user logged in succesfully. Used for default window etc.
+
+=item * I<onShow> Draw the window for a table.
+
+=item * I<And much more...>
+
+
+=back
+
+=back
+
+
+=head1 METHODS
+
+=cut
+
+
+
 use warnings;
 use strict;
 use ADBGUI::BasicVariables;
@@ -44,7 +85,7 @@ sub new {
 
    $self->{clients} = {};
 
-   $self->{dbm}->{config}->{qooxdooprepath} = $self->{dbm}->{cwd} . $self->{text}->{qx}->{paths}->{qx_building_subdir}
+   $self->{dbm}->{config}->{qooxdooprepath} = $self->{dbm}->{cwd} . $self->{text}->{"qx"}->{paths}->{qx_building_subdir}
       unless $self->{dbm}->{config}->{qooxdooprepath};
 
    $self->{telnetserver} = POE::Component::Server::TCP->new(
@@ -152,7 +193,7 @@ sub new {
             $heap->{connection}->{ip} = $request->header('X-Forwarded-For') || $heap->{remote_ip};
             $heap->{connection}->{port} = $heap->{remote_port};
             $heap->{connection}->{sessionid} = $q->param("sessionid");
-            $heap->{connection}->{q} = $q;
+            $heap->{connection}->{"q"} = $q;
             $heap->{connection}->{request} = $request;
             Log("Ajax: sessionid=".$heap->{connection}->{sessionid}.":".$request->method().":".$request->uri().":".length($request->content())." Bytes:", $DEBUG);
             my $job = $q->param("job") || "";
@@ -337,230 +378,417 @@ sub new {
    return $self;
 }
 
-sub sendToQXForSession {
-   my $self = shift;
-   my $sessionid = shift;
-   my $text = shift;
-   my $ids = undef;
-   my $noque = shift || 0;
-   my $response = HTTP::Response->new();
-   $response->code(RC_OK);
-   $response->content($text."\n") if defined($text);
-   $response->content_type("text/plain; charset=UTF-8");
-   if ($sessionid) {
-      if (defined($self->{dbm}->getSession($sessionid))) {
-         $ids = [$sessionid];
-      } else {
-         Log("Qooxdoo.pm: sendToQX: Unknown session: ".$sessionid."!", $WARNING);
-         return; #die("Unknown session!");
-      }
-   } else {
-      $ids = [keys %{$self->{dbm}->{sessions}}];
-   }
-   foreach my $sessionid (@$ids) {
-      if (defined(my $curSession = $self->{dbm}->getSession($sessionid))) {
-         if (exists($curSession->{client}) &&
-            defined($curSession->{client})) {
-            Log("Sending for session ".$sessionid." to poesession ".$curSession->{client}, $DEBUG);
-            $poe_kernel->call($curSession->{client} => send_message => $response);
-            $poe_kernel->call($curSession->{client} => "shutdown");
-            delete $curSession->{client};
-         } else {
-            #Log("Writing for session ".$sessionid." to buffer.", $DEBUG);
-            unless ($noque) {
-               push(@{$curSession->{que}}, $text);
-               Log("Qued ".scalar(@{$curSession->{que}})." packets for ".$sessionid."!", $DEBUG);
+=pod
+
+=head2 sendToQXForSession( I<$sessionid>, I<$qooxdoocmd>, I<$noque> )
+
+Send I<$qooxdoocmd> to Session with id I<$sessionid>. I<$noque> is a optional parameter.
+
+I<Returns:> Nothing of meaning.
+
+=cut
+sub sendToQXForSession
+{
+    my $self      = shift;
+    my $sessionid = shift;
+    my $text      = shift;
+    my $noque     = shift || 0;
+
+    my $ids       = undef;
+
+    my $response  = HTTP::Response->new();
+    $response->code(RC_OK);
+    $response->content( $text . "\n" ) if defined($text);
+    $response->content_type("text/plain; charset=UTF-8");
+
+    if ($sessionid) {
+        if ( defined( $self->{dbm}->getSession($sessionid) ) ) {
+            $ids = [$sessionid];
+        }
+        else {
+            Log( "Qooxdoo.pm: sendToQX: Unknown session: " . $sessionid . "!",
+                $WARNING );
+            return;    #die("Unknown session!");
+        }
+    }
+    else {
+        $ids = [ keys %{ $self->{dbm}->{sessions} } ];
+    }
+
+    foreach my $sessionid (@$ids)
+    {
+        if ( defined( my $curSession = $self->{dbm}->getSession($sessionid) ) )
+        {
+            if ( exists( $curSession->{client} )
+                && defined( $curSession->{client} ) )
+            {
+                Log("Sending for session "
+                      . $sessionid
+                      . " to poesession "
+                      . $curSession->{client},
+                    $DEBUG
+                );
+
+                $poe_kernel->call( $curSession->{client} => send_message => $response );
+                $poe_kernel->call( $curSession->{client} => "shutdown" );
+                delete $curSession->{client};
             }
-         }
-      } else {
-         Log("Session ".$sessionid." not found.", $WARNING);
-      }
-   }
+            else {
+                #Log("Writing for session ".$sessionid." to buffer.", $DEBUG);
+                unless ($noque) {
+                    push( @{ $curSession->{que} }, $text );
+                    Log("Qued "
+                          . scalar( @{ $curSession->{que} } )
+                          . " packets for "
+                          . $sessionid . "!",
+                        $DEBUG
+                    );
+                }
+            }
+        }
+        else {
+            Log( "Session " . $sessionid . " not found.", $WARNING );
+        }
+    }
 }
 
-sub showActivate {
-   my $self = shift;
-   my $options = shift;
-   my $suffix = shift;
-   my $moreparams = shift;
-   unless ((!$moreparams) && $options->{curSession}) {
-      Log("onClientData: Missing parameters: connection session=".$options->{curSession}.": !", $ERROR);
-      return undef;
-   }
-   my $window = ($options->{window} || ("activate".($options->{table} ? "_".$options->{table} : $options->{activate} ? "_".$options->{activate} : '')));
-   $poe_kernel->yield(sendToQX => "destroy ".CGI::escape($window."_iframe"));
-   $options->{curSession}->{activateparams}->{$options->{activate}} =
-      ($options->{params} &&
-  (ref($options->{params}) eq "ARRAY")) ?
-       $options->{params} : 
-       $options->{params} ?
-      [$options->{params}] : [];
-   $poe_kernel->yield(sendToQX => "createiframe ".CGI::escape($window."_iframe")." ".CGI::escape("/ajax?nocache=".rand(999999999999)."&job=preactivate&activate=".$options->{activate}."&table=".$options->{table}."&sessionid=".$options->{curSession}->{sessionid}));
-   #$poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape($window."_".$suffix."_acticate_iframe));
-   my $curdef = {};
-   if ($options->{table}) { 
-      my $curtabledef   = $self->{dbm}->getTableDefiniton($options->{table});
-      $curdef->{width}  = $curtabledef->{qxactivatewidth}  || $curtabledef->{qxwidth}  || $qxwidth;
-      $curdef->{height} = $curtabledef->{qxactivateheight} || $curtabledef->{qxheight} || $qxheight;
-      $curdef->{label}  = $curtabledef->{label} || $options->{table};
-      $curdef->{icon}   = $curtabledef->{icon};
-   }
-   $curdef->{label}  ||= $options->{label}  || $options->{activate} || $self->{text}->{qx}->{unnamed};
-   $curdef->{height} ||= $options->{height} || $qxheight;
-   $curdef->{width}  ||= $options->{width}  || $qxwidth;
-   $curdef->{icon}   ||= $options->{icon}   || '';
+=pod
 
-   $poe_kernel->yield( sendToQX => "createwin " . CGI::escape($window) . " "
-         . CGI::escape( $curdef->{width} ) . " " . CGI::escape( $curdef->{height} ) . " "
-         . CGI::escape( $self->{text}->{qx}->{enable} . $curdef->{label} ) . " "
-         . CGI::escape( $curdef->{icon} ) );
+=head2 showActivate( I<$options>, I<$suffix>, I<$moreparams> )
 
-   $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape($window."_iframe"));
-   $poe_kernel->yield(sendToQX => "open ".CGI::escape($window)." 1");
-   $poe_kernel->yield(sendToQX => "modal ".CGI::escape($window)." 1") 
-      if ($options->{modal});
+Execute a shell command and display the output in a new window.
+(This is called an I<Activate> in ADBGUI Terminology).
+Using Ajax therefore nearly "live" output.
+Calls sendToQx() with createiframe as Parameter, this call contains
+a /ajax url, therefore handleAjax() will be called which does the
+actual invokation of the Activate.
+
+The concrete Activate is stored in I<$options-E<gt>{activate}>
+The mapping from activate to command is stored in dbm.cfg.   
+  For example:
+  I<activatecmd>B<Addkey> ./command.sh
+
+defines the activate B<Addkey>
+
+I<Returns:> Nothing of meaning.
+
+=cut
+
+
+sub showActivate
+{
+    my $self       = shift;
+    my $options    = shift;
+    my $suffix     = shift;
+    my $moreparams = shift;
+
+    unless ( ( !$moreparams ) && $options->{curSession} ) {
+        Log(
+            "onClientData: Missing parameters: connection session="
+              . $options->{curSession} . ": !",
+            $ERROR
+        );
+        return undef;
+    }
+
+    my $window = (
+        $options->{window}
+          || (
+            "activate"
+            . (
+                  $options->{table}    ? "_" . $options->{table}
+                : $options->{activate} ? "_" . $options->{activate}
+                : ''
+            )
+          )
+    );
+
+    $poe_kernel->yield(sendToQX => "destroy " . CGI::escape( $window . "_iframe" ) );
+
+    $options->{curSession}->{activateparams}->{ $options->{activate} } =
+      ( $options->{params} && ( ref( $options->{params} ) eq "ARRAY" ) )
+      ? $options->{params}
+      : $options->{params} ? [ $options->{params} ]
+      :                      [];
+
+    $poe_kernel->yield(
+            sendToQX => "createiframe "
+          . CGI::escape( $window . "_iframe" ) . " "
+          . CGI::escape(
+                "/ajax?nocache="
+              . rand(999999999999)
+              . "&job=preactivate&activate="
+              . $options->{activate}
+              . "&table="
+              . $options->{table}
+              . "&sessionid="
+              . $options->{curSession}->{sessionid}
+          )
+    );
+
+#$poe_kernel->yield(sendToQX => "addobject ".CGI::escape($window)." ".CGI::escape($window."_".$suffix."_acticate_iframe));
+    my $curdef = {};
+    
+    if ( $options->{table} )
+    {
+        my $curtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
+        $curdef->{width} =
+             $curtabledef->{qxactivatewidth}
+          || $curtabledef->{qxwidth}
+          || $qxwidth;
+        $curdef->{height} =
+             $curtabledef->{qxactivateheight}
+          || $curtabledef->{qxheight}
+          || $qxheight;
+        $curdef->{label} = $curtabledef->{label} || $options->{table};
+        $curdef->{icon} = $curtabledef->{icon};
+    }
+
+    $curdef->{label} ||=
+         $options->{label}
+      || $options->{activate}
+      || $self->{text}->{"qx"}->{unnamed};
+
+    $curdef->{height} ||= $options->{height} || $qxheight;
+    $curdef->{width}  ||= $options->{width}  || $qxwidth;
+    $curdef->{icon}   ||= $options->{icon}   || '';
+
+    $poe_kernel->yield( sendToQX => "createwin "
+          . CGI::escape($window) . " "
+          . CGI::escape( $curdef->{width} ) . " "
+          . CGI::escape( $curdef->{height} ) . " "
+          . CGI::escape( $self->{text}->{"qx"}->{enable} . $curdef->{label} )
+          . " "
+          . CGI::escape( $curdef->{icon} ) );
+
+    $poe_kernel->yield( sendToQX => "addobject "
+          . CGI::escape($window) . " "
+          . CGI::escape( $window . "_iframe" ) );
+    
+    $poe_kernel->yield( sendToQX => "open " . CGI::escape($window) . " 1" );
+
+    $poe_kernel->yield( sendToQX => "modal " . CGI::escape($window) . " 1" )
+      if ( $options->{modal} );
 }
 
-sub handleAjax {
-   my $self = shift;
-   my $action = shift;
-   my $kernel = shift;
-   my $session = shift;
-   my $heap = shift;
-   my $request = shift;
-   my $response = shift;
-   my $curSession = shift;
-   #$self->SUPER::handleAjax($action, $kernel, $session, $heap) if $self->SUPER::can("handleAjax");
-   if ($heap->{connection}->{"q"}->param("job") eq "preactivate") {
-      if ($action == $AJAXSTART) {
-         my $activate = $heap->{connection}->{"q"}->param("activate") || '';
-         $response->code(RC_OK);
-         $response->content_type("text/html; charset=UTF-8");
-         if (my $activatecmd = $self->{dbm}->{config}->{"activatecmd".$activate}) {
-            my $activateparams = [];
-            if ($activate && $curSession) {
-               $activateparams = $curSession->{activateparams}->{$activate} || [];
-               delete $curSession->{activateparams}->{$activate};
+=pod
+
+=head2 handleAjax( )
+
+  Gets called on any URL which contains "/ajax" from ClientInput Event of the POE Weserver.
+  Also handles Activates and calls the corresponding shell processes.
+
+=cut
+
+
+sub handleAjax
+{
+    my $self       = shift;
+    my $action     = shift;
+    my $kernel     = shift;
+    my $session    = shift;
+    my $heap       = shift;
+    my $request    = shift;
+    my $response   = shift;
+    my $curSession = shift;
+
+    #$self->SUPER::handleAjax($action, $kernel, $session, $heap) if $self->SUPER::can("handleAjax");
+    if ( $heap->{connection}->{"q"}->param("job") eq "preactivate" )
+    {
+        if ( $action == $AJAXSTART )
+        {
+            my $activate = $heap->{connection}->{"q"}->param("activate") || '';
+            $response->code(RC_OK);
+            $response->content_type("text/html; charset=UTF-8");
+
+            if ( my $activatecmd = $self->{dbm}->{config}->{ "activatecmd" . $activate } )
+            {
+                my $activateparams = [];
+                if ( $activate && $curSession )
+                {
+                    $activateparams = $curSession->{activateparams}->{$activate}
+                      || [];
+                    delete $curSession->{activateparams}->{$activate};
+                }
+                $response->content("<pre>");
+                $heap->{client}->put($response);
+                $heap->{client}->set_output_filter( POE::Filter::Stream->new() );
+                
+                $heap->{connection}->{activate} = POE::Session->create(
+                    inline_states => {
+                        _start => sub {
+                            my (
+                                $kernel,        $heap,
+                                $parentsession, $client,
+                                $activatecmd,   $activateparams,
+                                $timeout,       $activate,
+                                $qooxdoo,       $curSession
+                              )
+                              = @_[
+                              KERNEL, HEAP, ARG0, ARG1, ARG2, ARG3,
+                              ARG4,   ARG5, ARG6, ARG7
+                              ];
+                            $heap->{parentsession}  = $parentsession;
+                            $heap->{parentclient}   = $client;
+                            $heap->{timeout}        = $timeout;
+                            $heap->{qooxdoo}        = $qooxdoo;
+                            $heap->{activate}       = $activate;
+                            $heap->{activatecmd}    = $activatecmd;
+                            $heap->{activateparams} = $activateparams;
+                            $heap->{curSession}     = $curSession;
+                            my $cmd = undef;
+                            eval {
+                                $cmd = POE::Wheel::Run->new(
+                                    Program     => $activatecmd,
+                                    ProgramArgs => $activateparams || [],
+
+                                    #CloseOnCall => 1,
+                                    StdoutEvent => 'output',
+                                    StderrEvent => 'output',
+                                    ErrorEvent  => 'error',
+                                    CloseEvent  => 'close',
+                                    StdioFilter => POE::Filter::Stream->new()
+                                );
+                            };
+                            if ($@) {
+                                $heap->{parentclient}
+                                  ->put( "ERROR STARTING:" . $@ )
+                                  if ( defined( $heap->{parentclient} ) );
+                            }
+                            $heap->{cmd} = $cmd;
+                            my $pid = "Unknown";
+                            if ( defined( $heap->{cmd} ) ) {
+                                $pid = $heap->{cmd}->PID;
+                            }
+                            $heap->{parentclient}
+                              ->put( "Program started (PID:" . $pid . ")\n" )
+                              if ( defined( $heap->{parentclient} ) );
+                            $poe_kernel->delay( "timeout" => $heap->{timeout} )
+                              if $heap->{timeout};
+                        },
+                        _stop => sub {
+
+                           #delete $heap->{parentclient};
+                           #$kernel->call($heap->{parentsession} => "shutdown");
+                           #print "DONE\n";
+                        },
+                        output => sub {
+
+                            #print "OUTPUT\n";
+                            my ( $kernel, $heap, $output, $wheel_id ) =
+                              @_[ KERNEL, HEAP, ARG0, ARG1 ];
+
+                            #$output =~ s,\n,<br>\n,g;
+                            #$output = $output.(join(",", split(//, $output)));
+                            $heap->{parentclient}
+                              ->put( $heap->{qooxdoo}->can("onCmdRead")
+                                ? $heap->{qooxdoo}->onCmdRead( $heap, $output )
+                                : $output )
+                              if ( defined( $heap->{parentclient} ) );
+
+                            #syswrite(STDOUT, "PUT".length($output)."\n");
+                        },
+                        error => sub {
+                            my ( $kernel, $heap, $operation, $errnum, $errstr,
+                                $wheel_id )
+                              = @_[ KERNEL, HEAP, ARG0 .. ARG3 ];
+                            return
+                              if ( $operation eq "read" ) && ( $errnum == 0 );
+                            $heap->{parentclient}->put( "ERROR:"
+                                  . $operation
+                                  . " error "
+                                  . $errnum . ": "
+                                  . $errstr )
+                              if ( defined( $heap->{parentclient} ) );
+                            delete $heap->{parentclient};
+                            $kernel->call(
+                                $heap->{parentsession} => "shutdown" );
+
+                            #print "ERROR:".$errnum."\n";
+                        },
+                        close => sub {
+                            my ( $kernel, $heap ) = @_[ KERNEL, HEAP ];
+                            my $pid    = "Unknown";
+                            my $return = "Unknown";
+
+                            #print "CLOSE\n";
+                            if ( defined( $heap->{cmd} ) ) {
+                                $pid = $heap->{cmd}->PID;
+                                $return = waitpid( $pid, 0 );
+                            }
+                            delete $heap->{cmd};
+                            $heap->{parentclient}
+                              ->put( $heap->{qooxdoo}->onCmdClose($heap) )
+                              if $heap->{qooxdoo}->can("onCmdClose");
+                            $heap->{parentclient}
+                              ->put("Program terminated (PID:"
+                                  . $pid
+                                  . ", RET:"
+                                  . $return
+                                  . ")" )
+                              if ( defined( $heap->{parentclient} ) );
+                            delete $heap->{parentclient};
+                            $kernel->call(
+                                $heap->{parentsession} => "shutdown" );
+                            $poe_kernel->delay( "timeout" => undef );
+
+                            #print "CLOSEEND\n";
+                        },
+                        timeout => sub {
+                            my ( $kernel, $heap ) = @_[ KERNEL, HEAP ];
+                            my $pid = "unknown";
+                            if ( defined( $heap->{cmd} ) ) {
+                                $pid = $heap->{cmd}->PID;
+                            }
+                            $heap->{parentclient}
+                              ->put("TIMEOUT: Killing process(PID:"
+                                  . $pid
+                                  . ") after "
+                                  . $heap->{timeout}
+                                  . " seconds." )
+                              if ( defined( $heap->{parentclient} ) );
+                            $poe_kernel->yield("terminate");
+                        },
+                        terminate => sub {
+                            my ( $kernel, $heap ) = @_[ KERNEL, HEAP ];
+                            $heap->{cmd}->kill()
+                              if ( defined( $heap->{cmd} ) );
+                          }
+                    },
+                    args => [
+                        $session,
+                        $heap->{client},
+                        $activatecmd,
+                        $activateparams,
+                        $self->{dbm}->{config}->{"cmdtimeout"} || 3600,
+                        $activate,
+                        $self,
+                        $curSession
+                    ]
+                );
             }
-            $response->content("<pre>");
-            $heap->{client}->put($response);
-            $heap->{client}->set_output_filter(POE::Filter::Stream->new());
-            $heap->{connection}->{activate} = POE::Session->create(
-               inline_states => {
-                  _start  => sub {
-                     my ( $kernel, $heap, $parentsession, $client, $activatecmd, $activateparams, $timeout, $activate, $qooxdoo, $curSession ) = @_[ KERNEL, HEAP, ARG0, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7 ];
-                     $heap->{parentsession} = $parentsession;
-                     $heap->{parentclient}  = $client;
-                     $heap->{timeout} = $timeout;
-                     $heap->{qooxdoo} = $qooxdoo;
-                     $heap->{activate} = $activate;
-                     $heap->{activatecmd} = $activatecmd;
-                     $heap->{activateparams} = $activateparams;
-                     $heap->{curSession} = $curSession;
-                     my $cmd = undef;
-                     eval {
-                        $cmd = POE::Wheel::Run->new(
-                           Program      => $activatecmd,
-                           ProgramArgs  => $activateparams || [],
-                           #CloseOnCall => 1,
-                           StdoutEvent  => 'output',
-                           StderrEvent  => 'output',
-                           ErrorEvent   => 'error',
-                           CloseEvent   => 'close',
-                           StdioFilter  => POE::Filter::Stream->new()
-                        );
-                     };
-                     if ($@) {
-                        $heap->{parentclient}->put("ERROR STARTING:".$@)
-                           if(defined($heap->{parentclient}));
-                     }
-                     $heap->{cmd} = $cmd;
-                     my $pid = "Unknown";
-                     if (defined($heap->{cmd})) {
-                        $pid = $heap->{cmd}->PID;
-                     }
-                     $heap->{parentclient}->put("Program started (PID:".$pid.")\n")
-                        if(defined($heap->{parentclient}));
-                     $poe_kernel->delay("timeout" => $heap->{timeout})
-                        if $heap->{timeout};
-                  },
-                  _stop   => sub {
-                     #delete $heap->{parentclient};
-                     #$kernel->call($heap->{parentsession} => "shutdown");
-                     #print "DONE\n";
-                  },
-                  output => sub {
-                     #print "OUTPUT\n";
-                     my ($kernel, $heap, $output, $wheel_id) = @_[KERNEL, HEAP, ARG0, ARG1];
-                     #$output =~ s,\n,<br>\n,g;
-                     #$output = $output.(join(",", split(//, $output)));
-                     $heap->{parentclient}->put($heap->{qooxdoo}->can("onCmdRead") ?
-                                                $heap->{qooxdoo}->     onCmdRead($heap, $output) : $output)
-                        if(defined($heap->{parentclient}));
-                     #syswrite(STDOUT, "PUT".length($output)."\n");
-                  },
-                  error  => sub {
-                     my ($kernel, $heap, $operation, $errnum, $errstr, $wheel_id) = @_[KERNEL, HEAP, ARG0..ARG3];
-                     return if ($operation eq "read") && ($errnum == 0);
-                     $heap->{parentclient}->put("ERROR:".$operation." error ".$errnum.": ".$errstr)
-                        if(defined($heap->{parentclient}));
-                     delete $heap->{parentclient};
-                     $kernel->call($heap->{parentsession} => "shutdown");
-                     #print "ERROR:".$errnum."\n";
-                  },
-                  close  => sub {
-                     my ($kernel, $heap) = @_[KERNEL, HEAP];
-                     my $pid = "Unknown";
-                     my $return = "Unknown";
-                     #print "CLOSE\n";
-                     if (defined($heap->{cmd})) {
-                        $pid = $heap->{cmd}->PID;
-                        $return = waitpid($pid, 0);
-                     }
-                     delete $heap->{cmd};
-                     $heap->{parentclient}->put($heap->{qooxdoo}->onCmdClose($heap))
-                        if $heap->{qooxdoo}->can("onCmdClose");
-                     $heap->{parentclient}->put("Program terminated (PID:".$pid.", RET:".$return.")")
-                        if(defined($heap->{parentclient}));
-                     delete $heap->{parentclient};
-                     $kernel->call($heap->{parentsession} => "shutdown");
-                     $poe_kernel->delay("timeout" => undef);
-                     #print "CLOSEEND\n";
-                  },
-                  timeout => sub {
-                     my ($kernel, $heap) = @_[KERNEL, HEAP];
-                     my $pid = "unknown";
-                     if (defined($heap->{cmd})) {
-                        $pid = $heap->{cmd}->PID;
-                     }
-                     $heap->{parentclient}->put("TIMEOUT: Killing process(PID:".$pid.") after ".$heap->{timeout}." seconds.")
-                        if (defined($heap->{parentclient}));
-                     $poe_kernel->yield("terminate");
-                  },
-                  terminate => sub {
-                     my ($kernel, $heap) = @_[KERNEL, HEAP];
-                     $heap->{cmd}->kill()
-                        if (defined($heap->{cmd}));
-                  }
-               }, args => [ $session, $heap->{client}, $activatecmd, $activateparams, $self->{dbm}->{config}->{"cmdtimeout"} || 3600, $activate, $self, $curSession ]
-            );
-         }  else {
-            $response->content( $self->{text}->{qx}->{activate_not_configured} . $activate );
-            $heap->{client}->put($response);
+            else {
+                $response->content(
+                        $self->{text}->{"qx"}->{activate_not_configured}
+                      . $activate );
+                $heap->{client}->put($response);
+                $kernel->yield("shutdown");
+                return 1;
+            }
+        }
+        elsif ( $action == $AJAXDISCONNECTED ) {
+
+            #print "TERM\n";
+            $poe_kernel->call( $heap->{connection}->{activate}, "terminate" );
+
+            #$heap->{client}->put(" " x 20)
+            #   if (exists($heap->{client}) && defined($heap->{client}));
+            #delete $heap->{client};
             $kernel->yield("shutdown");
-            return 1;
-         }
-      } elsif($action == $AJAXDISCONNECTED) {
-         #print "TERM\n";
-         $poe_kernel->call($heap->{connection}->{activate}, "terminate");
-         #$heap->{client}->put(" " x 20)
-         #   if (exists($heap->{client}) && defined($heap->{client}));
-         #delete $heap->{client};
-         $kernel->yield("shutdown");
-      }
-      return 1;
-   }
-   return 0;
+        }
+        return 1;
+    }
+    return 0;
 }
 
 sub resetQX {
@@ -607,13 +835,13 @@ sub doQxContext {
          $poe_kernel->yield( sendToQX => "createwin "
                . $window
                . " 500 160 "
-               . CGI::escape( $self->{text}->{qx}->{accessing} . $username )
+               . CGI::escape( $self->{text}->{"qx"}->{accessing} . $username )
                . " "
                . CGI::escape('') );
          $poe_kernel->yield(sendToQX => "open ".$window." 1");
 
          $poe_kernel->yield(sendToQX => "createedit contextedit " . $options->{loginjob} . " " . 
-            CGI::escape( $self->{text}->{qx}->{username} ) . "," . CGI::escape( $self->{text}->{qx}->{password} ) . "," . CGI::escape( $self->{text}->{qx}->{context} ) . " " . 
+            CGI::escape( $self->{text}->{"qx"}->{username} ) . "," . CGI::escape( $self->{text}->{"qx"}->{password} ) . "," . CGI::escape( $self->{text}->{"qx"}->{context} ) . " " .
             CGI::escape("text")     . "," . CGI::escape("password") . "," . CGI::escape("text") . " " . 
             CGI::escape("username") . "," . CGI::escape("password") . "," . CGI::escape("contextid") . " " . 
             CGI::escape("hidden")   . "," . CGI::escape("")         . "," . CGI::escape("hidden") . " " . 
@@ -632,8 +860,8 @@ sub doQxContext {
       else
       {
          $poe_kernel->yield( sendToQX => "showmessage "
-            . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 "
-            . CGI::escape( $self->{text}->{qx}->{qx_context_error} . $contextid ) );
+            . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 50 "
+            . CGI::escape( $self->{text}->{"qx"}->{qx_context_error} . $contextid ) );
       }
    }
 
@@ -679,8 +907,8 @@ sub doContext {
    if (ref($return) ne "HASH")
    {
       $poe_kernel->yield(sendToQX => "showmessage " . 
-         CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 300 50 " . 
-         CGI::escape( $self->{text}->{qx}->{context_error} . ($contextid||"UNDEF") . ")"));
+         CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 300 50 " .
+         CGI::escape( $self->{text}->{"qx"}->{context_error} . ($contextid||"UNDEF") . ")"));
       return undef;
    }
    return $return;
@@ -714,6 +942,7 @@ sub onClientData {
    #print "INPUT: ".$options->{connection}->{sessionid}."\n";
    if ($options->{job} eq "delrow") {
       $self->onDelRow({
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -725,6 +954,7 @@ sub onClientData {
       });
    } elsif ($options->{job} eq "treechange") {
       $self->onTreeChange({
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -775,17 +1005,15 @@ sub onClientData {
   #    } else {
   #       ${$options->{content}} .= "Unable to build table reference tree!";
   #    }
-   }
-   elsif($options->{job} eq "auth")
-   {
+   } elsif($options->{job} eq "auth") {
       $self->onAuthenticate({
+         %$options,
          connection => $options->{connection},
          curSession => $options->{curSession}
       });
-   }
-   elsif($options->{job} eq "neweditentry")
-   {
+   } elsif($options->{job} eq "neweditentry") {
       $self->onNewEditEntry({
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -797,12 +1025,11 @@ sub onClientData {
          curSession => $options->{curSession},
          "q" => $options->{connection}->{"q"},
       });
-   }
-   elsif($options->{job} eq "filterselecttable")
-   {
+   } elsif($options->{job} eq "filterselecttable") {
       if (my $popupid = $options->{connection}->{"q"}->param("popupid")) {
          #$poe_kernel->yield(sendToQX => "show ".$popupid." 1");
          $self->onTableSelect({
+            %$options,
             table => $options->{table},
             oid => $options->{oid},
             curSession => $options->{curSession},
@@ -811,20 +1038,16 @@ sub onClientData {
          });
          $poe_kernel->yield(sendToQX => "addobject " . CGI::escape($popupid) . " " . CGI::escape($options->{oid} . "_tableselect_tree"));
       } else {
-         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{popupid_missing} . $options->{job} ));
+         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{"qx"}->{popupid_missing} . $options->{job} ));
       }
-   }
-   elsif( ($options->{job} eq "filteropen")
-          || ($options->{job} eq "filtersave") )
-   {
-        if ( my $popupid = $options->{connection}->{"q"}->param("popupid") )
-        {
+   } elsif( ($options->{job} eq "filteropen")
+         || ($options->{job} eq "filtersave") ) {
+        if ( my $popupid = $options->{connection}->{"q"}->param("popupid") ) {
             my $urlappend = ",popupid=" . $popupid . ",table=" . $options->{table};
-
             $poe_kernel->yield(
                   sendToQX => "createtree "
                   . CGI::escape( $popupid . "_" . $options->{job} )     . " "
-                  . CGI::escape( $self->{text}->{qx}->{saved_filters} ) . " "
+                  . CGI::escape( $self->{text}->{"qx"}->{saved_filters} ) . " "
                   . CGI::escape( ",treeaction=select" . $options->{job} . ",table=" . $options->{table}
                                  . ",loid=" . $options->{oid} . $urlappend )
             );
@@ -834,16 +1057,16 @@ sub onClientData {
                   . CGI::escape( $popupid . "_" . $options->{job} ) . " "
                   . CGI::escape("") . " "
                   . CGI::escape("1") . " "
-                  . CGI::escape( $self->{text}->{qx}->{first_entry} ) . " "
-                  . CGI::escape( $self->{text}->{qx}->{paths}->{system_search_png} )
+                  . CGI::escape( $self->{text}->{"qx"}->{first_entry} ) . " "
+                  . CGI::escape( $self->{text}->{"qx"}->{paths}->{system_search_png} )
             );
 
             $poe_kernel->yield( sendToQX => "addtreeentry "
                   . CGI::escape( $popupid . "_" . $options->{job} ) . " "
                   . CGI::escape("") . " "
                   . CGI::escape("newentry") . " "
-                  . CGI::escape( $self->{text}->{qx}->{new_entry} ) . " "
-                  . CGI::escape( $self->{text}->{qx}->{paths}->{list_add} ) )
+                  . CGI::escape( $self->{text}->{"qx"}->{new_entry} ) . " "
+                  . CGI::escape( $self->{text}->{"qx"}->{paths}->{list_add} ) )
               unless ( $options->{job} eq "filteropen" );
 
             $poe_kernel->yield( sendToQX => "addobject "
@@ -853,24 +1076,22 @@ sub onClientData {
         else   
         {
             $poe_kernel->yield( sendToQX => "showmessage "
-                  . CGI::escape( $self->{text}->{qx}->{internal_error} )
+                  . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
                   . " 400 200 "
-                  . CGI::escape( $self->{text}->{qx}->{popupid_missing} . $options->{job} )
+                  . CGI::escape( $self->{text}->{"qx"}->{popupid_missing} . $options->{job} )
             );
         }
-   }
-   elsif($options->{job} eq "filter")
-   {
+   } elsif($options->{job} eq "filter") {
       $self->onFilter({
+         %$options,
          table => $options->{table},
          oid => $options->{oid},
          curSession => $options->{curSession},
          "q" => $options->{connection}->{"q"},
       });
-   }
-   elsif($options->{job} eq "filterhtml")
-   {
+   } elsif($options->{job} eq "filterhtml") {
       $self->onFilterHTML({
+         %$options,
          table => $options->{table},
          oid => $options->{oid},
          curSession => $options->{curSession},
@@ -879,8 +1100,7 @@ sub onClientData {
          "q" => $options->{connection}->{"q"},
       });
    }
-   elsif($options->{job} eq "listcreateentry")
-   {
+   elsif($options->{job} eq "listcreateentry") {
       my $column = $options->{connection}->{"q"}->param("column") || '';
       my $id = $options->{connection}->{"q"}->param($UNIQIDCOLUMNNAME) || undef;
       my $table = undef,
@@ -898,6 +1118,7 @@ sub onClientData {
       {
          if (my $curtabledef = $self->{dbm}->getTableDefiniton($table)) {
             $self->onNewEditEntry({
+               %$options,
                table => $table,
                oid => $options->{oid},
                connection => $options->{connection},
@@ -913,21 +1134,22 @@ sub onClientData {
         } else 
         {
             my $msg           = "Error loading column: '"             . $table . "' -> '" . $column . "'";
-            my $localised_msg = $self->{text}->{qx}->{col_load_error} . $table . "' -> '" . $column . "'"; 
+            my $localised_msg = $self->{text}->{"qx"}->{col_load_error} . $table . "' -> '" . $column . "'";
 
             Log("Qooxdoo: listnewentry: ".$msg, $WARNING);
-            $poe_kernel->yield(  sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $localised_msg ) );
+            $poe_kernel->yield(  sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 200 " . CGI::escape( $localised_msg ) );
          }
       } else {
          my $msg           = "Bad column information: '" . $column . "'";
-         my $localised_msg = $self->{text}->{qx}->{col_info_error}  . $column . "'";
+         my $localised_msg = $self->{text}->{"qx"}->{col_info_error}  . $column . "'";
          
          Log("Qooxdoo: listnewentry: ".$msg, $WARNING);
-         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $localised_msg ) );
+         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 200 " . CGI::escape( $localised_msg ) );
       }
    }
    elsif($options->{job} eq "show") {
       $self->onShow({
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          connection => $options->{connection},
@@ -940,6 +1162,7 @@ sub onClientData {
       });
    } elsif($options->{job} eq "showlist") {
       $self->onShowList({
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          oid => $options->{oid},
@@ -951,6 +1174,7 @@ sub onClientData {
       });
    } elsif($options->{job} eq "updatelist") {
       $self->onUpdateList({
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -963,7 +1187,8 @@ sub onClientData {
       });
    } elsif($options->{job} eq "getrowcount") {
       $self->onGetRowCount({
-         "q" => $options->{connection}->{q},
+         %$options,
+         "q" => $options->{connection}->{"q"},
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -974,6 +1199,7 @@ sub onClientData {
       });
    } elsif($options->{job} eq "closeobject") {
       $self->onCloseObject({
+         %$options,
          curSession => $options->{curSession},
          oid => $options->{oid},
       });
@@ -992,6 +1218,7 @@ sub onClientData {
          }
       }
       $self->onGetLines({
+         %$options,
          "q" => $options->{connection}->{"q"},
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
@@ -1009,10 +1236,10 @@ sub onClientData {
       });
    }
    elsif(($options->{job} eq "saveedit") ||
-           ($options->{job} eq "newedit"))
-   {
+         ($options->{job} eq "newedit")) {
       my $id = $options->{$UNIQIDCOLUMNNAME} || $options->{connection}->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
       my $params = {
+         %$options,
          crosslink => $options->{crosslink},
          crossid => $options->{crossid},
          crosstable => $options->{crosstable},
@@ -1031,6 +1258,7 @@ sub onClientData {
    elsif($options->{job} eq "htmlpreview")
    {
       $self->onHTMLPreview({
+         %$options,
          table => $options->{table},
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          oid => $options->{oid},
@@ -1045,7 +1273,7 @@ sub onClientData {
       my $url = "/ajax?nocache=".rand(999999999999)."&job=statsval&sessionid=".$options->{curSession}->{sessionid};
 
       $poe_kernel->yield(sendToQX => "destroy ".CGI::escape($winname));
-      $poe_kernel->yield(sendToQX => "createwin " . CGI::escape($winname) . " " . ($qxwidth) . " " . ($qxheight) . " " . CGI::escape( $self->{text}->{qx}->{live_stats} ) . " " . CGI::escape("icon"));
+      $poe_kernel->yield(sendToQX => "createwin " . CGI::escape($winname) . " " . ($qxwidth) . " " . ($qxheight) . " " . CGI::escape( $self->{text}->{"qx"}->{live_stats} ) . " " . CGI::escape("icon"));
       $poe_kernel->yield(sendToQX => "createiframe ".CGI::escape($winname."_iframe")." ".CGI::escape($url));
       $poe_kernel->yield(sendToQX => "addobject ".CGI::escape($winname)." ".CGI::escape($winname."_iframe"));
       $poe_kernel->yield(sendToQX => "open ".CGI::escape($winname));
@@ -1054,11 +1282,11 @@ sub onClientData {
    {
       if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ADMIN)))
       {
-         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{permission_denied} )  );
+         $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{"qx"}->{permission_denied} )  );
          return Log("DBManager: onNewLineServer: ".$options->{job}.": ACCESS DENIED: ".$err->[0], $err->[1]);
       }
 
-      my $translations = $self->{text}->{qx}->{stats_window};
+      my $translations = $self->{text}->{"qx"}->{stats_window};
 
       my $value = "";
       my $url = "/ajax?nocache=".rand(999999999999)."&job=statsval&sessionid=".$options->{curSession}->{sessionid};
@@ -1093,7 +1321,7 @@ sub onClientData {
                     || 0)
             );
           $value .= $session
-            . " ($self->{text}->{qx}->{username}: "
+            . " (".$self->{text}->{"qx"}->{username}.": "
             . ( $cursession->{ $USERSTABLENAME . $TSEP . "username" } || "-" )
             . " / ID:"
             . ($cursession->{
@@ -1129,9 +1357,26 @@ sub onClientData {
       $options->{response}->code(RC_OK);
       $options->{response}->content_type("text/html; charset=UTF-8");
       ${$options->{content}} = $value;
+   } elsif(($options->{job} eq "tableselectline") ||
+           ($options->{job} eq "listselectline")) {
+      $self->onSelectLine({
+         %$options,
+         list => ($options->{job} eq "listselectline") ? 1 : 0,
+      });
    } else {
-      $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape($self->{text}->{qx}->{internal_error}) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{unknown_command} . $options->{job}) );
+      $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape($self->{text}->{"qx"}->{internal_error}) . " 400 200 " . CGI::escape( $self->{text}->{"qx"}->{unknown_command} . $options->{job}) );
    }
+}
+
+sub onSelectLine {
+   my $self = shift;
+   my $options = shift;
+   my $moreparams = shift;
+   unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{connection}) {
+      Log("onGetLines: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
+      return undef;
+   }
+   Log("User selected entry ".$options->{$UNIQIDCOLUMNNAME}." for table ".$options->{table}, $INFO);
 }
 
 sub parseFormularData {
@@ -1172,13 +1417,13 @@ sub onTreeChange {
       Log("onDelRow: Missing parameters: connection:".$options->{table}.": !", $ERROR);
       return undef;
    }
-   my $treeaction = $options->{q}->param("treeaction");
+   my $treeaction = $options->{"q"}->param("treeaction");
    if ($treeaction eq "filter") {
-      if (my $popupid = $options->{q}->param("popupid")) {
-         my $loid = $options->{q}->param("loid");
+      if (my $popupid = $options->{"q"}->param("popupid")) {
+         my $loid = $options->{"q"}->param("loid");
          if ($options->{$UNIQIDCOLUMNNAME}) {
-            #if ($options->{q}->param("entry")) {
-               if ($self->addFilterEntry($options->{q}->param("entry"), $options->{curSession}, $options->{table}, $options->{$UNIQIDCOLUMNNAME})) {
+            #if ($options->{"q"}->param("entry")) {
+               if ($self->addFilterEntry($options->{"q"}->param("entry"), $options->{curSession}, $options->{table}, $options->{$UNIQIDCOLUMNNAME})) {
                   $poe_kernel->yield(sendToQX => "destroy ".$popupid);
                   $poe_kernel->yield(sendToQX => "destroy ".CGI::escape($loid."_filter_iframe"));
                   $poe_kernel->yield(sendToQX => "createiframe ".CGI::escape($loid."_filter_iframe")." ".CGI::escape("/ajax?nocache=".rand(999999999999)."&job=filterhtml&table=".$options->{table}."&sessionid=".$options->{curSession}->{sessionid}."&oid=".$loid));
@@ -1259,13 +1504,13 @@ sub onDelRow {
 
          if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $MODIFY, $options->{table}, $options->{$UNIQIDCOLUMNNAME})))
          {
-            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{permission_denied} ));
+            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{"qx"}->{permission_denied} ));
             return Log("DBManager: onNewLineServer: ".$cmd.": ACCESS DENIED: ".$err->[0], $err->[1]);
          }
 
          if (($curtabledef->{readonly}) || ($curtabledef->{editonly}))
          {
-            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{qx}->{table_non_modifiable} ));
+            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 50 " . CGI::escape( $self->{text}->{"qx"}->{table_non_modifiable} ));
             return Log("DBManager: onNewLineServer: ".$cmd.": ACCESS DENIED: ACCESS_LOG not allowed!");
          }
          
@@ -1280,7 +1525,7 @@ sub onDelRow {
          if (defined(my $err = $self->{dbm}->BeforeNewUpdate($options->{table}, $cmd, { $options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table}) => $options->{$UNIQIDCOLUMNNAME} }, $options->{curSession})))
          {
             Log("ADBGUI::Qooxdoo::onDelRow: BeforeNewUpdate failed: ".$err, $INFO);
-            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{qx}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{qx}->{delrow_failed} ));
+            $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{"qx"}->{delrow_failed} ));
             return;
          }
 
@@ -1300,9 +1545,9 @@ sub onDelRow {
          {
             Log("DBManager: onNewLineServer: ".$cmd." ".$options->{table}." FAILED: SQL Query failed: ".$ret, $ERROR);
             $poe_kernel->yield( sendToQX => "showmessage "
-                  . CGI::escape( $self->{text}->{qx}->{internal_error} )
+                  . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
                   . " 400 200 "
-                  . CGI::escape( $self->{text}->{qx}->{delrow_linex_failed} . $ret ) );
+                  . CGI::escape( $self->{text}->{"qx"}->{delrow_linex_failed} . $ret ) );
          }
 
          return $ret;
@@ -1351,9 +1596,9 @@ sub onAuthenticate
         {
             $poe_kernel->yield(
                     sendToQX => "showmessage "
-                  . CGI::escape( $self->{text}->{qx}->{login_error} )
+                  . CGI::escape( $self->{text}->{"qx"}->{login_error} )
                   . " 400 50 "
-                  . CGI::escape( $self->{text}->{qx}->{application_unavailable} )
+                  . CGI::escape( $self->{text}->{"qx"}->{application_unavailable} )
             );
         }
     }
@@ -1392,9 +1637,9 @@ sub onAuthenticate
 
             if ($user) {
                 $poe_kernel->yield( sendToQX => "showmessage "
-                  . CGI::escape( $self->{text}->{qx}->{login_error} )
+                  . CGI::escape( $self->{text}->{"qx"}->{login_error} )
                   . " 400 50 "
-                  . CGI::escape( $self->{text}->{qx}->{wrong_pw_user_combo} )
+                  . CGI::escape( $self->{text}->{"qx"}->{wrong_pw_user_combo} )
             );
             }
         }
@@ -1457,8 +1702,8 @@ sub getBasicDataDefine {
             ($self->{dbm}->{config}->{oldlinklogic} && ($column eq $_."_".$UNIQIDCOLUMNNAME)))
          } keys(%{$db->{config}->{DB}->{tables}})]) && scalar(@$curTable)) {
             $options->{links}->{$column} = $curTable;
-         }
-         CGI::escape($curtabledef->{columns}->{$_}->{label} || $_)
+         };
+         CGI::escape(encode("utf8", ($curtabledef->{columns}->{$column}->{label} || $column)))
       } @{$options->{columns}}), @{$options->{overridecolumns}})),                                                     # 3. Spaltename, uebersetzt. Zudem werden Tabellenverknuepfungen erkannt.
       join(",", ((map {                    
          CGI::escape(($options->{links}->{$_}) ? "list" :
@@ -1517,7 +1762,7 @@ sub handleCrossLink {
       }
       else
       {
-         $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape( $self->{text}->{qx}->{internal_error} )." 400 200 ".CGI::escape( $self->{text}->{qx}->{no_crosslink_id} ));
+         $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape( $self->{text}->{"qx"}->{internal_error} )." 400 200 ".CGI::escape( $self->{text}->{"qx"}->{no_crosslink_id} ));
          push(@$where, "(1 == 2)");
       }
 
@@ -1531,7 +1776,7 @@ sub onGetLines {
    my $self = shift;
    my $options = shift;
    my $moreparams = shift;
-   unless ((!$moreparams) && $options->{q} && $options->{curSession} && $options->{table} && $options->{connection} && ($options->{start} =~ /^\d+$/) && ($options->{end} =~ /^\d+$/) && ($options->{end} >= $options->{start})) {
+   unless ((!$moreparams) && $options->{"q"} && $options->{curSession} && $options->{table} && $options->{connection} && ($options->{start} =~ /^\d+$/) && ($options->{end} =~ /^\d+$/) && ($options->{end} >= $options->{start})) {
       Log("onGetLines: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}." q=".$options->{"q"}.": !", $ERROR);
       return undef;
    }
@@ -1551,7 +1796,7 @@ sub onGetLines {
    } hashKeysRightOrder($curtabledef->{columns})];
    unshift(@$columns, $self->{dbm}->getIdColumnName($options->{table})) if exists($curtabledef->{columns}->{$self->{dbm}->getIdColumnName($options->{table})});
    if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}, $options->{$UNIQIDCOLUMNNAME}))) {
-      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{qx}->{permission_denied})."\n");
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{"qx"}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{"qx"}->{permission_denied})."\n");
       return Log("DBManager: onGetLines: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
    }
    my $ret = undef;
@@ -1567,6 +1812,7 @@ sub onGetLines {
    $db->getDataSet({
       %$options,
       $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
+      skip => $options->{start},
       rows => $count,
       searchdef => $self->{dbm}->getFilter($options),
       wherePre => $where,
@@ -1579,7 +1825,7 @@ sub onGetLines {
          my $msg = shift;
          unless (ref($ret) eq "ARRAY") {
             Log("DBManager: onGetLines: GET ".$options->{table}." FAILED SQL Query failed.", $WARNING);
-            $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{qx}->{failed}."\n"));
+            $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{"qx"}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{"qx"}->{failed}."\n"));
             return;         
          };
          # TODO/XXX/FIXME: Derzeit wird onGetLines einmal für getRowsCount und ein zweites mal für getRows abgefragt, das könnten wir cachen!
@@ -1594,7 +1840,7 @@ sub onGetLines {
                   $options->{curSession}->{hidebuttons}++;
                   # TODO/FIXME/XXX: Ausgabeformat beliebig ändern?
                   # TODO/FIXME/XXX: Hotfix fuer sayTRUST Logviewer: csv funktioniert mit Column_Handler nicht; es werden Spalten verschluckt.
-                  CGI::escape((lc($dbtype) eq "csv") ? $dbline->{$options->{table}.$TSEP.$curcolumn} : $self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $curcolumn))
+                  CGI::escape(encode("utf8", (lc($dbtype) eq "csv") ? $dbline->{$options->{table}.$TSEP.$curcolumn} : $self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $curcolumn))) || ""
                } @$columns);
                $self->sendToQXForSession($options->{connection}->{sessionid} || 0, $line);
             }
@@ -1647,9 +1893,9 @@ sub updateList {
       $self->sendToQXForSession(
           $options->{connection}->{sessionid} || 0,
           "showmessage "
-            . CGI::escape( $self->{text}->{qx}->{internal_error} )
+            . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
             . " 400 200 "
-            . CGI::escape( $self->{text}->{qx}->{permission_denied} . "\n" )
+            . CGI::escape( $self->{text}->{"qx"}->{permission_denied} . "\n" )
       );
       Log("Qooxdoo: updateList: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
       return undef;
@@ -1707,9 +1953,9 @@ sub updateList {
        $self->sendToQXForSession(
            $options->{connection}->{sessionid} || 0,
            "showmessage "
-             . CGI::escape( $self->{text}->{qx}->{internal_error} )
+             . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
              . " 400 200 "
-             . CGI::escape( $self->{text}->{qx}->{failed} . "\n" )
+             . CGI::escape( $self->{text}->{"qx"}->{failed} . "\n" )
        );
        return undef;
    }
@@ -1778,7 +2024,7 @@ sub updateListloop {
       Log("Qooxdoo: updateListloop: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
       return undef;
    }
-   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createlistitem ".CGI::escape($curid)." ".CGI::escape($dbline->{$options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table})})." ".CGI::escape($line)." ".CGI::escape(
+   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createlistitem ".CGI::escape($curid)." ".CGI::escape($dbline->{$options->{table}.$TSEP.$self->{dbm}->getIdColumnName($options->{table})})." ".CGI::escape(encode("utf8", $line))." ".CGI::escape(
       ($curtabledef->{listimagecolumn} && $dbline->{$curtabledef->{listimagecolumn}}) ?
          $dbline->{$curtabledef->{listimagecolumn}} :
                    $curtabledef->{listimagedefault} ?
@@ -1912,9 +2158,9 @@ sub doCSVonShow {
             $ret = "destroy ".$options->{table}."_".$suffix."\n";
             $ret .=
                 "showmessage "
-              . CGI::escape( $self->{text}->{qx}->{no_log_data} )
+              . CGI::escape( $self->{text}->{"qx"}->{no_log_data} )
               . " 400 100 "
-              . CGI::escape( $self->{text}->{qx}->{no_log_data} );
+              . CGI::escape( $self->{text}->{"qx"}->{no_log_data} );
             return $ret;
          }
 
@@ -1930,9 +2176,9 @@ sub doCSVonShow {
          $ret = "destroy " . $options->{table} . "_" . $suffix . "\n";
          $ret .=
              "showmessage "
-           . CGI::escape( $self->{text}->{qx}->{no_log_data} )
+           . CGI::escape( $self->{text}->{"qx"}->{no_log_data} )
            . " 400 100 "
-           . CGI::escape( $self->{text}->{qx}->{no_log_data} );
+           . CGI::escape( $self->{text}->{"qx"}->{no_log_data} );
          return $ret;
       }
    }
@@ -2060,10 +2306,10 @@ sub getTableButtonsDef
 
         
         return [
-            CGI::escape( $self->{text}->{qx}->{new} ) . ","
-              . CGI::escape( $self->{text}->{qx}->{edit} ) . ","
-              . CGI::escape( $self->{text}->{qx}->{delete} ) . ","
-              . CGI::escape( $self->{text}->{qx}->{filter} ),
+            CGI::escape( $self->{text}->{"qx"}->{new} ) . ","
+              . CGI::escape( $self->{text}->{"qx"}->{edit} ) . ","
+              . CGI::escape( $self->{text}->{"qx"}->{delete} ) . ","
+              . CGI::escape( $self->{text}->{"qx"}->{filter} ),
             CGI::escape("resource/qx/icon/Tango/32/actions/list-add.png") . ","
               . CGI::escape("/bilder/edit.png") . ","
               . CGI::escape("resource/qx/icon/Tango/32/actions/list-remove.png")
@@ -2091,7 +2337,7 @@ sub getTableButtonsDef
         (
             {
                 name  => "new",
-                label => $self->{text}->{qx}->{new} ,
+                label => $self->{text}->{"qx"}->{new} ,
                 image => "resource/qx/icon/Tango/"
                   . ( $options->{smallbuttons} ? "16" : "32" )
                   . "/actions/list-add.png",
@@ -2100,14 +2346,14 @@ sub getTableButtonsDef
             },
             {
                 name  => "edit",
-                label => $self->{text}->{qx}->{edit} ,
+                label => $self->{text}->{"qx"}->{edit} ,
                 image => ( $options->{smallbuttons} ? "" : "/bilder/edit.png" ),
                 action => "neweditentry",
                 bindto => "row",
             },
             {
                 name  => "del",
-                label => $self->{text}->{qx}->{delete} ,
+                label => $self->{text}->{"qx"}->{delete} ,
                 image => "resource/qx/icon/Tango/"
                   . ( $options->{smallbuttons} ? "16" : "32" )
                   . "/actions/list-remove.png",
@@ -2124,7 +2370,7 @@ sub getTableButtonsDef
             @$return,
             {
                 name  => "filter",
-                label => $self->{text}->{qx}->{filter} ,
+                label => $self->{text}->{"qx"}->{filter} ,
                 image => "resource/qx/icon/Tango/"
                   . ( $options->{smallbuttons} ? "16" : "32" )
                   . "/actions/system-search.png",
@@ -2155,14 +2401,14 @@ sub onHTMLPreview
                                    $options->{table}."_".$options->{column}."_".$suffix." ".
                                    ($curtabledef->{qxeditwidth} || $qxwidth)." ".
                                    ($curtabledef->{qxeditheight} || $qxheight)." ".
-                                   CGI::escape( $self->{text}->{qx}->{preview_of} .
+                                   CGI::escape( $self->{text}->{"qx"}->{preview_of} .
                                       (exists($curtabledef->{columns}->{$options->{column}}) &&
                                       defined($curtabledef->{columns}->{$options->{column}}) &&
                                               $curtabledef->{columns}->{$options->{column}}->{label} ? 
                                               $curtabledef->{columns}->{$options->{column}}->{label} :
                                                                         $options->{column})
-                                          . ($options->{$UNIQIDCOLUMNNAME} ?  $self->{text}->{qx}->{of_entry} . $options->{$UNIQIDCOLUMNNAME} : $self->{text}->{qx}->{new_entry} ).
-                                      $self->{text}->{qx}->{in} . ($curtabledef->{label} || $options->{table})) . " " . 
+                                          . ($options->{$UNIQIDCOLUMNNAME} ?  $self->{text}->{"qx"}->{of_entry} . $options->{$UNIQIDCOLUMNNAME} : $self->{text}->{"qx"}->{new_entry} ).
+                                      $self->{text}->{"qx"}->{in} . ($curtabledef->{label} || $options->{table})) . " " .
                                    CGI::escape($curtabledef->{icon}));
 
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "open ".$options->{table}."_".$options->{column}."_".$suffix." 1");
@@ -2184,7 +2430,7 @@ sub onHTMLPreview
            $options->{table} . "_" . $options->{column} . "_" . $suffix . "_button"
          )
          . " "
-         . CGI::escape( $self->{text}->{qx}->{close} ) . " "
+         . CGI::escape( $self->{text}->{"qx"}->{close} ) . " "
          . CGI::escape("resource/qx/icon/Tango/32/actions/dialog-close.png") . " "
          . CGI::escape(
                "job=closeobject,oid="
@@ -2258,15 +2504,15 @@ sub onSaveEditEntry {
                $options->{qxself}->afterNewUpdate($options, $options->{columns}, $ret);
             } elsif($ret) {
                $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "unlock ".CGI::escape($options->{"q"}->param("oid")));
-               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." ".($ret ? ((length($ret)+15) * 7) : 400)." 100 ".CGI::escape($ret || "Unspecified error"));
+               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{"qx"}->{internal_error})." ".($ret ? ((length($ret)+25) * 7) : 400)." 100 ".CGI::escape($ret || "Unspecified error"));
             } else {
                $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "unlock ".CGI::escape($options->{"q"}->param("oid")));
-               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." 500 100 ".CGI::escape($ret ? "onSaveEditEntry: ".$ret : $self->{text}->{qx}->{onSaveEditEntry_error}));
+               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{"qx"}->{internal_error})." 500 100 ".CGI::escape($ret ? "onSaveEditEntry: ".$ret : $self->{text}->{"qx"}->{onSaveEditEntry_error}));
             }
          } else {
             $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "unlock ".CGI::escape($options->{"q"}->param("oid")));
-            $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." 400 100 ".CGI::escape($self->{text}->{qx}->{onSaveEditEntry_error}));
-         }         
+            $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{"qx"}->{internal_error})." 400 100 ".CGI::escape($self->{text}->{"qx"}->{onSaveEditEntry_error}));
+         }
          return $ret;
       }
    });
@@ -2287,8 +2533,8 @@ sub afterNewUpdate {
       } elsif ($self->{dbm}->{config}->{oldlinklogic} && ($column =~ m,^(.+)_$UNIQIDCOLUMNNAME$,)) {
          $curtable = $1;
       }
-      my $value = "".($curtable ? $self->{gui}->getValueForTable($curtable, $columns) : undef) || $self->{text}->{qx}->{created_entry} ;
-      my $tmp = "addtoeditlist ".CGI::escape($addAndSelect)." ".CGI::escape($column)." ".CGI::escape($value)." ".CGI::escape($id);
+      my $value = "".($curtable ? $self->{gui}->getValueForTable($curtable, $columns) : undef) || $self->{text}->{"qx"}->{created_entry} ;
+      my $tmp = "addtoeditlist ".CGI::escape($addAndSelect)." ".CGI::escape($column)." ".CGI::escape(encode("utf8", $value))." ".CGI::escape($id);
       #Log($tmp, $WARNING);
       $self->sendToQXForSession($options->{connection}->{sessionid} || 0, $tmp);
       $tmp = "selectoneditlist ".CGI::escape($addAndSelect)." ".CGI::escape($column)." ".CGI::escape($id);
@@ -2326,9 +2572,9 @@ sub onFilter {
             )))
     {
         $poe_kernel->yield( sendToQX => "showmessage "
-              . CGI::escape( $self->{text}->{qx}->{internal_error} )
+              . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
               . " 400 200 "
-              . CGI::escape( $self->{text}->{qx}->{permission_denied} ) );
+              . CGI::escape( $self->{text}->{"qx"}->{permission_denied} ) );
         Log( "Qooxdoo: onFilter: GET: ACCESS DENIED: " . $err->[0], $err->[1] );
         return undef;
     }
@@ -2352,7 +2598,7 @@ sub onFilter {
           )
           . " "
           . CGI::escape(
-            $self->{text}->{qx}->{filter_in} . ( $curtabledef->{label} || $options->{table} )
+            $self->{text}->{"qx"}->{filter_in} . ( $curtabledef->{label} || $options->{table} )
           )
           . " "
           . ( CGI::escape( $curtabledef->{icon} || '' ) )
@@ -2379,7 +2625,7 @@ sub onFilter {
         {
             id      => $options->{oid} . "_filter_toolbar_add",
             job     => "createtoolbarbutton",
-            label   => $self->{text}->{qx}->{filter_criterion} ,
+            label   => $self->{text}->{"qx"}->{filter_criterion} ,
             image   => "resource/qx/icon/Tango/16/actions/list-add.png",
             popupid => $options->{oid} . "_filter_popup",
             action  => "job=filterselecttable,table="
@@ -2398,7 +2644,7 @@ sub onFilter {
         {
             id      => $options->{oid} . "_filter_toolbar_open",
             job     => "createtoolbarbutton",
-            label   => $self->{text}->{qx}->{load} ,
+            label   => $self->{text}->{"qx"}->{load} ,
             image   => "resource/qx/icon/Tango/16/actions/document-open.png",
             popupid => $options->{oid} . "_filteropen",
             action  => "job=filteropen,table="
@@ -2414,7 +2660,7 @@ sub onFilter {
         {
             id      => $options->{oid} . "_filter_toolbar_save",
             job     => "createtoolbarbutton",
-            label   => $self->{text}->{qx}->{save} ,
+            label   => $self->{text}->{"qx"}->{save} ,
             image   => "resource/qx/icon/Tango/16/actions/document-save.png",
             popupid => $options->{oid} . "_filtersave",
             action  => "job=filtersave,table="
@@ -2512,7 +2758,7 @@ sub onFilterHTML {
 
    if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table})))
    {
-      $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape( $self->{text}->{qx}->{internal_error} )." 400 200 ".CGI::escape( $self->{text}->{qx}->{permission_denied} . "\n" ));
+      $poe_kernel->yield(sendToQX => "showmessage ".CGI::escape( $self->{text}->{"qx"}->{internal_error} )." 400 200 ".CGI::escape( $self->{text}->{"qx"}->{permission_denied} . "\n" ));
       Log("Qooxdoo: onFilterHTML: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
       return undef;
    }
@@ -2533,9 +2779,9 @@ sub onFilterHTML {
       table => $options->{table},
    });
    # TODO:XXX:FIXME: Hier werden die Benutzereingaben ungefiltert übernommen!!!!
-   my $filterjob = $options->{q}->param("filterjob") || "";
-   my $filtername = $options->{q}->param("filtername");
-   my $filtervalue = $options->{q}->param("filtervalue");
+   my $filterjob = $options->{"q"}->param("filterjob") || "";
+   my $filtername = $options->{"q"}->param("filtername");
+   my $filtervalue = $options->{"q"}->param("filtervalue");
    my $doFilterUpdate = 0;
    if ($filterjob eq "deletefilter") {
       if ($filtername) {
@@ -2568,11 +2814,11 @@ sub onFilterHTML {
       $doFilterUpdate++;
    } elsif($filterjob eq "setfilterdatebegin") {
       #print "XXX:".$filtername.":".$filtervalue.":\n";
-      my $values = $self->{gui}->parseDateDefintion($filtervalue, $options->{q});
+      my $values = $self->{gui}->parseDateDefintion($filtervalue, $options->{"q"});
       $filter->{$filtername."_begin"} = $values->[0];
       $doFilterUpdate++;
    } elsif($filterjob eq "setfilterdateend") {
-      my $values = $self->{gui}->parseDateDefintion($filtervalue, $options->{q});
+      my $values = $self->{gui}->parseDateDefintion($filtervalue, $options->{"q"});
       $filter->{$filtername."_end"} = $values->[1];
       $doFilterUpdate++;
    } elsif($filterjob eq "deletefilterdatebegin") {
@@ -2595,9 +2841,9 @@ sub onFilterHTML {
    {
       my $showtype = 0;
 
-      ${$options->{content}} .= "<table width=100%><tr><td></td><td><b>" . $self->{text}->{qx}->{filter_criterion}
-                      . "</b></td><td><b>" . $self->{text}->{qx}->{table} . "</b></td>"
-                      . ($showtype ? "<td><center><b>" . $self->{text}->{qx}->{filter_criterion} . "</b></center></td>" : "")."</tr>";
+      ${$options->{content}} .= "<table width=100%><tr><td></td><td><b>" . $self->{text}->{"qx"}->{filter_criterion}
+                      . "</b></td><td><b>" . $self->{text}->{"qx"}->{table} . "</b></td>"
+                      . ($showtype ? "<td><center><b>" . $self->{text}->{"qx"}->{filter_criterion} . "</b></center></td>" : "")."</tr>";
 
       foreach my $curfilter ( sort {  (     (($b =~ m,^$options->{table},) ? 1 : 0)
                                         <=> (($a =~ m,^$options->{table},) ? 1 : 0))
@@ -2681,10 +2927,10 @@ sub onFilterHTML {
                         wherePre => $wherePre,
                         session => $options->{curSession},
                      });
-                     my $addtext = $self->{text}->{qx}->{selected_entries_only} ;
+                     my $addtext = $self->{text}->{"qx"}->{selected_entries_only} ;
                      if ($filter->{$curfilter} && (ref($filter->{$curfilter}) eq "ARRAY") && scalar(@{$filter->{$curfilter}}))
                      {
-                        ${ $options->{content} } .=  $self->{text}->{qx}->{only_the_following} . join(
+                        ${ $options->{content} } .=  $self->{text}->{"qx"}->{only_the_following} . join(
                             "",
                             map {
                                 my $id    = $_;
@@ -2719,7 +2965,7 @@ sub onFilterHTML {
                         );
 
                         #${$options->{content}} .= "<br>";
-                        $addtext = $self->{text}->{qx}->{further_selection} ;
+                        $addtext = $self->{text}->{"qx"}->{further_selection} ;
                      }
 
                     if (defined($ret)
@@ -2778,14 +3024,14 @@ sub onFilterHTML {
                               . "</option>\n";
                         }
                         ${ $options->{content} } .=
-                            "</select><input type=submit value=$self->{text}->{qx}->{add} ></form>";
+                            "</select><input type=submit value=".$self->{text}->{"qx"}->{add}."></form>";
 
                   #${$options->{content}} .= "</nobr></font></td></tr></table>";
                         ${ $options->{content} } .= hideend();
                     }
                      ${$options->{content}} .= "</font>";
                   } else {
-                     ${$options->{content}} .= "<font color=red>$self->{text}->{qx}->{link_to_broken}" . $table . "</font>";
+                     ${$options->{content}} .= "<font color=red>".$self->{text}->{"qx"}->{link_to_broken}." ".$table."</font>";
                   }
                }
                elsif (($columntype eq "date") ||
@@ -2802,67 +3048,67 @@ sub onFilterHTML {
 
                   ${$options->{content}} .= "<font size=2>";
 
-                  my $addtext = $plusimg . " " . $self->{text}->{qx}->{before_specific_date} ; #  . "<br>" . $curfilter . "_begin" . "<br>" . join(";", map { $_ . "=" . $filter->{$_} } keys %$filter);
+                  my $addtext = $plusimg . " " . $self->{text}->{"qx"}->{before_specific_date} ; #  . "<br>" . $curfilter . "_begin" . "<br>" . join(";", map { $_ . "=" . $filter->{$_} } keys %$filter);
 
                   if ($filter->{$curfilter."_begin"})
                   {
-                     ${$options->{content}} .= $self->getFilterActionLink($options, "deletefilterdatebegin", $curfilter).$minusimg."</a>" . $self->{text}->{qx}->{before} ;
+                     ${$options->{content}} .= $self->getFilterActionLink($options, "deletefilterdatebegin", $curfilter).$minusimg."</a>" . $self->{text}->{"qx"}->{before} ;
                      $addtext = $filter->{$curfilter."_begin"};
                   }
 
                   ${$options->{content}} .= hidebegin("filter".$table.$curfilter."begin", $addtext);
                   ${$options->{content}} .= $self->getFilterActionForm($options, "setfilterdatebegin", $curfilter, $column);
                   ${$options->{content}} .= $self->{gui}->printDateQuestion("search".$column."_begin_", $self->{gui}->getDatePredefFor($column, $filter->{$curfilter."_begin"}), $datedef);
-                  ${$options->{content}} .= "<input type=submit value=" .  $self->{text}->{qx}->{refresh} . ">";
+                  ${$options->{content}} .= "<input type=submit value=" .  $self->{text}->{"qx"}->{refresh} . ">";
                   ${$options->{content}} .= "</form>";
                   ${$options->{content}} .= hideend();
-                  $addtext = $plusimg . " " . $self->{text}->{qx}->{after_specific_date} ;
+                  $addtext = $plusimg . " " . $self->{text}->{"qx"}->{after_specific_date} ;
 
                   if ($filter->{$curfilter."_end"})
                   {
-                     ${$options->{content}}  .= $self->getFilterActionLink($options, "deletefilterdateend", $curfilter) . $minusimg . "</a>" . $self->{text}->{qx}->{after} ;
+                     ${$options->{content}}  .= $self->getFilterActionLink($options, "deletefilterdateend", $curfilter) . $minusimg . "</a>" . $self->{text}->{"qx"}->{after} ;
                      $addtext = $filter->{$curfilter."_end"};
                   }
                   ${$options->{content}} .= hidebegin("filter".$table.$curfilter."end", $addtext);
                   ${$options->{content}} .= $self->getFilterActionForm($options, "setfilterdateend", $curfilter, $column);
                   ${$options->{content}} .= $self->{gui}->printDateQuestion("search".$column."_end_", $self->{gui}->getDatePredefFor($column, $filter->{$curfilter."_end"}, 1), $datedef);
-                  ${$options->{content}} .= "<input type=submit value=" .  $self->{text}->{qx}->{refresh} . ">";
+                  ${$options->{content}} .= "<input type=submit value=" .  $self->{text}->{"qx"}->{refresh} . ">";
                   ${$options->{content}} .= "</form>";
                   ${$options->{content}} .= hideend();
                   ${$options->{content}} .= "</font>";
                } elsif ($columntype eq "boolean") {
                   ${$options->{content}} .= "<font size=2>";
                   if ($filter->{$curfilter} eq "1") {
-                     ${$options->{content}} .= $self->{text}->{qx}->{has_to_be_set} ;
+                     ${$options->{content}} .= $self->{text}->{"qx"}->{has_to_be_set} ;
                   } elsif ($filter->{$curfilter} eq "0") {
-                     ${$options->{content}} .= $self->{text}->{qx}->{must_not_be_set} ;
+                     ${$options->{content}} .= $self->{text}->{"qx"}->{must_not_be_set} ;
                   } else {
-                     ${$options->{content}} .= $plusimg . $self->{text}->{qx}->{has_to_be_set} ;
+                     ${$options->{content}} .= $plusimg . $self->{text}->{"qx"}->{has_to_be_set} ;
                      ${$options->{content}} .= "<br>";
-                     ${$options->{content}} .= $plusimg . $self->{text}->{qx}->{must_not_be_set} ;
+                     ${$options->{content}} .= $plusimg . $self->{text}->{"qx"}->{must_not_be_set} ;
                   }
                   ${$options->{content}} .= "</font>";
                } elsif ($columntype eq $DELETEDCOLUMNNAME) {
                   ${$options->{content}} .= "<font size=2>";
                   if ($filter->{$curfilter} eq "1") {
-                     ${$options->{content}}  .= $minusimg . $self->{text}->{qx}->{only_archived_entries} ;
+                     ${$options->{content}}  .= $minusimg . $self->{text}->{"qx"}->{only_archived_entries} ;
                   } elsif ($filter->{$curfilter} eq "0") {
-                     ${$options->{content}} .= $minusimg . $self->{text}->{qx}->{only_non_archived} ;
+                     ${$options->{content}} .= $minusimg . $self->{text}->{"qx"}->{only_non_archived} ;
                   } else {
-                     ${$options->{content}} .= $plusimg . $self->{text}->{qx}->{only_archived_entries} ;
+                     ${$options->{content}} .= $plusimg . $self->{text}->{"qx"}->{only_archived_entries} ;
                      ${$options->{content}} .= "<br>";
-                     ${$options->{content}} .= $plusimg . $self->{text}->{qx}->{only_non_archived} ;
+                     ${$options->{content}} .= $plusimg . $self->{text}->{"qx"}->{only_non_archived} ;
                   }
                   ${$options->{content}} .= "</font>";
                } elsif ($columntype eq "number") {
-                  ${$options->{content}} .= "<font size=2>" . $self->{text}->{qx}->{number} . "</font>";
+                  ${$options->{content}} .= "<font size=2>" . $self->{text}->{"qx"}->{number} . "</font>";
                #if (($columntype eq "text") ||
                #    ($columntype eq "textarea")) {
                } else {
                   ${$options->{content}} .= "<font size=2>";
-                  my $addtext = $plusimg . " " . $self->{text}->{qx}->{filter_for_text} ;
+                  my $addtext = $plusimg . " " . $self->{text}->{"qx"}->{filter_for_text} ;
                   if ($filter->{$curfilter}) {
-                     ${$options->{content}} .= $self->getFilterActionLink($options, "deletefilterval", $curfilter).$minusimg."</a> " . $self->{text}->{qx}->{contains} . ": ";
+                     ${$options->{content}} .= $self->getFilterActionLink($options, "deletefilterval", $curfilter).$minusimg."</a> " . $self->{text}->{"qx"}->{contains} . ": ";
                      $addtext = $filter->{$curfilter};
                   }
                   ${$options->{content}} .= hidebegin("filter".$table.$curfilter, $addtext);
@@ -2870,7 +3116,7 @@ sub onFilterHTML {
                   ${$options->{content}} .= "<table width=100%><tr><td>"; # " width=1%><font size=2>".$minusimg." Beinhaltet: ".$filter->{$curfilter}."</font>"."</td><td>";
                   ${$options->{content}} .= "<input type=text name=filtervalue style='width:100%' value='".($filter->{$curfilter}||"")."'>";
                   ${$options->{content}} .= "</td><td>";
-                  ${$options->{content}} .= "<input type=submit value=" . $self->{text}->{qx}->{refresh} . ">";
+                  ${$options->{content}} .= "<input type=submit value=" . $self->{text}->{"qx"}->{refresh} . ">";
                   ${$options->{content}} .= "</td></tr></table>";
                   ${$options->{content}} .= "</form>";
                   ${$options->{content}} .= hideend();
@@ -2881,7 +3127,7 @@ sub onFilterHTML {
             }
          } else {
             ${$options->{content}} .= "<td colspan=".(2 + ($showtype ? 1 : 0)).">";
-            ${$options->{content}} .= $curfilter." (<font color=red>" . $self->{text}->{qx}->{unknown_filter_crit} . "</font>)";
+            ${$options->{content}} .= $curfilter." (<font color=red>" . $self->{text}->{"qx"}->{unknown_filter_crit} . "</font>)";
          }
          ${$options->{content}} .= "</td></tr>";
          #${$options->{content}} .= " = ".(
@@ -2893,7 +3139,7 @@ sub onFilterHTML {
       }
       ${$options->{content}} .= "</table>";
    } else {
-       ${$options->{content}} .= "<br><font size=4><center>" . $self->{text}->{qx}->{no_filter_crit_selected} . "</center></font>";
+       ${$options->{content}} .= "<br><font size=4><center>" . $self->{text}->{"qx"}->{no_filter_crit_selected} . "</center></font>";
    }
    ${$options->{content}} .= "</font>";
 }
@@ -2931,9 +3177,9 @@ sub onTableSelect
       )
     {
         $poe_kernel->yield( sendToQX => "showmessage "
-              . CGI::escape( $self->{text}->{qx}->{internal_error} )
+              . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
               . " 400 200 "
-              . CGI::escape( $self->{text}->{qx}->{permission_denied} . "\n") );
+              . CGI::escape( $self->{text}->{"qx"}->{permission_denied} . "\n") );
         Log( "Qooxdoo: onTableSelect: GET: ACCESS DENIED: " . $err->[0],
             $err->[1] );
         return undef;
@@ -2988,7 +3234,7 @@ sub onTableSelect
         $poe_kernel->yield(
                 sendToQX => "createtree "
               . CGI::escape( $options->{oid} . "_tableselect_tree" ) . " "
-              . CGI::escape( $self->{text}->{qx}->{search_criteria} ) . " "
+              . CGI::escape( $self->{text}->{"qx"}->{search_criteria} ) . " "
               . CGI::escape(
                     ",treeaction=filter,table="
                   . $options->{table}
@@ -3012,9 +3258,9 @@ sub onTableSelect
     }
     else {
         $poe_kernel->yield( sendToQX => "showmessage "
-              . CGI::escape( $self->{text}->{qx}->{internal_error} )
+              . CGI::escape( $self->{text}->{"qx"}->{internal_error} )
               . " 400 200 "
-              . CGI::escape( $self->{text}->{qx}->{table_ref_tree_error} ) );
+              . CGI::escape( $self->{text}->{"qx"}->{table_ref_tree_error} ) );
     }
 }
 
@@ -3094,11 +3340,11 @@ sub getDefaults {
 
     foreach my $column ( @{ $params->{columns} } ) {
         $mydefaults->{ $options->{table} . $TSEP . $column } =
-          $options->{q}->param( $options->{table} . $TSEP . $column )
-          if ( exists( $options->{q} )
-            && defined( $options->{q} )
-            && $options->{q}
-            && $options->{q}->param( $options->{table} . $TSEP . $column ) );
+          $options->{"q"}->param( $options->{table} . $TSEP . $column )
+          if ( exists( $options->{"q"} )
+            && defined( $options->{"q"} )
+            && $options->{"q"}
+            && $options->{"q"}->param( $options->{table} . $TSEP . $column ) );
         $mydefaults->{ $options->{table} . $TSEP . $column } ||=
           $params->{ret}->[0]->[0]->{ $options->{table} . $TSEP . $column }
           if (
@@ -3207,476 +3453,184 @@ sub determineCrossLink {
 }
 
 
-sub onNewEditEntry
-{
-    my $self       = shift;
-    my $options    = shift;
-    my $moreparams = shift;
+sub onNewEditEntry {
+   my $self       = shift;
+   my $options    = shift;
+   my $moreparams = shift;
 
-    unless ( ( !$moreparams )
-        && $options->{curSession}
-        && $options->{table}
-        && $options->{connection} )
-    {
-        Log(
-            "Qooxdoo: onNewEditEntry: Missing parameters: table:"
-              . $options->{table}
-              . ":curSession:"
-              . $options->{curSession} . ": !",
-            $ERROR
-        );
-        return undef;
-    }
-
-    my $suffix = "edit";
-    if (
-        defined(
-            my $err = $self->{dbm}->checkRights(
-                $options->{curSession}, $ACTIVESESSION,
-                $options->{table},      $options->{$UNIQIDCOLUMNNAME}
-            )
-        )
-      )
-    {
-        $self->sendToQXForSession(
-            $options->{connection}->{sessionid} || 0,
-            "showmessage "
-              . CGI::escape( $self->{text}->{qx}->{internal_error} )
-              . " 400 200 "
-              . CGI::escape( $self->{text}->{qx}->{permission_denied} . "\n"),
-            $options->{connection}->{sessionid} || 0
-        );
-        Log( "Qooxdoo: onNewEditEntry: GET: ACCESS DENIED: " . $err->[0],
-            $err->[1] );
-        return undef;
-    }
-    my $curtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
-    my $columns = [    #grep { my $status = $self->{gui}->getViewStatus({
-                       #      column => $_,
-                       #      table => $options->{table},
-                       #      targetself => $options->{curSession}
-                       #   }); ($status ne "hidden") }
-        grep {
-            (        exists( $curtabledef->{columns}->{$_}->{type} )
-                  && defined( $curtabledef->{columns}->{$_}->{type} )
-                  && ( $curtabledef->{columns}->{$_}->{type} ne "htmltext" )
-                  && ( $curtabledef->{columns}->{$_}->{type} ne "longtext" ) )
-              && $self->{dbm}->isMarked( $options->{onlyWithMark},
-                $curtabledef->{columns}->{$_}->{marks} )
-          }
-
-    # TODO:FIXME:XXX: Typ "virtual" hier rausfiltern oder als readonly schicken?
-          hashKeysRightOrder(
-            $curtabledef->{columns},
-            0, $options->{specialordercolumn}
-          )
-    ];
-    my $ret = [];
-    if ( $options->{$UNIQIDCOLUMNNAME} ) {
-        my $db = $self->{dbm}->getDBBackend( $options->{table} );
-        unless (
-            defined(
-                $ret = $db->getDataSet(
-                    {
-                        table             => $options->{table},
-                        nodeleted         => 1,
-                        $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
-                        wherePre          => $self->{dbm}->Where_Pre($options),
-                        session           => $options->{curSession}
-                    }
-                )
-            )
-            && ( ref($ret) eq "ARRAY" )
-            && ( scalar( @{ $ret->[0] } ) >= 1 )
-          )
-        {
-            Log(
-                "DBManager: onNewLineServer: GET "
-                  . $options->{table}
-                  . " FAILED SQL Query failed.",
-                $WARNING
-            );
-            $self->sendToQXForSession(
-                $options->{connection}->{sessionid} || 0,
-                "showmessage "
-                  . CGI::escape( $self->{text}->{qx}->{permission_denied} )
-                  . " 300 50 "
-                  . CGI::escape( $self->{text}->{qx}->{permission_denied} ),
-                $options->{connection}->{sessionid} || 0
-            );
-            return undef;
-        }
-    }
-
-    my $window = undef;
-
-    if ( $options->{window} )
-    {
-        $window = $options->{window};
-        $self->sendToQXForSession( $options->{connection}->{sessionid} || 0,
-            "destroy " . $window . "_tabs" )
-          ;    # , $options->{connection}->{sessionid} || 0);
-        $self->sendToQXForSession( $options->{connection}->{sessionid} || 0,
-            "destroy " . $window . "_data" )
-          ;    # , $options->{connection}->{sessionid} || 0);
-        $self->sendToQXForSession(
-            $options->{connection}->{sessionid} || 0,
-            "destroy " . $window . "_button"
-        );     # , $options->{connection}->{sessionid} || 0);
-    }
-    else {
-        $window = $options->{table} . "_" . $suffix;
-        $self->sendToQXForSession( $options->{connection}->{sessionid} || 0,
-            "destroy " . $window )
-          ;    # , , $options->{connection}->{sessionid} || 0);
-        $self->sendToQXForSession(
-            $options->{connection}->{sessionid} || 0,
-            "createwin "
-              . $window . " "
-              . ( $curtabledef->{qxeditwidth}  || $qxwidth ) . " "
-              . ( $curtabledef->{qxeditheight} || $qxheight ) . " "
-              . CGI::escape(
-                (
-                         $options->{newedittitle}
-                      || $options->{title}
-                      || ( $options->{$UNIQIDCOLUMNNAME}
-                        ?  $self->{text}->{qx}->{details_of_entry} . $options->{$UNIQIDCOLUMNNAME}
-                        :  $self->{text}->{qx}->{new_entry} )
-                      . $self->{text}->{qx}->{in} 
-                      . ( $curtabledef->{label} || $options->{table} )
-                )
-              )
-              . " "
-              . ( CGI::escape( $curtabledef->{icon} || '' ) )
-        );    # , , $options->{connection}->{sessionid} || 0);
-        $self->sendToQXForSession( $options->{connection}->{sessionid} || 0,
-            "open " . $window . " 1" )
-          ;    # , , $options->{connection}->{sessionid} || 0);
-               # TODO:FIXME:XXX: Modal sollte konfigurierbar sein!
-         #$self->sendToQXForSession($options->{connection}->{sessionid} || 0, "modal ".$window." 1", $options->{connection}->{sessionid} || 0);
-    }
-    my $links      = {};
-    my $mydefaults = $self->getDefaults(
-        {
-            options     => $options,
-            curtabledef => $curtabledef,
-            columns     => $columns,
-            ret         => $ret,
-        }
-    );
-    my $overridecolumns = [];
-    if ( $options->{override} ) {
-        $ret->[0]->[0] = { %{ $ret->[0]->[0] }, %{ $options->{override} } };
-
-        #Log("COLUMNS PRE:".scalar(@$columns), $WARNING);
-        $overridecolumns = [
-            grep {
-                my $column = $_;
-                scalar( grep { $_ eq $column } @$columns ) ? 0 : 1
-            } keys %{ $options->{override} }
-        ];
-
-        #Log("COLUMNS POST:".scalar(@$columns), $WARNING);
-    }
-    $self->sendToQXForSession(
-        $options->{connection}->{sessionid} || 0,
-        "createedit " . join(
-            " ",
-            (
-                CGI::escape( $window . "_data" ),    # 1. Interne Objekt ID
-                @{
-                    $self->getBasicDataDefine(
-                        {
-                            %$options,
-                            crosslink       => $options->{crosslink},
-                            crosstable      => $options->{crosstable},
-                            table           => $options->{table},
-                            columns         => $columns,
-                            overridecolumns => $overridecolumns,
-                            links           => $links,
-                            curSession      => $options->{curSession},
-                            realtype        => 1,
-                            action          => (
-                                  $options->{$UNIQIDCOLUMNNAME} ? $UPDATEACTION
-                                : $NEWACTION
-                            ),
-                        }
-                    )
-                },
-                join(
-                    ",",
-                    (
-                        (
-                            map {
-                                $self->determineCrossLink( $_,
-                                    $options->{crosslink},
-                                    $options->{crosstable} )
-                                  ? $options->{crossid}
-                                  : CGI::escape(
-                                    $self->{gui}->doFormularColumn(
-                                        {
-                                            table  => $options->{table},
-                                            column => $_,
-                                            targetself =>
-                                              $options->{curSession},
-                                            mydefaults => $mydefaults
-                                        }
-                                    )
-                                  )
-                            } @$columns
-                        ),
-                        map { $options->{override}->{$_} } @$overridecolumns
-                    )
-                  )
-                , # 7. Die Werte des Eintrags, oder die Defaultwerte wenns neu is
-                join(
-                    ",",
-                    (
-                        (
-                            map {
-                                CGI::escape(
-                                    $curtabledef->{columns}->{$_}->{unit}
-                                      || "" )
-                            } @$columns
-                        ),
-                        map { "" } @$overridecolumns
-                    )
-                ),    # 8. Units
-                CGI::escape( $curtabledef->{infotextedit} || '' )
-                ,     # 9. Hilfetext
-                CGI::escape( $window || '' ),    # 10. Parentwindow
-                CGI::escape(
-                    (
-                        $options->{crosslink}
-                        ? ",crosslink="
-                          . CGI::escape( $options->{crosslink} )
-                          . ",crossid="
-                          . CGI::escape( $options->{crossid} )
-                          . ",crosstable="
-                          . CGI::escape( $options->{crosstable} )
-                        : ''
-                    )
-                    . ( $options->{urlappend} || '' )
-                ),    # 11. urlappend
-            )
-        )
-    );                # , $options->{connection}->{sessionid} || 0);
-    $self->sendToQXForSession(
-        $options->{connection}->{sessionid} || 0,
-        "createtabview " . CGI::escape( $window . "_tabs" )
-    );                # , $options->{connection}->{sessionid} || 0);
-    $self->sendToQXForSession(
-        $options->{connection}->{sessionid} || 0,
-        "addtab "
-          . CGI::escape( $window . "_tabs" ) . " "
-          . CGI::escape( $window . "_tabs_tab1" )
-          . " " . $self->{text}->{qx}->{basis_data} 
-    );                # , $options->{connection}->{sessionid} || 0);
-    $self->sendToQXForSession(
-        $options->{connection}->{sessionid} || 0,
-        "addobject "
-          . CGI::escape($window) . " "
-          . CGI::escape( $window . "_tabs" )
-    );                # , $options->{connection}->{sessionid} || 0);
-    $self->sendToQXForSession(
-        $options->{connection}->{sessionid} || 0,
-        "addobject "
-          . CGI::escape( $window . "_tabs_tab1" ) . " "
-          . CGI::escape( $window . "_data" )
-    );                # , $options->{connection}->{sessionid} || 0);
-
-#$self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createtoolbarbutton ".CGI::escape($window."_data_toolbar_close")." Abbrechen resource/qx/icon/Tango/32/actions/dialog-close.png job=closeobject,oid=".$window, $options->{connection}->{sessionid} || 0);
-    $self->sendToQXForSession(
-        $options->{connection}->{sessionid} || 0,
-        "addobject "
-          . CGI::escape( $window . "_data_toolbar" ) . " "
-          . CGI::escape( $window . "_data_toolbar_close" )
-    );                # , $options->{connection}->{sessionid} || 0);
-
-    $self->doSpecialColumns(
-        {
+   unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{connection} ) {
+      Log("Qooxdoo: onNewEditEntry: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession} . ": !", $ERROR);
+      return undef;
+   }
+   my $suffix = "edit";
+   if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $options->{table}, $options->{$UNIQIDCOLUMNNAME}))) {
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{"qx"}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{"qx"}->{permission_denied}."\n"), $options->{connection}->{sessionid} || 0);
+      Log("Qooxdoo: onNewEditEntry: GET: ACCESS DENIED: ".$err->[0], $err->[1]);
+      return undef;
+   }
+   my $curtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
+   my $columns = [
+      #grep { my $status = $self->{gui}->getViewStatus({
+      #      column => $_,
+      #      table => $options->{table},
+      #      targetself => $options->{curSession}
+      #   }); ($status ne "hidden") }
+      grep {(exists( $curtabledef->{columns}->{$_}->{type} )
+         && defined( $curtabledef->{columns}->{$_}->{type} )
+                && ( $curtabledef->{columns}->{$_}->{type} ne "htmltext" )
+                && ( $curtabledef->{columns}->{$_}->{type} ne "longtext" ) )
+                && $self->{dbm}->isMarked( $options->{onlyWithMark},
+                     $curtabledef->{columns}->{$_}->{marks} )
+      } # TODO:FIXME:XXX: Typ "virtual" hier rausfiltern oder als readonly schicken?
+      hashKeysRightOrder($curtabledef->{columns},  0, $options->{specialordercolumn})
+   ];
+   my $ret = [];
+   if ($options->{$UNIQIDCOLUMNNAME}) {
+      my $db = $self->{dbm}->getDBBackend($options->{table});
+      unless (defined($ret = $db->getDataSet({
+         table             => $options->{table},
+         nodeleted         => 1,
+         $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
+         wherePre          => $self->{dbm}->Where_Pre($options),
+         session           => $options->{curSession}
+      })) && (ref($ret) eq "ARRAY") && (scalar(@{$ret->[0]}) >= 1)) {
+         Log("DBManager: onNewLineServer: GET ".$options->{table}." FAILED SQL Query failed.", $WARNING);
+         $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{"qx"}->{permission_denied})." 300 50 ".CGI::escape($self->{text}->{"qx"}->{permission_denied}), $options->{connection}->{sessionid} || 0);
+         return undef;
+      }
+   }
+   my $window = undef;
+   if ($options->{window}) {
+      $window = $options->{window};
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "destroy ".$window."_tabs");
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "destroy ".$window."_data");
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "destroy " . $window . "_button");
+   } else {
+      $window = $options->{table} . "_" . $suffix;
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "destroy ".$window);
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createwin ".$window." ".
+         ($curtabledef->{qxeditwidth} || $qxwidth)." ".
+         ($curtabledef->{qxeditheight} || $qxheight)." ".
+         CGI::escape(encode("utf8", ($options->{newedittitle} || $options->{title} || ($options->{$UNIQIDCOLUMNNAME} ?
+         $self->{text}->{"qx"}->{details_of_entry}.$options->{$UNIQIDCOLUMNNAME} :
+         $self->{text}->{"qx"}->{new_entry}).
+         $self->{text}->{"qx"}->{in}.($curtabledef->{label} || $options->{table}))))." ".
+         CGI::escape( $curtabledef->{icon} || '' )
+      );    # , , $options->{connection}->{sessionid} || 0);
+      $self->sendToQXForSession( $options->{connection}->{sessionid} || 0, "open ".$window." 1");
+      # TODO:FIXME:XXX: Modal sollte konfigurierbar sein!
+      #$self->sendToQXForSession($options->{connection}->{sessionid} || 0, "modal ".$window." 1");
+   }
+   my $links      = {};
+   my $mydefaults = $self->getDefaults({
+      options     => $options,
+      curtabledef => $curtabledef,
+      columns     => $columns,
+      ret         => $ret,
+   });
+   my $overridecolumns = [];
+   if ($options->{override}) {
+      $ret->[0]->[0] = { %{ $ret->[0]->[0] }, %{ $options->{override} } };
+      #Log("COLUMNS PRE:".scalar(@$columns), $WARNING);
+      $overridecolumns = [grep {
+         my $column = $_;
+         scalar( grep { $_ eq $column } @$columns ) ? 0 : 1
+      } keys %{ $options->{override} }];
+      #Log("COLUMNS POST:".scalar(@$columns), $WARNING);
+   }
+   $self->sendToQXForSession(
+      $options->{connection}->{sessionid} || 0, "createedit " . join(" ", (
+         CGI::escape($window . "_data"), # 1. Interne Objekt ID
+         @{$self->getBasicDataDefine({
             %$options,
-            basetable => $options->{table},
-
-            #table => $options->{table},
-            window => $window,
-
-            #curSession => $options->{curSession},
-            defaults => $ret->[0]->[0],
-            oid      => $options->{oid},
-
-            #connection => $options->{connection},
-            #onlyWithMark => $options->{onlyWithMark},
-            #$UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
-        }
-    );
-
-#$self->sendToQXForSession($options->{connection}->{sessionid} || 0, $options->{connection}->{sessionid} || 0, "createbutton ".CGI::escape($window."_button")." ".
-#                                               CGI::escape("Schliessen")." ".
-#                                               CGI::escape("resource/qx/icon/Tango/32/actions/dialog-close.png")." ".
-#                                               CGI::escape("job=closeobject,oid=".$window), $options->{connection}->{sessionid} || 0);
-#$self->sendToQXForSession($options->{connection}->{sessionid} || 0, $options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($window)." ".CGI::escape($window."_button")."\n", $options->{connection}->{sessionid} || 0);
-    my $return = { $options->{table} => $ret };
-    $options->{override} ||= {};
-    foreach my $column ( keys %$links ) {
-        my $curTable = $links->{$column}->[0];
-        my $cursubtabledef =
-          $self->{dbm}->getTableDefiniton( $options->{table} );
-        my $columns = [
-            @{
-                getAffectedColumns(
-                    $self->{dbm}->getDBBackend( $options->{table} )->{config}
-                      ->{DB},
-                    $cursubtabledef->{columns}, 1
-                )
-            }
-        ];
-        if (
-            defined(
-                my $err = $self->{dbm}->checkRights(
-                    $options->{curSession},
-                    $ACTIVESESSION, $curTable
-                )
-            )
-          )
-        {
-#$self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape("Internal error")." 400 200 ".CGI::escape("onNewEditEntry ACCESS DENIED\n"), $options->{connection}->{sessionid} || 0);
-            Log( "Qooxdoo: onNewEditEntry: GET: ACCESS DENIED: " . $err->[0],
-                $err->[1] );
-            next;
-        }
-        my $db        = $self->{dbm}->getDBBackend($curTable);
-        my $nodeleted = 0;
-        my $curwhere  = $self->{dbm}->Where_Pre(
-            {
-                %$options,
-                basetable => $options->{table},
-                baseid    => $options->{$UNIQIDCOLUMNNAME},
-                table     => $curTable
-            }
-        );
-        push( @$curwhere, $options->{orselection}->{$column} )
-          if ( $options->{orselection}->{$column} );
-
-        if ( $ret->[0]->[0]->{ $options->{table} . $TSEP . $column } )
-        {
-            $curwhere = [
-                map {
-                        "(("
-                      . $_ . ")"
-                      . ( $nodeleted
-                        ? ""
-                        : " AND ("
-                          . $curTable
-                          . $TSEP
-                          . $DELETEDCOLUMNNAME
-                          . " != 1)" )
-                      . ") OR ("
-                      . $curTable
-                      . $TSEP
-                      . $self->{dbm}->getIdColumnName($curTable) . " = "
-                      . $ret->[0]->[0]->{ $options->{table} . $TSEP . $column }
-                      . ")"
-                } @$curwhere
-            ];
-            $nodeleted++;
-        }
-
-        my $curret = undef;
-
-        unless (
-            defined(
-                $curret = $db->getDataSet(
-                    {
-                        table     => $curTable,
-                        wherePre  => $curwhere,
-                        session   => $options->{curSession},
-                        nodeleted => $nodeleted,
-                        searchdef => $self->{dbm}->getFilter($options),
-                    }
-                )
-            )
-            && ( ref($curret) eq "ARRAY" )
-          )
-        {
-            Log(
-                "Qooxdoo: onNewEditEntry: GET "
-                  . $curTable
-                  . " FAIL: SQL Query failed.",
-                $WARNING
-            );
-            $self->sendToQXForSession(
-                $options->{connection}->{sessionid} || 0,
-                "showmessage "
-                  . CGI::escape( $self->{text}->{qx}->{internal_error} )
-                  . " 400 200 "
-                  . CGI::escape( $self->{text}->{qx}->{failed} )
-            );    # , $options->{connection}->{sessionid} || 0);
-            return undef;
-        }
-        $return->{$curTable} = $curret;
-        $self->sendToQXForSession(
-            $options->{connection}->{sessionid} || 0,
-            "addtoeditlist "
-              . $window
-              . "_data "
-              . $column . " "
-              . CGI::escape("-") . " "
-        );        # , $options->{connection}->{sessionid} || 0);
-        my $curtabledef = $self->{dbm}->getTableDefiniton($curTable);
-        foreach my $dbline ( @{ $curret->[0] } ) {
-            $self->sendToQXForSession(
-                $options->{connection}->{sessionid} || 0,
-                "addtoeditlist " . $window . "_data " . $column . " " . (
-                    CGI::escape(
-
-#$self->{gui}->Column_Handler($options->{curSession}, $options->{table}, $dbline, $column)
-                        $self->{gui}->getValueForTable( $curTable, $dbline )
-                      )
-                      || $dbline->{
-                            $curTable
-                          . $TSEP
-                          . $self->{dbm}->getIdColumnName($curTable)
-                      }
-                  )
-                  . " "
-                  . (
-                    (
-                        exists(
-                            $options->{override}->{
-                                    $curTable
-                                  . $TSEP
-                                  . $self->{dbm}->getIdColumnName($curTable)
-                            }
-                          )
-                          && defined(
-                            $options->{override}->{
-                                    $curTable
-                                  . $TSEP
-                                  . $self->{dbm}->getIdColumnName($curTable)
-                            }
-                          )
-                          && $options->{override}->{
-                                $curTable
-                              . $TSEP
-                              . $self->{dbm}->getIdColumnName($curTable)
-                          }
-                    )
-                    ? $options->{override}->{
-                            $curTable
-                          . $TSEP
-                          . $self->{dbm}->getIdColumnName($curTable)
-                      }
-                    : $dbline->{
-                            $curTable
-                          . $TSEP
-                          . $self->{dbm}->getIdColumnName($curTable)
-                    }
-                  )
-            );    # $options->{connection}->{sessionid} || 0);
-        }
-    }
-    return $return;
+            crosslink       => $options->{crosslink},
+            crosstable      => $options->{crosstable},
+            table           => $options->{table},
+            columns         => $columns,
+            overridecolumns => $overridecolumns,
+            links           => $links,
+            curSession      => $options->{curSession},
+            realtype        => 1,
+            action          => $options->{$UNIQIDCOLUMNNAME} ? $UPDATEACTION : $NEWACTION,
+         })},
+         join(",", ((map {
+            $self->determineCrossLink($_, $options->{crosslink}, $options->{crosstable}) ? $options->{crossid} :
+               CGI::escape(encode("utf8", $self->{gui}->doFormularColumn({
+                  table  => $options->{table},
+                  column => $_,
+                  targetself =>
+                  $options->{curSession},
+                  mydefaults => $mydefaults
+               })))
+            } @$columns), map { $options->{override}->{$_} } @$overridecolumns)
+         ), # 7. Die Werte des Eintrags, oder die Defaultwerte wenns neu is
+         join(",", ((map { CGI::escape($curtabledef->{columns}->{$_}->{unit} || "") } @$columns), map { "" } @$overridecolumns)),    # 8. Units
+         CGI::escape($curtabledef->{infotextedit} || ''), # 9. Hilfetext
+         CGI::escape($window || ''),    # 10. Parentwindow
+         CGI::escape(($options->{crosslink} ? ",crosslink=".CGI::escape($options->{crosslink}).",crossid=".CGI::escape($options->{crossid}).",crosstable=".CGI::escape($options->{crosstable}) : '').($options->{urlappend} || '' )),    # 11. urlappend
+   )));
+   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createtabview ".CGI::escape($window."_tabs"));
+   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addtab ".CGI::escape($window."_tabs")." ".CGI::escape($window."_tabs_tab1")." ".$self->{text}->{"qx"}->{basis_data});
+   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($window)." ".CGI::escape($window."_tabs"));
+   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($window."_tabs_tab1")." ".CGI::escape($window."_data"));
+   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($window . "_data_toolbar")." ".CGI::escape($window."_data_toolbar_close"));
+   $self->doSpecialColumns({
+      %$options,
+      basetable => $options->{table},
+      window => $window,
+      defaults => $ret->[0]->[0],
+      oid      => $options->{oid},
+   });
+   my $return = {$options->{table} => $ret};
+   $options->{override} ||= {};
+   foreach my $column (keys %$links) {
+      my $curTable = $links->{$column}->[0];
+      my $cursubtabledef = $self->{dbm}->getTableDefiniton($options->{table});
+      my $columns = [@{getAffectedColumns($self->{dbm}->getDBBackend( $options->{table} )->{config}->{DB}, $cursubtabledef->{columns}, 1)}];
+      if (defined(my $err = $self->{dbm}->checkRights($options->{curSession}, $ACTIVESESSION, $curTable))) {
+         Log("Qooxdoo: onNewEditEntry: GET: ACCESS DENIED: " . $err->[0], $err->[1]);
+         next;
+      }
+      my $db        = $self->{dbm}->getDBBackend($curTable);
+      my $nodeleted = 0;
+      my $curwhere  = $self->{dbm}->Where_Pre({
+         %$options,
+         basetable => $options->{table},
+         baseid    => $options->{$UNIQIDCOLUMNNAME},
+         table     => $curTable
+      });
+      push(@$curwhere, $options->{orselection}->{$column})
+         if ( $options->{orselection}->{$column} );
+      if ($ret->[0]->[0]->{$options->{table}.$TSEP.$column}) {
+         $curwhere = [map {"((".$_.")".($nodeleted ? "" : " AND (".$curTable.$TSEP.$DELETEDCOLUMNNAME."!= 1)").") OR (".$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)." = ".$ret->[0]->[0]->{$options->{table}.$TSEP.$column}.")"} @$curwhere];
+         $nodeleted++;
+      }
+      my $curret = undef;
+      unless (defined($curret = $db->getDataSet({
+         table     => $curTable,
+         wherePre  => $curwhere,
+         session   => $options->{curSession},
+         nodeleted => $nodeleted,
+         searchdef => $self->{dbm}->getFilter($options),
+      })) && (ref($curret) eq "ARRAY")) {
+         Log("Qooxdoo: onNewEditEntry: GET ".$curTable." FAIL: SQL Query failed.", $WARNING);
+         $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{"qx"}->{internal_error})." 400 200 ".CGI::escape($self->{text}->{"qx"}->{failed}));
+         return undef;
+      }
+      $return->{$curTable} = $curret;
+      $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addtoeditlist ".$window."_data ".$column." ".CGI::escape("-")." ");
+      my $curtabledef = $self->{dbm}->getTableDefiniton($curTable);
+      foreach my $dbline (@{$curret->[0]}) {
+         $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addtoeditlist ".$window."_data ".CGI::escape($column)." ".
+         (CGI::escape(encode("utf8", $self->{gui}->getValueForTable($curTable, $dbline)) || $dbline->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}))." ".
+         ((exists($options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) &&
+          defined($options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) &&
+                  $options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}) ?
+                  $options->{override}->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)} :
+                               $dbline->{$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)}));
+      }
+   }
+   return $return;
 }
 
 sub noCrossShowTable
@@ -3864,7 +3818,7 @@ sub doSpecialColumns
                                  $linktabledef->{crosslinklabel}
                               || $linktabledef->{label}
                               || $crosslinktabledef->{crosslinklabel}
-                              || $self->{text}->{qx}->{assigned} . " " . $crosstable
+                              || $self->{text}->{"qx"}->{assigned} . " " . $crosstable
                         )
                       )
                 );    # , $options->{connection}->{sessionid} || 0);
@@ -3968,18 +3922,18 @@ sub showTabellen
                 #print "showTabellen: ".$db.":".join(",", keys(%$db))."\n";
                 my $menuname =
                   $db->{config}->{DB}->{tables}->{$curtable}->{menuname}
-                  || $self->{text}->{qx}->{tables} ;
+                  || $self->{text}->{"qx"}->{tables} ;
                 $poe_kernel->yield(
                     sendToQX => "addmenu "
                       . CGI::escape(
-                        ( $menuname eq  $self->{text}->{qx}->{tables} ) ? "" : $self->{text}->{qx}->{tables} )
+                        ( $menuname eq  $self->{text}->{"qx"}->{tables} ) ? "" : $self->{text}->{"qx"}->{tables} )
                       . " "
                       . CGI::escape($menuname) . " "
                       . CGI::escape(
                         $db->{config}->{DB}->{menu}->{$menuname}->{text}
-                          || ( ( $menuname eq  $self->{text}->{qx}->{tables} )
-                            ? $self->{text}->{qx}->{start} 
-                            :  $self->{text}->{qx}->{unnamed} )
+                          || ( ( $menuname eq  $self->{text}->{"qx"}->{tables} )
+                            ? $self->{text}->{"qx"}->{start} 
+                            :  $self->{text}->{"qx"}->{unnamed} )
                       )
                       . " "
                       . CGI::escape(
@@ -4015,9 +3969,9 @@ sub showTabellen
         }
     }
     $poe_kernel->yield( sendToQX => "addbutton "
-          . CGI::escape( $self->{text}->{qx}->{tables} ) . " "
+          . CGI::escape( $self->{text}->{"qx"}->{tables} ) . " "
           . CGI::escape("statistic") . " "
-          . CGI::escape( $self->{text}->{qx}->{live_stats} ) . " "
+          . CGI::escape( $self->{text}->{"qx"}->{live_stats} ) . " "
           . CGI::escape("icon") . " "
           . CGI::escape("job=statswin") );
 }

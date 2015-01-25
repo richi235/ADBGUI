@@ -7,15 +7,23 @@ use ADBGUI::Tools qw(Log);
 
 our @ISA;
 
-sub new {
-   my $proto = shift;
-   my $class = ref($proto) || $proto;
-   my $self = shift;
-   my $parent = $self ? ref($self) : "";
-   @ISA = ($parent) if $parent;
-   $self = $self ? $self : {};
-   bless ($self, $class);
-   return $self;
+sub new
+{
+    my $proto  = shift;
+    my $self   = shift;
+
+    my $class  = ref($proto) || $proto;
+    my $parent = $self ? ref($self) : "";
+    $self      = $self ? $self : {};
+    
+    @ISA = ($parent) if $parent;
+
+    bless( $self, $class );
+    return $self;
 }
+
+# Here, You can directly use $self->{text} and all the other
+# Member variables of DBManager.pm of the superclass and all other modules.
+
 
 1;

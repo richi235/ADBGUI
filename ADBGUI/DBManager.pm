@@ -13,7 +13,7 @@ package ADBGUI::DBManager;
 =head1 DESCRIPTION
 
   Subroutines in here get called from Qooxdoo.pm and call Subroutines in DBBackend.pm.
-  It provides a database-un-specific interface to the database.
+  It provides a database-un-specific high-level interface to the database.
   Which for example includes:
 
 =over
@@ -65,48 +65,62 @@ use Data::Dumper;
 my $qxsessiontimeout = 240;
 my $qxmaxquesize = 4000;
 
-sub new {
-   my $proto = shift;
-   my $class = ref($proto) || $proto;
-   my $DB = shift;
-   my $keys = shift;
-   my $configfile = shift;
-   my $self  = {};
-   bless ($self, $class);
+sub new
+{
+    my $self       = {};
 
-   # States, die unsere Handler einnehmen koennen
-   $self->{NOSTATE}      = 0;
-   $self->{NEW_DATA}     = 1;
-   $self->{NEW_DATA_LOG} = 2;
-   Log("You need to migrate to multi DB! You have now to use getDBBackend to access the DB Backend!", $WARNING) unless (ref($DB) eq "ARRAY");
-   $self->{DBs} = (ref($DB) eq "ARRAY") ? $DB : [$DB];
-   $self->{DB} = "YOU NEED TO MIGRAGE!!!";
+    my $proto      = shift;
+    my $DB         = shift;
+    my $keys       = shift;
+    my $configfile = shift;
+    $self->{text}  = shift;    
 
-   my $i = 0;
+    my $class      = ref($proto) || $proto;
+    bless( $self, $class );
 
-   # Oeffnet die Konfigurationsdatei, und oeffnet die Ports
-   # fuer die Entgegennahme der Laufzeitkonfiguration
+    # States, die unsere Handler einnehmen koennen
+    $self->{NOSTATE}      = 0;
+    $self->{NEW_DATA}     = 1;
+    $self->{NEW_DATA_LOG} = 2;
+    Log(
+"You need to migrate to multi DB! You have now to use getDBBackend to access the DB Backend!",
+        $WARNING
+    ) unless ( ref($DB) eq "ARRAY" );
+    $self->{DBs} = ( ref($DB) eq "ARRAY" ) ? $DB : [$DB];
+    $self->{DB} = "YOU NEED TO MIGRAGE!!!";
 
-   # Das Folgende macht nun ReadConfigAndInit, damit openSocket bereits auf die DB zugreifen kann.
-   $self->ReadConfigAndInit($configfile || "/etc/sshplex/dbm.cfg", {
-      # Die folgenden Definitionen sollten eigentlich aus der
-      # Konfigurationsdatei kommen. Falls diese das nicht tun,
-      # werden folgende gewisse Standardwerte verwendet:
-      listenip => '127.0.0.1', # Standardmaessig binden wir uns auf localhost
-      qooxdoolistenip => '127.0.0.1', # Standardmaessig binden wir uns auf localhost
-      readtimeout => 0,        # Wie lange lassen wir einen Connect offen,
-                               # der keine Daten schickt? Einheiten: Sekunden
-      readlinetimeout => 0,    # So lange warte wir bis eine Zeile fertig
-                               # ist (-> "\n" ). Einheiten: Sekunden
-      debug  => 0,
-   }, $keys);
-   #Log("DBManager: Startup: Can't connect to database!", $ERROR) && die
-   #   unless ($config->{dbbackend}->db_open());
-   #unlink($PIDFILE);
-   #$kernel->run();
-   #exit(0);
-   
-   return $self;
+    my $i = 0;
+
+    # Oeffnet die Konfigurationsdatei, und oeffnet die Ports
+    # fuer die Entgegennahme der Laufzeitkonfiguration
+
+# Das Folgende macht nun ReadConfigAndInit, damit openSocket bereits auf die DB zugreifen kann.
+    $self->ReadConfigAndInit(
+        $configfile || "/etc/sshplex/dbm.cfg",
+        {
+            # Die folgenden Definitionen sollten eigentlich aus der
+            # Konfigurationsdatei kommen. Falls diese das nicht tun,
+            # werden folgende gewisse Standardwerte verwendet:
+            listenip =>
+              '127.0.0.1',    # Standardmaessig binden wir uns auf localhost
+            qooxdoolistenip =>
+              '127.0.0.1',    # Standardmaessig binden wir uns auf localhost
+            readtimeout     => 0, # Wie lange lassen wir einen Connect offen,
+                                  # der keine Daten schickt? Einheiten: Sekunden
+            readlinetimeout => 0, # So lange warte wir bis eine Zeile fertig
+                                  # ist (-> "\n" ). Einheiten: Sekunden
+            debug           => 0,
+        },
+        $keys
+    );
+
+    #Log("DBManager: Startup: Can't connect to database!", $ERROR) && die
+    #   unless ($config->{dbbackend}->db_open());
+    #unlink($PIDFILE);
+    #$kernel->run();
+    #exit(0);
+
+    return $self;
 }
 
 sub getIdColumnName {
@@ -715,7 +729,7 @@ sub NewUpdateData {
          table => $options->{table},
          $UNIQIDCOLUMNNAME => $options->{uniqid},
          nodeleted => $options->{nodeleted},
-         searchdef => $self->getFilter({ curSession => $options->{curSession}, table => $options->{table} }),
+         #searchdef => $self->getFilter({ curSession => $options->{curSession}, table => $options->{table} }),
          columns => $options->{columns},
          session => $options->{curSession},
          wherePre => $self->Where_Pre($options)
@@ -1283,9 +1297,10 @@ sub protokolError {
 
 =pod
 
-B<Where_Pre( { table =E<gt> ... , curSession =E<gt> ... } )>
-  I<Returns:> the currently set default filters for this table and session.
-  Must be included before every use of I<getDataSet>.
+=head2 Where_Pre( I<{ table =E<gt> ... , curSession =E<gt> ... }> )
+
+I<Returns:> the currently set default filters for this table and session.
+Must be included before every use of I<getDataSet()>.
 
 =cut
 
@@ -1401,17 +1416,21 @@ sub sendTheMail {
 
 =pod
 
-B<get_single_value_from_db( $options )>
-  Where $options has to contain at least:
-  I<$options> = 
-  {
-     curSession => ...
-     table      => ...
-     column     => ...
-     id         => ...
-  }
-  A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handlung for you.
-  I<Returns:> the requested single value as scalar.
+=head2 get_single_value_from_db( I<$options> )
+
+Where $options has to contain at least:
+
+I<$options> = 
+    {
+       curSession => ...
+       table      => ...
+       column     => ...
+       id         => ...
+    }
+
+A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handlung for you.
+
+I<Returns:> the requested single value as scalar.
 
 =cut
 
@@ -1466,16 +1485,18 @@ sub get_single_value_from_db
 
 =pod
 
-B<get_single_row_from_db( $session, $table, $id )>
-  A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handling.
-  I<Returns:> the requested row(and referenced ones) as reference to a hash.
+=head2 get_single_row_from_db( I<$session>, I<$table>, I<$id> )
 
-  Expample:
-    my $result_row = $self->get_single_row_from_db( $session, $table, $id );
+A wrapper around getDataSet() from DBBackend, which makes it much more comfortable and does all the error handling.
 
-    # to access single columns use:
-    $result_row->{$table . $TSEP . $column_name }
-    # the table name is needed
+I<Returns:> the requested row(and referenced ones) as reference to a hash.
+
+I<Expample:>
+  my $result_row = $self->get_single_row_from_db( $session, $table, $id );
+
+  # to access single columns use:
+  $result_row->{$table . $TSEP . $column_name }
+  # the table name is needed
 
 =cut
 

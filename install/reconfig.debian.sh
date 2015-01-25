@@ -28,6 +28,9 @@ fi
 rm -r bilder 2>/dev/null
 mkdir bilder
 
+# copy dbm.pl from install to production in case it got updated
+cp install/dbm.pl ../
+
 unset IFS
 for i in `echo */bilder`; do
    export IFS=$(echo -en "\n\b")
@@ -38,7 +41,7 @@ done
 
 
 
-unset IFS    #  iterate over all the folders of submodules
+unset IFS    #  iterate over all the submodule-folders
 for i in `ls | grep -v install | grep -vi qooxdoo | grep -v myproject | grep -v bilder`; do
    export IFS=$(echo -en "\n\b")
    if [ -f $i/install.debian.sh ]; then
