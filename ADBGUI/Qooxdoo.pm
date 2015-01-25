@@ -2217,19 +2217,15 @@ sub onCloseObject
 }
 
 
-sub onSaveEditEntry
-{
+sub onSaveEditEntry {
    my $self = shift;
    my $options = shift;
    my $moreparams = shift;
-
    unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{"q"} && $options->{oid} && $options->{connection}) {
       Log("onSaveEditEntry: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
       return undef;
    }
-
    my $id = $options->{"q"}->param($UNIQIDCOLUMNNAME) || $options->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
-
    $self->{dbm}->NewUpdateData({
       %$options,
       cmd => ($id ? "UPDATE" : "NEW"),
@@ -2237,27 +2233,22 @@ sub onSaveEditEntry
       columns => $options->{columns},
       uniqid => scalar($id) || '',
       qxself => $self,
-
       onDone => sub {
          my $ret = shift;
          my $options = shift;
          my $self = shift;
          # TODO:FIXME:XXX: Das sollte an alle anderen user auch gehen, die auf der tabelle sind!
          # TODO:FIXME:XXX: ID sollte vom Rückgabewert des NewUpdateData genommen werden, und nicht vom CGI Objekt!
-         if (defined($ret))
-         {
+         if (defined($ret)) {
             my $curid = $options->{"q"}->param($UNIQIDCOLUMNNAME) || $options->{"q"}->param($self->getIdColumnName($options->{table}));
             $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "updaterow ".CGI::escape($options->{table})." ".CGI::escape($curid||""));
-            if ($ret =~ /^\d+$/)
-            {
-               if (($options->{qxself}->{dbm}->{config}->{autocloseeditwindow} || $options->{close}) && $options->{"q"}->param("wid") && !$options->{noclose})
-               {
+            if ($ret =~ /^\d+$/) {
+               if (($options->{qxself}->{dbm}->{config}->{autocloseeditwindow} || $options->{close}) && $options->{"q"}->param("wid") && !$options->{noclose}) {
                   $options->{qxself}->onCloseObject({
                      "curSession" => $options->{curSession},
                      "oid" => CGI::escape($options->{"q"}->param("wid"))
                   }) ;
-               }
-               else {
+               } else {
                   $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "destroy ".CGI::escape($options->{table}."_edit"));
                   $options->{qxself}->onNewEditEntry({
                      %$options,
@@ -2267,16 +2258,15 @@ sub onSaveEditEntry
                $options->{qxself}->afterNewUpdate($options, $options->{columns}, $ret);
             } elsif($ret) {
                $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "unlock ".CGI::escape($options->{"q"}->param("oid")));
-               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape( $self->{text}->{qx}->{internal_error} ) . " " . ($ret ? ((length($ret)+15) * 7) : 400)." 100 ".CGI::escape($ret));
+               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." ".($ret ? ((length($ret)+15) * 7) : 400)." 100 ".CGI::escape($ret || "Unspecified error"));
             } else {
                $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "unlock ".CGI::escape($options->{"q"}->param("oid")));
-               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape( $self->{text}->{qx}->{internal_error} )." 500 100 ".CGI::escape($ret ? "onSaveEditEntry: " . $ret : $self->{text}->{qx}->{onSaveEditEntry_error} ));
+               $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." 500 100 ".CGI::escape($ret ? "onSaveEditEntry: ".$ret : $self->{text}->{qx}->{onSaveEditEntry_error}));
             }
          } else {
             $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "unlock ".CGI::escape($options->{"q"}->param("oid")));
-            $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape( $self->{text}->{qx}->{internal_error} )." 400 100 ".CGI::escape( $self->{text}->{qx}->{onSaveEditEntry_error} ));
-         }
-         
+            $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "showmessage ".CGI::escape($self->{text}->{qx}->{internal_error})." 400 100 ".CGI::escape($self->{text}->{qx}->{onSaveEditEntry_error}));
+         }         
          return $ret;
       }
    });
