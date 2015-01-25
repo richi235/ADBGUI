@@ -812,10 +812,6 @@ sub LineHandler {
             return $client->send("SESSION FAILED\n");
          }
       } elsif (/^LOGOUT$/) {
-         if (defined(my $err = $self->checkRights($curSession, $ACTIVESESSION))) {
-            $client->send("LOGOUT FAILED\n");
-            return Log("DBManager: onNewLineServer: LOGOUT ACCESS DENIED: ".$err->[0], $err->[1]);
-         }
          $self->deleteSession($connection->{sessionID});
          delete $connection->{sessionID};
          $client->send("LOGOUT OK\n");
