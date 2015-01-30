@@ -325,6 +325,8 @@ if (typeof JSON !== 'object') {
 }());
 
 function decode_utf8(utftext) {
+   var c1;
+   var c2;
    var plaintext = ""; var i=0; var c=c1=c2=0;
    // while-Schleife, weil einige Zeichen uebersprungen werden
    while(i<utftext.length) {
@@ -337,6 +339,7 @@ function decode_utf8(utftext) {
          plaintext += String.fromCharCode(((c&31)<<6) | (c2&63));
          i+=2;
       } else {
+         var c3;
          c2 = utftext.charCodeAt(i+1); c3 = utftext.charCodeAt(i+2);
          plaintext += String.fromCharCode(((c&15)<<12) | ((c2&63)<<6) | (c3&63));
          i+=3;
