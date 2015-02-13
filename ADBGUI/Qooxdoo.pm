@@ -2463,15 +2463,20 @@ sub onCloseObject
 }
 
 
-sub onSaveEditEntry {
-   my $self = shift;
-   my $options = shift;
+sub onSaveEditEntry
+{
+   my $self       = shift;
+   my $options    = shift;
    my $moreparams = shift;
-   unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{"q"} && $options->{oid} && $options->{connection}) {
+
+   unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{"q"} && $options->{oid} && $options->{connection})
+   {
       Log("onSaveEditEntry: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
       return undef;
    }
+   
    my $id = $options->{"q"}->param($UNIQIDCOLUMNNAME) || $options->{"q"}->param($self->{dbm}->getIdColumnName($options->{table}));
+
    $self->{dbm}->NewUpdateData({
       %$options,
       cmd => ($id ? "UPDATE" : "NEW"),
@@ -3864,3 +3869,23 @@ sub onAuthenticated
 }
 
 1;
+
+=head1 Buttons, Actions and Functions
+
+Or: How to create a Button and bind it to a specific function.
+
+Buttons are defined via I<getButtonsdef()>. Every Button contains a datastructure like:
+  {
+      name   => "edit",
+      label  => "Beteiligung_bearbeiten",
+      image  => ( "/bilder/edit.png" ),
+      action => "neweditentry",
+      bindto => "row",
+  },
+(new datastructure, there exists also a legacy datatype, see ADBGUI::getButtonsdef() if interested)
+
+Here I<neweditentry> is the B<action> triggered by this button.
+The corresponding function which will be called has to be assigned in I<onClientData()> :
+    if ( $options->{job} eq "neweditentry" ) {
+        function_to_be_called....()
+    }        
