@@ -1,6 +1,6 @@
 export IFS=$(echo -en "\n\t\b")
 
-apt-get --force-yes -y install libwww-perl libgd-graph3d-perl libunix-syslog-perl libpoe-perl mysql-server libpoe-component-client-http-perl libdate-calc-perl libjson-perl libclone-perl libemail-mime-createhtml-perl libemail-send-perl
+apt-get --force-yes -y install libwww-perl libgd-graph3d-perl libunix-syslog-perl libpoe-perl mysql-server libpoe-component-client-http-perl libdate-calc-perl libjson-perl libclone-perl libemail-mime-createhtml-perl libemail-sender-perl
 
 cd install 2>/dev/null
 
