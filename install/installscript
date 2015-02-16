@@ -7,7 +7,7 @@ if hash sudo 2>/dev/null; then
     sudocommand="sudo"
 else     # check if we are root
     if (( $EUID == 0 )); then
-        sudocommand= ''  # we are, so we will simply install everything as root
+        sudocommand= '' 2>/dev/null # we are, so we will simply install everything as root
     else
         echo "sudo is not installed and you are not root"
         echo "please install sudo or execute as root"
