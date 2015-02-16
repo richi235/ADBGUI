@@ -44,10 +44,10 @@ done
 unset IFS    #  iterate over all the submodule-folders
 for i in `ls | grep -v install | grep -vi qooxdoo | grep -v myproject | grep -v bilder`; do
    export IFS=$(echo -en "\n\b")
-   if [ -f $i/install.debian.sh ]; then
+   if [ -f $i/install/install.debian.sh ]; then
       cd $i;
       # execute the installscripts of all submodules/slice-packs
-      bash install.debian.sh;
+      bash install/install.debian.sh;
       cd ..;
    fi;
    if [[ $1 == "noap" || $2 == "noap" ]]; then
