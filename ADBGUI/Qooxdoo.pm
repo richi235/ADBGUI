@@ -1388,7 +1388,7 @@ sub parseFormularData {
    #if ($options->{"q"}->param("ignoreEmptyValues")) {
       foreach my $column (hashKeysRightOrder($curtabledef->{columns})) {
          #next if $curtabledef->{columns}->{$column}->{hidden};
-         $columns->{$options->{table}.$TSEP.$column} = htmlUnEscape(CGI::unescape($options->{"q"}->param($column)))
+         $columns->{$options->{table}.$TSEP.$column} = htmlUnEscape(CGI::unescape(scalar($options->{"q"}->param($column))))
             if (defined($options->{"q"}->param($column)) || ($column eq $self->{dbm}->getIdColumnName($options->{table})));
          delete $columns->{$options->{table}.$TSEP.$column}
             if ((exists($columns->{$options->{table}.$TSEP.$column}) &&
@@ -2492,7 +2492,7 @@ sub onSaveEditEntry {
                if (($options->{qxself}->{dbm}->{config}->{autocloseeditwindow} || $options->{close}) && $options->{"q"}->param("wid") && !$options->{noclose}) {
                   $options->{qxself}->onCloseObject({
                      "curSession" => $options->{curSession},
-                     "oid" => CGI::escape($options->{"q"}->param("wid"))
+                     "oid" => CGI::escape(scalar($options->{"q"}->param("wid"))),
                   }) ;
                } else {
                   $options->{qxself}->sendToQXForSession($options->{connection}->{sessionid} || 0, "destroy ".CGI::escape($options->{table}."_edit"));
