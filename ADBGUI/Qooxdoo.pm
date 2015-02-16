@@ -1229,9 +1229,9 @@ sub onClientData {
          oid => $options->{oid},
          rowsadded => 0,
          sortby => $orderby,
-         start => $options->{connection}->{"q"}->param("start"),
-         end =>   $options->{connection}->{"q"}->param("end"),
-         ionum => $options->{connection}->{"q"}->param("ionum"),
+         start => scalar($options->{connection}->{"q"}->param("start")),
+         end =>   scalar($options->{connection}->{"q"}->param("end")),
+         ionum => scalar($options->{connection}->{"q"}->param("ionum")),
          connection => $options->{connection},
       });
    }
