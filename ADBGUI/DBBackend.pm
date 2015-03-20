@@ -1224,7 +1224,8 @@ sub getSQLStringForTable {
    }
    # Nur bestimmte ID? -> Entsprechendes WHERE fabrizieren.
    my $tabledef = $self->{config}->{DB}->{tables}->{$param->{table}};
-   @where = ("(".join(($param->{filter}->{orsearch} ? " OR ":" AND "), @where).")") if scalar(@where);
+   @where = ("(".join((((ref($param->{filter}->{orsearch}) eq "") &&
+                             $param->{filter}->{orsearch}) ? " OR ":" AND "), @where).")") if scalar(@where);
    if ($param->{id} && $tabledef->{columns}->{$self->getIdColumnName($param->{table})}) {
       my $curcolumn = mergeColumnInfos($self->{config}->{DB}, $tabledef->{columns}->{$self->getIdColumnName($param->{table})});
       my $conjunction = $curcolumn->{"dbcompare"} || "=";
