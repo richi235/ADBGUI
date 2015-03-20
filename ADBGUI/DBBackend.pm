@@ -1216,36 +1216,12 @@ sub getSQLStringForTable {
          push(@orderby, @$tmporderby);
       }
       #Log("DEBUG:".join(";", @orderby).":", $WARNING);
-      foreach my $curcolumn (@{$self->getColumnsForTable($curtable, 1, 0, 1, $curtablename)}) {
-         foreach my $curfilter (keys(%{$param->{filter}})) {
-            my $curcolumndef = mergeColumnInfos($self->{config}->{DB}, $self->{config}->{DB}->{tables}->{$curtable}->{columns}->{$curcolumn});
-            my $thevalorg = $param->{filter}->{$curfilter};
-            next unless defined($thevalorg);
-            # TODO:XXX:FIXME: Das sollte als Eigeschaft gehen, $self->{config}->{DB}->{csv}, und nicht als RegExpr aufn DBtypen...
-            if (($self->{config}->{DB}->{type} =~ m,CSV,i) && (($curcolumndef->{type} eq "date") || ($curcolumndef->{type} eq "datetime"))) {
-               $thevalorg = str2time($thevalorg);
-            }
-            my $vals = (ref($thevalorg) eq "ARRAY") ? $thevalorg : [$thevalorg];
-            my @curwhere = ();
-            foreach my $curthevalorg (@$vals) {
-               my $theval = normaliseLine($curthevalorg,1);
-               foreach (["", ($curcolumndef->{instr} ?
-                             ("INSTR(".$curfilter.", ".$theval.")", "!=", "0") :
-                             # TODO:XXX:FIXME: Das sollte als Eigeschaft gehen, $self->{config}->{DB}->{csv}, und nicht als RegExpr aufn DBtypen...
-                             (($self->{config}->{DB}->{type} =~ m,CSV,i) && ($curcolumndef->{type} eq "text")) ?
-                             ("REGEX(".$curfilter.",".normaliseLine("/".$curthevalorg."/i",1).")", "IS", "TRUE") :
-                             ((($curcolumndef->{type} eq "date") || ($curcolumndef->{type} eq "datetime")) && !$curthevalorg) ?
-                             () :
-                             ($curfilter, undef, $theval)) ],
-                        ["_begin", $curtablename.$TSEP.$curcolumn, ">", $theval],
-                        ["_end", $curtablename.$TSEP.$curcolumn, "<", $theval]) {
-                  #print $curfilter." CMP ".$curtable.$TSEP.$curcolumn.$_->[0]."\n";
-                  push(@curwhere, "(".$_->[1]." ".($_->[2] || $curcolumndef->{"dbcompare"} || "=")." ".$_->[3].")")
-                     if ((scalar(@$_) > 1) && ($curfilter eq $curtablename.$TSEP.$curcolumn.$_->[0]));
-               }
-            }
-            push(@where, "(".join(" OR ", @curwhere).")")
-               if (scalar(@curwhere));
+      foreach my $curfilter (keys(%{$param->{filter}})) {
+         my $thevalorg = $param->{filter}->{$curfilter};
+         next unless defined($thevalorg);
+         my $addtowhere = $self->ParseFilter($curfilter, $thevalorg, $curtable, $curtablename);
+         foreach my $curwhere (@$addtowhere) {
+            push(@where, "(".join(" OR ", @$curwhere).")")
          }
       }
    }
@@ -1313,6 +1289,45 @@ sub getSQLStringForTable {
       # GroupBy
       join(", ", @groupByList),
    ];
+}
+
+sub ParseFilter {
+   my $self = shift;
+   my $curfilter = shift;
+   my $thevalorg = shift;
+   my $curtable = shift;
+   my $curtablename = shift;
+   my $return = [];
+   foreach my $curcolumn (@{$self->getColumnsForTable($curtable, 1, 0, 1, $curtablename)}) {
+      #print "CURCOLUMN".$curtable."/".$curtablename."\t".$curcolumn."\n";
+      my $curcolumndef = mergeColumnInfos($self->{config}->{DB}, $self->{config}->{DB}->{tables}->{$curtable}->{columns}->{$curcolumn});
+      # TODO:XXX:FIXME: Das sollte als Eigeschaft gehen, $self->{config}->{DB}->{csv}, und nicht als RegExpr aufn DBtypen...
+      if (($self->{config}->{DB}->{type} =~ m,CSV,i) && (($curcolumndef->{type} eq "date") || ($curcolumndef->{type} eq "datetime"))) {
+         $thevalorg = str2time($thevalorg);
+      }
+      my $vals = (ref($thevalorg) eq "ARRAY") ? $thevalorg : [$thevalorg];
+      my @curwhere = ();
+      foreach my $curthevalorg (@$vals) {
+         my $theval = normaliseLine($curthevalorg,1);
+         foreach (["", ($curcolumndef->{instr} ?
+                       ("INSTR(".$curfilter.", ".$theval.")", "!=", "0") :
+                       # TODO:XXX:FIXME: Das sollte als Eigeschaft gehen, $self->{config}->{DB}->{csv}, und nicht als RegExpr aufn DBtypen...
+                       (($self->{config}->{DB}->{type} =~ m,CSV,i) && ($curcolumndef->{type} eq "text")) ?
+                       ("REGEX(".$curfilter.",".normaliseLine("/".$curthevalorg."/i",1).")", "IS", "TRUE") :
+                       ((($curcolumndef->{type} eq "date") || ($curcolumndef->{type} eq "datetime")) && !$curthevalorg) ?
+                       () :
+                       ($curfilter, undef, $theval)) ],
+                  ["_begin", $curtablename.$TSEP.$curcolumn, ">", $theval],
+                  ["_end", $curtablename.$TSEP.$curcolumn, "<", $theval]) {
+            #print $curfilter." CMP ".$curtable.$TSEP.$curcolumn.$_->[0]."\n";
+            push(@curwhere, "(".$_->[1]." ".($_->[2] || $curcolumndef->{"dbcompare"} || "=")." ".$_->[3].")")
+               if ((scalar(@$_) > 1) && ($curfilter eq $curtablename.$TSEP.$curcolumn.$_->[0]));
+         }
+      }
+      push(@$return, [@curwhere])
+         if (scalar(@curwhere));
+   }
+   return $return;
 }
 
 sub makeEvilGood {
