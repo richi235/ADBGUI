@@ -1295,9 +1295,15 @@ sub joinFilter {
    my $return = [];
    foreach my $curfilter (keys(%{$params->{filter}})) {
       next unless defined($params->{filter}->{$curfilter});
-      my $addtowhere = $self->ParseFilter({%$params, value => $params->{filter}->{$curfilter}, curfilter => $curfilter});
-      push(@$return, join(" AND ", map { "(".join(" OR ", @$_).")" } grep { scalar(@$_) } @$addtowhere))
-         if scalar(grep { scalar(@$_) } @$addtowhere);
+      if (ref($params->{filter}->{$curfilter}) eq "HASH") {
+         my $addtowhere = $self->joinFilter({%$params, filter => $params->{filter}->{$curfilter}});
+         push(@$return, "(".join(" OR ", @$addtowhere).")")
+            if scalar(@$addtowhere);
+      } else {
+         my $addtowhere = $self->ParseFilter({%$params, value => $params->{filter}->{$curfilter}, curfilter => $curfilter});
+         push(@$return, join(" AND ", map { "(".join(" OR ", @$_).")" } grep { scalar(@$_) } @$addtowhere))
+            if scalar(grep { scalar(@$_) } @$addtowhere);
+      }
    }
    return $return;
 }
