@@ -1,6 +1,6 @@
 export IFS=$(echo -en "\n\t\b")
 
-apt-get --force-yes -y install libwww-perl libgd-graph3d-perl libunix-syslog-perl libpoe-perl mysql-server libpoe-component-client-http-perl libdate-calc-perl libjson-perl libclone-perl libemail-mime-createhtml-perl libemail-send-perl
+apt-get --force-yes -y install libwww-perl libgd-graph3d-perl libunix-syslog-perl libpoe-perl mysql-server libpoe-component-client-http-perl libdate-calc-perl libjson-perl libclone-perl libemail-mime-createhtml-perl libemail-sender-perl
 
 cd install 2>/dev/null
 
@@ -71,7 +71,7 @@ if [[ $1 == "qx" || $2 == "qx" ]]; then
       rm qooxdoo-*-sdk 2>/dev/null;
       ln -s ../../qooxdoo-*-sdk .;
       rm source 2>/dev/null;
-      ln -s source .;
+      ln -s ../../myproject/source/ .;
       cd ..;
    done;
    cd source/resource;

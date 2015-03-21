@@ -24,8 +24,9 @@ export PROJECTNAME=myproject
 # Dependencies: git, sudo
 
 # clone to local folder
-git clone https://github.com/pRiVi/ADBGUI.git
-mv ADBGUI $PROJECTNAME
+git clone https://github.com/pRiVi/ADBGUI.git $PROJECTNAME
+# If you have an ssh account loaded on github:
+# git clone git@github.com:pRiVi/ADBGUI.git $PROJECTNAME
 cd $PROJECTNAME
 
 # If you want to use the qooxdoo feature   : paramter "qx"

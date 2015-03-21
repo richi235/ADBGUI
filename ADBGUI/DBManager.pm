@@ -55,7 +55,9 @@ use ADBGUI::BasicVariables;
 use ADBGUI::Tools qw(:DEFAULT getIncludedTables mergeColumnInfos Log md5pw daemonize ReadConfig);
 use ADBGUI::DBBackend;
 use Email::MIME::CreateHTML;
-use Email::Send;
+use Email::Sender::Simple qw(sendmail);
+use Email::Sender::Transport::SMTP qw();
+use Try::Tiny;
 
 # RefCycle Detection
 #use Devel::Cycle qw/find_cycle/;
@@ -1573,9 +1575,18 @@ sub sendTheMail {
       body => $options->{mailbody},
       text_body => "You have a non-HTML mailreader, you cannot read this email.",
    );
-   my $sender = Email::Send->new({mailer => 'SMTP'});
-   $sender->mailer_args([Host => $self->{config}->{mailhost} || '127.0.0.1']);
-   return $sender->send($email);
+   try {
+      sendmail($email, {
+         from => $options->{from} || $self->{config}->{sourceemail} || 'no-reply@adbgui.org',
+         to => $options->{to},
+         transport => Email::Sender::Transport::SMTP->new({
+             host => $self->{config}->{mailhost} || '127.0.0.1',
+             port => 25,
+         }),
+      });
+   } catch {
+      Log("sending failed: $_", $ERROR);
+   };
 }
 
 

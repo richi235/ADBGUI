@@ -7,7 +7,7 @@ if hash sudo 2>/dev/null; then
     sudocommand="sudo"
 else     # check if we are root
     if (( $EUID == 0 )); then
-        sudocommand= ''  # we are, so we will simply install everything as root
+        sudocommand= '' 2>/dev/null # we are, so we will simply install everything as root
     else
         echo "sudo is not installed and you are not root"
         echo "please install sudo or execute as root"
@@ -18,7 +18,7 @@ fi
 # Install dependencies via apt-get
 echo "Installing some dependencies via \"(sudo) apt-get install\" : "
 $sudocommand apt-get update
-$sudocommand apt-get --force-yes -y install libwww-perl libgd-graph3d-perl libunix-syslog-perl libpoe-perl mysql-server libpoe-component-client-http-perl libdate-calc-perl libjson-perl libclone-perl libemail-mime-createhtml-perl libemail-send-perl
+$sudocommand apt-get --force-yes -y install libwww-perl libgd-graph3d-perl libunix-syslog-perl libpoe-perl mysql-server libpoe-component-client-http-perl libdate-calc-perl libjson-perl libclone-perl libemail-mime-createhtml-perl libemail-sender-perl
 
 cd install 2>/dev/null
 
