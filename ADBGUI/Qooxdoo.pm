@@ -3602,7 +3602,8 @@ sub onNewEditEntry {
       push(@$curwhere, $options->{orselection}->{$column})
          if ( $options->{orselection}->{$column} );
       if ($ret->[0]->[0]->{$options->{table}.$TSEP.$column}) {
-         $curwhere = [map {"((".$_.")".($nodeleted ? "" : " AND (".$curTable.$TSEP.$DELETEDCOLUMNNAME."!= 1)").") OR (".$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)." = ".$ret->[0]->[0]->{$options->{table}.$TSEP.$column}.")"} @$curwhere];
+         $curwhere ||= ["1 = 1"];
+         $curwhere = [map {"((".$_.")".($nodeleted ? "" : " AND (".$curTable.$TSEP.$DELETEDCOLUMNNAME." != 1)").") OR (".$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)." = ".$ret->[0]->[0]->{$options->{table}.$TSEP.$column}.")"} @$curwhere];
          $nodeleted++;
       }
       my $curret = undef;
