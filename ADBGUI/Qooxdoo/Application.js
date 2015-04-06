@@ -1491,10 +1491,10 @@ qx.Class.define("myproject.Application", {
                            for (var j = 0; j < dstitem.json.menu.length; j++) {
                               var curbutton;
                               if (dstitem.json.menutype == "radio") {
-                                 curbutton = new qx.ui.menu.RadioButton(decode_utf8(unescape(dstitem.json.menu[j].label)));
+                                 curbutton = new qx.ui.menu.RadioButton(unescape(dstitem.json.menu[j].label));
                                  curbutton.setGroup(dstitem.groupobj);
                               } else {
-                                 curbutton = new qx.ui.menu.Button(decode_utf8(unescape(dstitem.json.menu[j].label)), dstitem.json.menu[j].image);
+                                 curbutton = new qx.ui.menu.Button(unescape(dstitem.json.menu[j].label), dstitem.json.menu[j].image);
                               }
                               curbutton.action    = dstitem.json.menu[j].action;
                               curbutton.urlappend = dstitem.json.menu[j].urlappend;
