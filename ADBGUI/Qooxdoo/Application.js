@@ -1496,6 +1496,9 @@ qx.Class.define("myproject.Application", {
                               } else {
                                  curbutton = new qx.ui.menu.Button(unescape(dstitem.json.menu[j].label), dstitem.json.menu[j].image);
                               }
+                              if (typeof(dstitem.json.menu[j].bgcolor) != 'undefined') {
+                                 curbutton.setBackgroundColor(dstitem.json.menu[j].bgcolor);
+                              }
                               curbutton.action    = dstitem.json.menu[j].action;
                               curbutton.urlappend = dstitem.json.menu[j].urlappend;
                               curbutton.id        = dstitem.json.menu[j].id;
