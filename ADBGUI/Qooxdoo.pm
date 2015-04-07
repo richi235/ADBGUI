@@ -3603,7 +3603,7 @@ sub onNewEditEntry {
          if ( $options->{orselection}->{$column} );
       if ($ret->[0]->[0]->{$options->{table}.$TSEP.$column}) {
          $curwhere = ["1 = 1"]
-            unless scalar(@$curwhere);
+            unless ($curwhere && (ref($curwhere) eq "ARRAY") && scalar(@$curwhere));
          $curwhere = [map {"((".$_.")".($nodeleted ? "" : " AND (".$curTable.$TSEP.$DELETEDCOLUMNNAME." != 1)").") OR (".$curTable.$TSEP.$self->{dbm}->getIdColumnName($curTable)." = ".$ret->[0]->[0]->{$options->{table}.$TSEP.$column}.")"} @$curwhere];
          $nodeleted++;
       }
