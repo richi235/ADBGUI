@@ -908,7 +908,7 @@ sub getHTML {
    for(my $rowid = 0; $rowid < $self->getTableAttr("maxrow"); $rowid++) {
       my $row = $self->{table}->{rows}->[$rowid];
       $return .= "  <tr>\n";
-      for(my $columnid = 0; $columnid < $self->getTableAttr("maxcol"); $columnid++) {
+      for(my $columnid = 0; $columnid < ($self->getCellAttr($rowid, 0)->{"maxcol"} || $self->getTableAttr("maxcol")); $columnid++) {
          my $column = $row->{column}->[$columnid];
          next if ($column->{attr} && $column->{attr}->{skip});
          $return .= "    <td".($column->{attr} ? " ".

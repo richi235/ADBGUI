@@ -1235,8 +1235,7 @@ sub getSQLStringForTable {
    if ((!$param->{nodeleted}) && $tabledef->{columns}->{$DELETEDCOLUMNNAME} &&
       (!grep { $_ eq $param->{table}.$TSEP.$DELETEDCOLUMNNAME } (keys(%{$param->{filter}})))) {
       my $curcolumn = mergeColumnInfos($self->{config}->{DB}, $tabledef->{columns}->{$DELETEDCOLUMNNAME});
-      my $conjunction = $curcolumn->{"dbcompare"} || "=";
-      push(@where, "(".$param->{table}.$TSEP.$DELETEDCOLUMNNAME." ".$conjunction." '0')");
+      push(@where, "(".$param->{table}.$TSEP.$DELETEDCOLUMNNAME." != 1)");
    }
 
    my @alltables = @{$self->getColumnsForTableRecursive($param->{table}, $tableconnections)};
