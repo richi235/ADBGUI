@@ -531,17 +531,17 @@ sub showActivate
     
     if ( $options->{table} )
     {
-        my $curtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
+        my $definition_of_current_table = $self->{dbm}->getTableDefiniton( $options->{table} );
         $curdef->{width} =
-             $curtabledef->{qxactivatewidth}
-          || $curtabledef->{qxwidth}
+             $definition_of_current_table->{qxactivatewidth}
+          || $definition_of_current_table->{qxwidth}
           || $qxwidth;
         $curdef->{height} =
-             $curtabledef->{qxactivateheight}
-          || $curtabledef->{qxheight}
+             $definition_of_current_table->{qxactivateheight}
+          || $definition_of_current_table->{qxheight}
           || $qxheight;
-        $curdef->{label} = $curtabledef->{label} || $options->{table};
-        $curdef->{icon} = $curtabledef->{icon};
+        $curdef->{label} = $definition_of_current_table->{label} || $options->{table};
+        $curdef->{icon} = $definition_of_current_table->{icon};
     }
 
     $curdef->{label} ||=
@@ -914,9 +914,10 @@ sub doContext {
    return $return;
 }
 
-sub onClientData {
-   my $self = shift;
-   my $options = shift;
+sub onClientData
+{
+   my $self       = shift;
+   my $options    = shift;
    my $moreparams = shift;
 
    unless ((!$moreparams) && $options->{heap} && $options->{curSession} && $options->{connection}) {
@@ -939,7 +940,7 @@ sub onClientData {
       }
       return;
    }
-   #print "INPUT: ".$options->{connection}->{sessionid}."\n";
+
    if ($options->{job} eq "delrow") {
       $self->onDelRow({
          %$options,
@@ -952,7 +953,8 @@ sub onClientData {
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          table => $options->{table}
       });
-   } elsif ($options->{job} eq "treechange") {
+   }
+   elsif ($options->{job} eq "treechange") {
       $self->onTreeChange({
          %$options,
          crosslink => $options->{crosslink},
@@ -1005,13 +1007,15 @@ sub onClientData {
   #    } else {
   #       ${$options->{content}} .= "Unable to build table reference tree!";
   #    }
-   } elsif($options->{job} eq "auth") {
+   }
+   elsif($options->{job} eq "auth") {
       $self->onAuthenticate({
          %$options,
          connection => $options->{connection},
          curSession => $options->{curSession}
       });
-   } elsif($options->{job} eq "neweditentry") {
+   }
+   elsif($options->{job} eq "neweditentry") {
       $self->onNewEditEntry({
          %$options,
          crosslink => $options->{crosslink},
@@ -1025,7 +1029,8 @@ sub onClientData {
          curSession => $options->{curSession},
          "q" => $options->{connection}->{"q"},
       });
-   } elsif($options->{job} eq "filterselecttable") {
+   }
+   elsif($options->{job} eq "filterselecttable") {
       if (my $popupid = $options->{connection}->{"q"}->param("popupid")) {
          #$poe_kernel->yield(sendToQX => "show ".$popupid." 1");
          $self->onTableSelect({
@@ -1040,7 +1045,8 @@ sub onClientData {
       } else {
          $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape( $self->{text}->{"qx"}->{internal_error} ) . " 400 200 " . CGI::escape( $self->{text}->{"qx"}->{popupid_missing} . $options->{job} ));
       }
-   } elsif( ($options->{job} eq "filteropen")
+   }
+   elsif( ($options->{job} eq "filteropen")
          || ($options->{job} eq "filtersave") ) {
         if ( my $popupid = $options->{connection}->{"q"}->param("popupid") ) {
             my $urlappend = ",popupid=" . $popupid . ",table=" . $options->{table};
@@ -1081,7 +1087,8 @@ sub onClientData {
                   . CGI::escape( $self->{text}->{"qx"}->{popupid_missing} . $options->{job} )
             );
         }
-   } elsif($options->{job} eq "filter") {
+   }
+   elsif($options->{job} eq "filter") {
       $self->onFilter({
          %$options,
          table => $options->{table},
@@ -1089,7 +1096,8 @@ sub onClientData {
          curSession => $options->{curSession},
          "q" => $options->{connection}->{"q"},
       });
-   } elsif($options->{job} eq "filterhtml") {
+   }
+   elsif($options->{job} eq "filterhtml") {
       $self->onFilterHTML({
          %$options,
          table => $options->{table},
@@ -1160,7 +1168,8 @@ sub onClientData {
          curSession => $options->{curSession},
          "q" => $options->{connection}->{"q"}
       });
-   } elsif($options->{job} eq "showlist") {
+   }
+   elsif($options->{job} eq "showlist") {
       $self->onShowList({
          %$options,
          crosslink => $options->{crosslink},
@@ -1172,7 +1181,8 @@ sub onClientData {
          $UNIQIDCOLUMNNAME => $options->{$UNIQIDCOLUMNNAME},
          curSession => $options->{curSession}
       });
-   } elsif($options->{job} eq "updatelist") {
+   }
+   elsif($options->{job} eq "updatelist") {
       $self->onUpdateList({
          %$options,
          crosslink => $options->{crosslink},
@@ -1185,7 +1195,8 @@ sub onClientData {
          name => $options->{connection}->{"q"}->param("oid") || undef,
          curSession => $options->{curSession}
       });
-   } elsif($options->{job} eq "getrowcount") {
+   }
+   elsif($options->{job} eq "getrowcount") {
       $self->onGetRowCount({
          %$options,
          "q" => $options->{connection}->{"q"},
@@ -1197,13 +1208,15 @@ sub onClientData {
          connection => $options->{connection},
          oid => $options->{oid},
       });
-   } elsif($options->{job} eq "closeobject") {
+   }
+   elsif($options->{job} eq "closeobject") {
       $self->onCloseObject({
          %$options,
          curSession => $options->{curSession},
          oid => $options->{oid},
       });
-   } elsif($options->{job} eq "getrow") {
+   }
+   elsif($options->{job} eq "getrow") {
       my $orderby = $options->{connection}->{"q"}->param("orderby");
       # TODO:FIXME:XXX: Das backend sollte orderby bei virutal Spalten ummappen können, im DBDesign sollte eine Spalte dafuer angegeben werden koennen
       my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
@@ -1357,13 +1370,15 @@ sub onClientData {
       $options->{response}->code(RC_OK);
       $options->{response}->content_type("text/html; charset=UTF-8");
       ${$options->{content}} = $value;
-   } elsif(($options->{job} eq "tableselectline") ||
+   }
+   elsif(($options->{job} eq "tableselectline") ||
            ($options->{job} eq "listselectline")) {
       $self->onSelectLine({
          %$options,
          list => ($options->{job} eq "listselectline") ? 1 : 0,
       });
-   } else {
+   }
+   else {
       $poe_kernel->yield(sendToQX => "showmessage " . CGI::escape($self->{text}->{"qx"}->{internal_error}) . " 400 200 " . CGI::escape( $self->{text}->{"qx"}->{unknown_command} . $options->{job}) );
    }
 }
@@ -1379,7 +1394,8 @@ sub onSelectLine {
    Log("User selected entry ".$options->{$UNIQIDCOLUMNNAME}." for table ".$options->{table}, $INFO);
 }
 
-sub parseFormularData {
+sub parseFormularData
+{
    my $self = shift;
    my $options = shift;
    my $q = shift;
@@ -2033,67 +2049,127 @@ sub updateListloop {
    $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "addobject ".CGI::escape($options->{name})." ".CGI::escape($curid));
 }
 
-sub createTable {
-   my $self = shift;
-   my $options = shift;
-   my $moreparams = shift;
-   unless ((!$moreparams) && $options->{curSession} && $options->{table} && $options->{name} && $options->{connection}) {
-      Log("onShow: Missing parameters: table:".$options->{table}.":curSession:".$options->{curSession}.": !", $ERROR);
-      return undef;
-   }
-   my $curtabledef = $self->{dbm}->getTableDefiniton($options->{table});
-   my $columns = [
-      grep {
-         $_ ne $self->{dbm}->getIdColumnName($options->{table})
-      } grep {
-         my $status = $self->{gui}->getViewStatus({
-            %$options,
-            column => $_,
-            table => $options->{table},
-            targetself => $options->{curSession},
-            action => $LISTACTION,
-         });
-         ($status ne "hidden") #&& ($status ne "writeonly")
-      } grep {
-         $self->{dbm}->isMarked($options->{onlyWithMark}, $curtabledef->{columns}->{$_}->{marks})
-      } hashKeysRightOrder($curtabledef->{columns})
-   ];
-   my $buttons = $self->getTableButtonsDef($options);
-   $buttons->[1] = CGI::escape(JSON->new->allow_nonref->encode($buttons->[1]))
-      if ($buttons->[0] eq "JSON");
-   unshift(@$columns, $self->{dbm}->getIdColumnName($options->{table})) if (exists($curtabledef->{columns}->{$self->{dbm}->getIdColumnName($options->{table})}));
-   $self->sendToQXForSession($options->{connection}->{sessionid} || 0, "createtable ".join(" ", (
-      CGI::escape($options->{name}),  # 1. Interne Objekt ID
-      @{$self->getBasicDataDefine({
-         %$options,
-         crosslink => $options->{crosslink},
-         crosstable => $options->{crosstable},
-         table => $options->{table},
-         columns => $columns,
-         curSession => $options->{curSession},
-         links => {},
-         action => $LISTACTION,
-      })},
-      #(($curtabledef->{readonly} || $options->{nobuttons}) ? "readonly" : ''),
-      join(",", map { (exists($curtabledef->{columns}->{$_}->{qxdefaultsize}) && 
-                      defined($curtabledef->{columns}->{$_}->{qxdefaultsize}) &&
-                              $curtabledef->{columns}->{$_}->{qxdefaultsize}) ?
-                              $curtabledef->{columns}->{$_}->{qxdefaultsize} : '' } @$columns),
-      join(",", map { (exists($curtabledef->{columns}->{$_}->{qxminsize}) && 
-                      defined($curtabledef->{columns}->{$_}->{qxminsize}) &&
-                              $curtabledef->{columns}->{$_}->{qxminsize}) ?
-                              $curtabledef->{columns}->{$_}->{qxminsize} : '' } @$columns),
-      join(",", map { (exists($curtabledef->{columns}->{$_}->{qxmaxsize}) && 
-                      defined($curtabledef->{columns}->{$_}->{qxmaxsize}) &&
-                              $curtabledef->{columns}->{$_}->{qxmaxsize}) ?
-                              $curtabledef->{columns}->{$_}->{qxmaxsize} : '' } @$columns),
-      @$buttons,
-      CGI::escape($options->{hilfe} || ''), # 9. Hilfetext
-      CGI::escape(($options->{crosslink} ? ",crosslink=".CGI::escape($options->{crosslink}).",crossid=".CGI::escape($options->{crossid}).",crosstable=".CGI::escape($options->{crosstable}) : '').($options->{urlappend} || '')), # 10. URLAppend
-      CGI::escape($curtabledef->{qxrowheight} || ""),
-      CGI::escape($self->{dbm}->getIdColumnName($options->{table}) || ""),
-   ))); # , $options->{connection}->{sessionid} || 0);
-   #print "Affected columns: ".join(",", @$columns).":\n";
+sub createTable
+{
+    my $self       = shift;
+    my $options    = shift;
+    my $moreparams = shift;
+
+    unless ( ( !$moreparams )
+        && $options->{curSession}
+        && $options->{table}
+        && $options->{name}
+        && $options->{connection} )
+    {
+        Log("onShow: Missing parameters: table:"
+              . $options->{table}
+              . ":curSession:"
+              . $options->{curSession} . ": !",
+            $ERROR
+        );
+        return undef;
+    }
+
+    my $curtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
+
+    my $columns     = [
+        grep { $_ ne $self->{dbm}->getIdColumnName( $options->{table} ) } grep {
+            my $status = $self->{gui}->getViewStatus(
+                {
+                    %$options,
+                    column     => $_,
+                    table      => $options->{table},
+                    targetself => $options->{curSession},
+                    action     => $LISTACTION,
+                }
+            );
+            ( $status ne "hidden" )    #&& ($status ne "writeonly")
+          } grep {
+            $self->{dbm}->isMarked( $options->{onlyWithMark},
+                $curtabledef->{columns}->{$_}->{marks} )
+          } hashKeysRightOrder( $curtabledef->{columns} )
+    ];
+
+    my $buttons = $self->getTableButtonsDef($options);
+
+    if (( $buttons->[0] eq "JSON" )) { 
+        $buttons->[1] = CGI::escape( JSON->new->allow_nonref->encode( $buttons->[1] ) );
+    }
+
+    if ((exists($curtabledef->{columns}->{ $self->{dbm}->getIdColumnName( $options->{table} ) })))
+    { 
+        unshift( @$columns, $self->{dbm}->getIdColumnName( $options->{table} ) );
+    }
+
+    # The Qooxdoo environment in the users Browser nows "qooxdootables"
+    # This call creates such a table in the Qooxdoo environment.
+    $self->sendToQXForSession(
+        $options->{connection}->{sessionid} || 0,
+        "createtable " . join(
+            " ",
+            (
+                CGI::escape( $options->{name} ),    # 1. Interne Objekt ID
+                @{$self->getBasicDataDefine(
+                        {
+                            %$options,
+                            crosslink  => $options->{crosslink},
+                            crosstable => $options->{crosstable},
+                            table      => $options->{table},
+                            columns    => $columns,
+                            curSession => $options->{curSession},
+                            links      => {},
+                            action     => $LISTACTION,
+                        }
+                    )
+                },
+                join(",",
+                    map {
+                        (exists($curtabledef->{columns}->{$_}->{qxdefaultsize})
+                              && defined($curtabledef->{columns}->{$_}->{qxdefaultsize})
+                              && $curtabledef->{columns}->{$_}->{qxdefaultsize}
+                          )
+                          ? $curtabledef->{columns}->{$_}->{qxdefaultsize}
+                          : ''
+                    } @$columns
+                ),
+                join(",",
+                    map {(exists($curtabledef->{columns}->{$_}->{qxminsize})
+                              && defined($curtabledef->{columns}->{$_}->{qxminsize})
+                              && $curtabledef->{columns}->{$_}->{qxminsize})
+                          ? $curtabledef->{columns}->{$_}->{qxminsize}
+                          : ''
+                    } @$columns
+                ),
+                join(",",
+                    map {
+                        (exists($curtabledef->{columns}->{$_}->{qxmaxsize})
+                              && defined($curtabledef->{columns}->{$_}->{qxmaxsize})
+                              && $curtabledef->{columns}->{$_}->{qxmaxsize})
+                          ? $curtabledef->{columns}->{$_}->{qxmaxsize}
+                          : ''
+                    } @$columns
+                ),
+                @$buttons,
+                CGI::escape( $options->{hilfe} || '' ),    # 9. Hilfetext
+                CGI::escape(
+                    ($options->{crosslink}
+                        ? ",crosslink="
+                          . CGI::escape( $options->{crosslink} )
+                          . ",crossid="
+                          . CGI::escape( $options->{crossid} )
+                          . ",crosstable="
+                          . CGI::escape( $options->{crosstable} )
+                        : ''
+                    )
+                    . ( $options->{urlappend} || '' )
+                ),    # 10. URLAppend
+                CGI::escape( $curtabledef->{qxrowheight} || "" ),
+                CGI::escape(
+                    $self->{dbm}->getIdColumnName( $options->{table} ) || ""
+                ),
+            )
+        )
+    );
 }
 
 sub doCSVonShow {
@@ -3513,27 +3589,27 @@ sub onNewEditEntry {
         return undef;
     }
 
-    my $curtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
+    my $current_table_dbdesign_hash = $self->{dbm}->getTableDefiniton( $options->{table} );
     my $columns     = [
         grep {
-            (        exists( $curtabledef->{columns}->{$_}->{type} )
-                  && defined( $curtabledef->{columns}->{$_}->{type} )
-                  && ( $curtabledef->{columns}->{$_}->{type} ne "htmltext" )
-                  && ( $curtabledef->{columns}->{$_}->{type} ne "longtext" ) )
+            (        exists( $current_table_dbdesign_hash->{columns}->{$_}->{type} )
+                  && defined( $current_table_dbdesign_hash->{columns}->{$_}->{type} )
+                  && ( $current_table_dbdesign_hash->{columns}->{$_}->{type} ne "htmltext" )
+                  && ( $current_table_dbdesign_hash->{columns}->{$_}->{type} ne "longtext" ) )
               && $self->{dbm}->isMarked( $options->{onlyWithMark},
-                $curtabledef->{columns}->{$_}->{marks} )
+                $current_table_dbdesign_hash->{columns}->{$_}->{marks} )
           } # TODO:FIXME:XXX: Typ "virtual" hier rausfiltern oder als readonly schicken?
           hashKeysRightOrder(
-            $curtabledef->{columns},
+            $current_table_dbdesign_hash->{columns},
             0, $options->{specialordercolumn}
           )
     ];
-    my $ret = [];
+    my $return_value_of_get_data_set = [];
     if ( $options->{$UNIQIDCOLUMNNAME} ) {
         my $db = $self->{dbm}->getDBBackend( $options->{table} );
         unless (
             defined(
-                $ret = $db->getDataSet(
+                $return_value_of_get_data_set = $db->getDataSet(
                     {
                         table             => $options->{table},
                         nodeleted         => 1,
@@ -3543,8 +3619,8 @@ sub onNewEditEntry {
                     }
                 )
             )
-            && ( ref($ret) eq "ARRAY" )
-            && ( scalar( @{ $ret->[0] } ) >= 1 )
+            && ( ref($return_value_of_get_data_set) eq "ARRAY" )
+            && ( scalar( @{ $return_value_of_get_data_set->[0] } ) >= 1 )
           )
         {
             Log("DBManager: onNewLineServer: GET "
@@ -3586,8 +3662,8 @@ sub onNewEditEntry {
             $options->{connection}->{sessionid} || 0,
             "createwin "
               . $window . " "
-              . ( $curtabledef->{qxeditwidth}  || $qxwidth ) . " "
-              . ( $curtabledef->{qxeditheight} || $qxheight ) . " "
+              . ( $current_table_dbdesign_hash->{qxeditwidth}  || $qxwidth ) . " "
+              . ( $current_table_dbdesign_hash->{qxeditheight} || $qxheight ) . " "
               . CGI::escape(
                 encode("utf8",
                     (
@@ -3600,12 +3676,12 @@ sub onNewEditEntry {
                             : $self->{text}->{"qx"}->{new_entry}
                           )
                           . $self->{text}->{"qx"}->{in}
-                          . ( $curtabledef->{label} || $options->{table} )
+                          . ( $current_table_dbdesign_hash->{label} || $options->{table} )
                     )
                 )
               )
               . " "
-              . CGI::escape( $curtabledef->{icon} || '' )
+              . CGI::escape( $current_table_dbdesign_hash->{icon} || '' )
         );
 
         # make the just created window visibale
@@ -3629,15 +3705,15 @@ sub onNewEditEntry {
     my $mydefaults = $self->getDefaults(
         {
             options     => $options,
-            curtabledef => $curtabledef,
+            curtabledef => $current_table_dbdesign_hash,
             columns     => $columns,
-            ret         => $ret,
+            ret         => $return_value_of_get_data_set,
         }
     );
     my $overridecolumns = [];
 
     if ( $options->{override} ) {
-        $ret->[0]->[0] = { %{ $ret->[0]->[0] }, %{ $options->{override} } };
+        $return_value_of_get_data_set->[0]->[0] = { %{ $return_value_of_get_data_set->[0]->[0] }, %{ $options->{override} } };
 
         $overridecolumns = [
             grep {
@@ -3699,13 +3775,13 @@ sub onNewEditEntry {
                     ))
                 , # 7. Die Werte des Eintrags, oder die Defaultwerte wenns neu is
                 join(",", (
-                        (map {CGI::escape($curtabledef->{columns}->{$_}->{unit} || "" )
+                        (map {CGI::escape($current_table_dbdesign_hash->{columns}->{$_}->{unit} || "" )
                             } @$columns
                         ),
                         map { "" } @$overridecolumns
                     )
                 ),    # 8. Units
-                CGI::escape( $curtabledef->{infotextedit} || '' )
+                CGI::escape( $current_table_dbdesign_hash->{infotextedit} || '' )
                 ,     # 9. Hilfetext
                 CGI::escape( $window || '' ),    # 10. Parentwindow
                 CGI::escape(
@@ -3769,16 +3845,14 @@ sub onNewEditEntry {
             %$options,
             basetable => $options->{table},
             window    => $window,
-            defaults  => $ret->[0]->[0],
+            defaults  => $return_value_of_get_data_set->[0]->[0],
             oid       => $options->{oid},
         }
     );
 
-    my $return = { $options->{table} => $ret };
+    my $return = { $options->{table} => $return_value_of_get_data_set };
     $options->{override} ||= {};
 
-    # this adds the data lines from the table in the database
-    # to the data view
     # iterate over all columns of this table containing links to other tables
     # and fetch the values of the referenced lines ( just these with "showinselect" attribute)
     foreach my $column ( keys %$linking_columns )
@@ -3816,7 +3890,7 @@ sub onNewEditEntry {
         push( @$current_where_pre, $options->{orselection}->{$column} )
           if ( $options->{orselection}->{$column} );
 
-        if ( $ret->[0]->[0]->{ $options->{table} . $TSEP . $column } ) {
+        if ( $return_value_of_get_data_set->[0]->[0]->{ $options->{table} . $TSEP . $column } ) {
             $current_where_pre = [
                 map {
                     "(("
@@ -3832,7 +3906,7 @@ sub onNewEditEntry {
                       . $current_table
                       . $TSEP
                       . $self->{dbm}->getIdColumnName($current_table) . " = "
-                      . $ret->[0]->[0]->{ $options->{table} . $TSEP . $column }
+                      . $return_value_of_get_data_set->[0]->[0]->{ $options->{table} . $TSEP . $column }
                       . ")"
                 } @$current_where_pre
             ];
@@ -3877,7 +3951,7 @@ sub onNewEditEntry {
               . CGI::escape("-") . " "
         );
 
-        my $curtabledef = $self->{dbm}->getTableDefiniton($current_table);
+        my $current_table_dbdesign_hash = $self->{dbm}->getTableDefiniton($current_table);
 
         foreach my $dbline ( @{ $content_of_current_table->[0] } ) {
             $self->sendToQXForSession(
@@ -4001,41 +4075,49 @@ sub doSpecialColumns
 
     return unless $options->{$UNIQIDCOLUMNNAME};
     
-    my $curtabledef = $self->{dbm}->getTableDefiniton( $options->{table} );
+    my $definition_of_current_table = $self->{dbm}->getTableDefiniton( $options->{table} );
 
-    foreach my $column ( hashKeysRightOrder( $curtabledef->{columns} ) )
+    # This whole foreach blog is responsible for the displaying of htmltext and longtext columns
+    foreach my $column ( hashKeysRightOrder( $definition_of_current_table->{columns} ) )
     {
-        unless ( $self->{dbm}->isMarked( $options->{onlyWithMark}, $curtabledef->{columns}->{$column}->{marks} ) )
-        { 
-            next;
-        }
-        if (( ( $curtabledef->{columns}->{$column}->{type} ne "htmltext" )
-            && ( $curtabledef->{columns}->{$column}->{type} ne "longtext" ) ))
-        { 
-            next;
-        }
-        if (( $curtabledef->{columns}->{$column}->{hidden}
-            || $curtabledef->{columns}->{$column}->{readonly} ))
+        unless ( $self->{dbm}->isMarked( $options->{onlyWithMark}, $definition_of_current_table->{columns}->{$column}->{marks} ) )
         { 
             next;
         }
 
+        # skip processing this column if its not "htmltext" or "longtext"
+        if (( ( $definition_of_current_table->{columns}->{$column}->{type} ne "htmltext" )
+            && ( $definition_of_current_table->{columns}->{$column}->{type} ne "longtext" ) ))
+        { 
+            next;
+        }
+
+        # skip if we're processing a hidden or readonly column
+        if (( $definition_of_current_table->{columns}->{$column}->{hidden}
+            || $definition_of_current_table->{columns}->{$column}->{readonly} ))
+        { 
+            next;
+        }
+
+        # create the tab
         $self->sendToQXForSession(
             $options->{connection}->{sessionid},
             "addtab "
               . CGI::escape( $options->{window} . "_tabs" ) . " "
               . CGI::escape( $options->{window} . "_tabs_" . $column ) . " "
               . CGI::escape(
-                $curtabledef->{columns}->{$column}->{label} || $column
+                $definition_of_current_table->{columns}->{$column}->{label} || $column
               )
         );
+
+        # create the textedit field
         $self->sendToQXForSession(
             $options->{connection}->{sessionid},
             "create"
               . (
                 (
-                    $curtabledef->{columns}->{$column}->{type}
-                      && ( $curtabledef->{columns}->{$column}->{type} eq
+                    $definition_of_current_table->{columns}->{$column}->{type}
+                      && ( $definition_of_current_table->{columns}->{$column}->{type} eq
                         "htmltext" )
                 ) ? "html" : ""
               )
@@ -4055,10 +4137,12 @@ sub doSpecialColumns
                   || ''
               )
               . " "
-              . CGI::escape( $curtabledef->{columns}->{$column}->{help} || '' )
+              . CGI::escape( $definition_of_current_table->{columns}->{$column}->{help} || '' )
               . " "
               . CGI::escape( $options->{urlappend} || "" ),
         );
+
+        # link them
         $self->sendToQXForSession( $options->{connection}->{sessionid},
                 "addobject "
               . CGI::escape( $options->{window} . "_tabs_" . $column ) . " "
@@ -4068,6 +4152,8 @@ sub doSpecialColumns
 
     my $tables = $self->{dbm}->getDBBackend( $options->{table} )->getTableList();
 
+    # this draws the tabs for columns with entries referencing the current entry
+    # either in a 1:n or a n:m fashion
     foreach my $onlycross ( 1, 0 )
     {
         foreach my $crosstable (
@@ -4122,18 +4208,16 @@ sub doSpecialColumns
                 ) ? $crosstable : undef;
             }
 
-# TODO:FIXME:XXX: Das zeigt Tabellen an, die per 1:n auf mich zeigen koennen. Das ist derzeit unschoen,
-#                 da man in diesem Fall die Eintraege an sich sieht und diese aendert/loescht und nicht
-#                 die Verknuepfung. Das sollte man ueberarbeiten und dann ggf. hier wieder einschalten.
-            if (
-                $crosslinktablename
-                && ( $crosslinktabledef =
-                    $self->{dbm}->getTableDefiniton($crosslinktablename) )
+            # TODO:FIXME:XXX: Das zeigt Tabellen an, die per 1:n auf mich zeigen koennen. Das ist derzeit unschoen,
+            #                 da man in diesem Fall die Eintraege an sich sieht und diese aendert/loescht und nicht
+            #                 die Verknuepfung. Das sollte man ueberarbeiten und dann ggf. hier wieder einschalten.
+            if ($crosslinktablename
+                && ( $crosslinktabledef = $self->{dbm}->getTableDefiniton($crosslinktablename) )
               )
             {
                 if ($self->noCrossShowTable(
-                    $options->{table},      $crosslinktablename,
-                    $options->{curSession}, $options->{$UNIQIDCOLUMNNAME}
+                        $options->{table},      $crosslinktablename,
+                        $options->{curSession}, $options->{$UNIQIDCOLUMNNAME}
                   ))
                 { 
                     next;
@@ -4159,6 +4243,9 @@ sub doSpecialColumns
                         )
                       )
                 );
+
+                # currently the key crosshowastable does not exist and is never set
+                # so the whole if block is quite useless
                 if ( $crosslinktabledef->{crossshowastable} ) {
                     $self->createTable(
                         {
@@ -4171,7 +4258,7 @@ sub doSpecialColumns
                             name       => $options->{window}
                               . "_tabs_cross_"
                               . $crosslinktablename . "_data",
-                            hilfe => $curtabledef->{infotext},
+                            hilfe => $definition_of_current_table->{infotext},
                         }
                     );
                 }
@@ -4187,7 +4274,7 @@ sub doSpecialColumns
                             name       => $options->{window}
                               . "_tabs_cross" . "_"
                               . $crosslinktablename . "_" . "data",
-                            hilfe => $curtabledef->{infotext},
+                            hilfe => $definition_of_current_table->{infotext},
                         }
                     );
                     $self->onUpdateList(
@@ -4205,6 +4292,7 @@ sub doSpecialColumns
                         }
                     );
                 }
+
                 $self->sendToQXForSession(
                     $options->{connection}->{sessionid} || 0,
                     "addobject "
