@@ -4335,7 +4335,7 @@ sub onAuthenticated
 
 Or: How to create a Button and bind it to a specific function.
 
-Buttons are defined via I<getButtonsdef()>. Every Button contains a datastructure like:
+Buttons are defined via I<getTableButtonsdef()>. Every Button contains a datastructure like:
   {
       name   => "edit",
       label  => "Beteiligung_bearbeiten",
@@ -4343,7 +4343,7 @@ Buttons are defined via I<getButtonsdef()>. Every Button contains a datastructur
       action => "neweditentry",
       bindto => "row",
   },
-(new datastructure, there exists also a legacy datatype, see ADBGUI::getButtonsdef() if interested)
+(new datastructure, there exists also a legacy datatype, see ADBGUI::getTableButtonsdef() if interested)
 
 Here I<neweditentry> is the B<action> triggered by this button.
 The corresponding function which will be called has to be assigned in I<onClientData()> :
